@@ -45,6 +45,19 @@ class Terminal(UI):
     
     def pop_ui_from_stack(self):
         return self._ui_stack.pop()
+    
+    def print_board(self, board):
+        print("Current Board: ")
+        print()
+        for row in board:
+            print()
+            print("-"*37)
+            for num in row:
+                print("|", num, end = ' ')
+            print("|", end='')
+        print()
+        print("-"*37)
+        print()
 
 class Board:
 
@@ -57,10 +70,13 @@ class Board:
     @staticmethod
     def generate_new_board(size=9):
         board = [[0 for _ in range(size)] for _ in range(size)]
-
-class Game:
-    def __init(self):
-        self.__board = Board()
+        return board
+    
+    def set_num_at(self, row, col, num):
+        self.__board[row-1][col-1] = num
+    
+    def get_board(self):
+        return self.__board
 
 class Sudoku:
     def __init__(self):
@@ -83,9 +99,9 @@ class Sudoku:
             return
 
     def __play_new_game(self):
-        self.__game = Game()
+        self.__board = Board()
         while True:
-            # print board
+            self.__ui.print_board(self.__board.get_board())
             choice = self.__ui.get_input("Would you like to continue (Y/N): ", ["Y", "N"])
             if choice == "N":
                 self.__ui.pop_ui_from_stack()
@@ -93,8 +109,7 @@ class Sudoku:
             num = int(self.__ui.get_input("Enter the NUMBER you want to place: ", Board.valid_nums))
             row = int(self.__ui.get_input("Enter the ROW you want to place the number at: ", Board.valid_nums))
             col = int(self.__ui.get_input("Enter the COLUMN you want to place the number at: ", Board.valid_nums))
-            # fill in the board
-            # detect when player wins
+            self.__board.set_num_at(row, col, num)
                   
 if __name__ in "__main__":
     game = Sudoku()
