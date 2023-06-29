@@ -51,7 +51,12 @@ class Board:
     valid_nums = [str(i) for i in range(1, 10)]
 
     def __init__(self):
-        pass  
+        self.__size = 9
+        self.__board = self.generate_new_board(self.__size)
+
+    @staticmethod
+    def generate_new_board(size=9):
+        board = [[0 for _ in range(size)] for _ in range(size)]
 
 class Game:
     def __init(self):
