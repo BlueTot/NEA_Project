@@ -8,17 +8,29 @@ class Sudoku:
     def start(self):
         mode_choice = self.__ui.get_input("Press (T) to play game in terminal mode, (Q) to quit the game: ", ["T", "Q"])
         if mode_choice == "T":
-            self.play()
+            self.__ui.push_ui_to_stack("home")
+            self.__play()
         elif mode_choice == "Q":
             self.__ui.print_game_closed()
     
-    def play(self):
+    def __play(self):
+        while True:
+            curr_screen = self.__ui.get_curr_ui()
+            if curr_screen == "home":
+                self.__play_home_screen()
+            elif curr_screen == "new game":
+                self.__play_new_game()
+            elif curr_screen == -1:
+                self.__ui.print_game_closed()
+                return
+    
+    def __play_home_screen(self):
         main_menu_choice = self.__ui.get_input("Press (P) to play game, (Q) to quit: ", ["P", "Q"])
         if main_menu_choice == "P":
             self.__ui.push_ui_to_stack("new game")
             self.__play_new_game()
         elif main_menu_choice == "Q":
-            self.__ui.print_game_closed()
+            self.__ui.pop_ui_from_stack()
             return
 
     def __play_new_game(self):
