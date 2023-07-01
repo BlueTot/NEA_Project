@@ -29,12 +29,12 @@ class Board:
         return num in [row[col] for row in grid]
 
     @staticmethod
-    def __in_3x3_matrix(board, row, col, num):
-        curr_box = (row // 3, col // 3)
+    def __in_3x3_matrix(grid, row, col, num):
+        box_row, box_col = row // 3, col // 3
         box = []
-        for row in range(3*curr_box[0], 3*(curr_box[0] + 1)):
-            for col in range(3*curr_box[1], 3*(curr_box[1]+1)):
-                box.append(board[row][col])
+        for row in range(3*box+row, 3*(box_row + 1)):
+            for col in range(3*box_col, 3*(box_col+1)):
+                box.append(grid[row][col])
         return num in box
 
     def __is_safe(self, grid, row, col, num):
