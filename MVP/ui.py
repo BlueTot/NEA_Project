@@ -33,14 +33,16 @@ class Terminal(UI):
     
     def print_board(self, board):
         print()
-        for row in board:
+        print("    1   2   3   4   5   6   7   8   9", end='')
+        for rn, row in enumerate(board):
             print()
-            print("-"*37)
+            print("  " + "-"*37)
+            print(rn+1, end=' ')
             for num in row:
                 print("|", num if num != 0 else " ", end = ' ')
             print("|", end='')
         print()
-        print("-"*37)
+        print("  " + "-"*37)
         print()
 
     def print_header(self):
