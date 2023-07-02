@@ -1,4 +1,5 @@
 from stack import Stack
+import os
 
 class UI:
     def __init__(self):
@@ -36,8 +37,14 @@ class Terminal(UI):
             print()
             print("-"*37)
             for num in row:
-                print("|", num, end = ' ')
+                print("|", num if num != 0 else " ", end = ' ')
             print("|", end='')
         print()
         print("-"*37)
         print()
+
+    def print_header(self):
+        os.system("cls")
+        print("-"*11)
+        print("SUDOKU v0.1")
+        print("-"*11)

@@ -1,12 +1,12 @@
 from ui import Terminal
 from board import Board
-import os
 
 class Sudoku:
     def __init__(self):
         self.__ui = Terminal()
 
     def start(self):
+        self.__ui.print_header()
         mode_choice = self.__ui.get_input("Press (T) to play game in terminal mode, (Q) to quit the game: ", ["T", "Q"])
         if mode_choice == "T":
             self.__ui.push_ui_to_stack("home")
@@ -16,7 +16,7 @@ class Sudoku:
     
     def __play(self):
         while True:
-            os.system("cls")
+            self.__ui.print_header()
             curr_screen = self.__ui.get_curr_ui()
             if curr_screen == "home":
                 self.__play_home_screen()
@@ -38,7 +38,7 @@ class Sudoku:
     def __play_new_game(self):
         self.__board = Board()
         while True:
-            os.system("cls")
+            self.__ui.print_header()
             self.__ui.print_board(self.__board.get_board())
             choice = self.__ui.get_input("Would you like to continue (Y/N): ", ["Y", "N"])
             if choice == "N":
