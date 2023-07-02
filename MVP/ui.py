@@ -31,7 +31,6 @@ class Terminal(UI):
         return self._ui_stack.peek()
     
     def print_board(self, board):
-        print("Current Board: ")
         print()
         for row in board:
             print()

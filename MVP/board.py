@@ -32,7 +32,7 @@ class Board:
     def __in_3x3_matrix(grid, row, col, num):
         box_row, box_col = row // 3, col // 3
         box = []
-        for row in range(3*box+row, 3*(box_row + 1)):
+        for row in range(3*box_row, 3*(box_row + 1)):
             for col in range(3*box_col, 3*(box_col+1)):
                 box.append(grid[row][col])
         return num in box

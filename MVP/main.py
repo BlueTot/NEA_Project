@@ -1,5 +1,6 @@
 from ui import Terminal
 from board import Board
+import os
 
 class Sudoku:
     def __init__(self):
@@ -15,6 +16,7 @@ class Sudoku:
     
     def __play(self):
         while True:
+            os.system("cls")
             curr_screen = self.__ui.get_curr_ui()
             if curr_screen == "home":
                 self.__play_home_screen()
@@ -36,9 +38,13 @@ class Sudoku:
     def __play_new_game(self):
         self.__board = Board()
         while True:
+            os.system("cls")
             self.__ui.print_board(self.__board.get_board())
             choice = self.__ui.get_input("Would you like to continue (Y/N): ", ["Y", "N"])
             if choice == "N":
+                if self.__ui.get_input("Would you like to see the solution (Y/N): ", ["Y", "N"]) == "Y":
+                    self.__ui.print_board(self.__board.get_solved_board())
+                    input("Press enter to quit game")
                 self.__ui.pop_ui_from_stack()
                 return
             num = int(self.__ui.get_input("Enter the NUMBER you want to place: ", Board.valid_nums))
