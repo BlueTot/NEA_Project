@@ -1,18 +1,16 @@
 from copy import deepcopy
+from random import randint
 
 class Board:
 
     valid_nums = [str(i) for i in range(1, 10)]
 
     def __init__(self):
-        self.__size = 9
-        self.__board = self.generate_new_board(self.__size)
+        self.__board = self.generate_new_board()
         self.__orig_board = deepcopy(self.__board)
 
-    @staticmethod
-    def generate_new_board(size=9):
-        board = [[0 for _ in range(size)] for _ in range(size)]
-        return board
+    def generate_new_board(self):
+        return self.get_random_filled_board()
     
     def set_num_at(self, row, col, num):
         self.__board[row-1][col-1] = num
@@ -60,9 +58,27 @@ class Board:
 
         return False
     
-    def get_solved_board(self):
-        new_board = deepcopy(self.__orig_board)
+    def get_solved_board(self, *args):
+        if len(args) == 0:
+            new_board = deepcopy(self.__orig_board)
+        else:
+            new_board = deepcopy(args[0])
         if self.__solve_sudoku(new_board):
             return new_board
         else:
             return -1
+    
+    def __fill_matrix_randomly(self, grid, start, end):
+        for row in range(start, end+1):
+            for col in range(start, end+1):
+                while not self.__is_safe(grid, row, col, num := randint(1, 9)):
+                    pass
+                grid[row][col] = num
+        return grid
+    
+    def get_random_filled_board(self):
+        board = [[0 for _ in range(9)] for _ in range(9)]
+        board = self.__fill_matrix_randomly(board, 0, 2)
+        board = self.__fill_matrix_randomly(board, 3, 5)
+        board = self.__fill_matrix_randomly(board, 6, 8)
+        return self.get_solved_board(board)
