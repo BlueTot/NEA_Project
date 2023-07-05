@@ -1,6 +1,12 @@
 from copy import deepcopy
 from random import randint
 
+class InvalidNumberError(Exception):
+    pass
+
+class SquareAlreadyFilledError(Exception):
+    pass
+
 class Board:
 
     valid_nums = [str(i) for i in range(1, 10)]
@@ -13,7 +19,13 @@ class Board:
         return self.get_random_filled_board()
     
     def set_num_at(self, row, col, num):
-        self.__board[row-1][col-1] = num
+        if self.__board[row][col] == 0:
+            if self.__is_safe(self.__board, row, col, num):
+                self.__board[row-1][col-1] = num
+            else:
+                raise InvalidNumberError
+        else:
+            raise SquareAlreadyFilledError
     
     def get_board(self):
         return self.__board

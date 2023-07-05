@@ -1,5 +1,5 @@
 from ui import Terminal
-from board import Board
+from board import *
 
 class Sudoku:
     def __init__(self):
@@ -40,18 +40,24 @@ class Sudoku:
         while True:
             self.__ui.print_header()
             self.__ui.print_board(self.__board.get_board())
-            choice = self.__ui.get_input("Would you like to continue (Y/N): ", ["Y", "N"])
-            if choice == "N":
+            if self.__ui.get_input("Would you like to continue (Y/N): ", ["Y", "N"]) == "N":
                 if self.__ui.get_input("Would you like to see the solution (Y/N): ", ["Y", "N"]) == "Y":
                     self.__ui.print_board(self.__board.get_solved_board())
                     input("Press enter to quit game")
                 self.__ui.pop_ui_from_stack()
                 return
-            num = int(self.__ui.get_input("Enter the NUMBER you want to place: ", Board.valid_nums))
-            row = int(self.__ui.get_input("Enter the ROW you want to place the number at: ", Board.valid_nums))
-            col = int(self.__ui.get_input("Enter the COLUMN you want to place the number at: ", Board.valid_nums))
-            self.__board.set_num_at(row, col, num)
-                  
+            try:
+                while True:
+                    num = int(self.__ui.get_input("Enter the NUMBER you want to place: ", Board.valid_nums))
+                    row = int(self.__ui.get_input("Enter the ROW you want to place the number at: ", Board.valid_nums))
+                    col = int(self.__ui.get_input("Enter the COLUMN you want to place the number at: ", Board.valid_nums))
+                    self.__board.set_num_at(row, col, num)
+                    break
+            except InvalidNumberError:
+                input(f"ERROR: {num} cannot be placed in the square ({row}, {col}) ... Press enter to continue")
+            except SquareAlreadyFilledError:
+                input(f"ERROR: A number already exists at the square ({row}, {col}) ... Press enter to continue")
+                
 if __name__ in "__main__":
     game = Sudoku()
     game.start()
