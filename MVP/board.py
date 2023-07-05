@@ -44,19 +44,12 @@ class Board:
     def set_num_at(self, row, col, num):
         row -= 1
         col -= 1
-        # print(row, col, num)
         if self.__board[row][col] == 0:
-            # print(self.__board[row][col])
-            # print(self.__in_row(self.__board, row, num))
-            # print(self.__in_col(self.__board, row, col))
-            # print(self.__in_3x3_matrix(self.__board, row, col, num))
             if self.__is_safe(self.__board, row, col, num):
                 self.__board[row][col] = num
             else:
                 raise InvalidNumberError
         else:
-            # print(self.__board[row][col])
-            # print()
             raise SquareAlreadyFilledError
     
     def get_board(self):
