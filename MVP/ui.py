@@ -1,7 +1,8 @@
 from stack import Stack
-import os
+from os import system
+from abc import ABC
 
-class UI:
+class UI(ABC):
     def __init__(self):
         self._ui_stack = Stack()
 
@@ -46,7 +47,7 @@ class Terminal(UI):
         print()
 
     def print_header(self):
-        os.system("cls")
+        system("cls")
         print("-"*11)
         print("SUDOKU v0.1")
         print("-"*11)

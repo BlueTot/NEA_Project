@@ -11,20 +11,52 @@ class Board:
 
     valid_nums = [str(i) for i in range(1, 10)]
 
-    def __init__(self):
-        self.__board = self.generate_new_board()
+    num_nums_to_remove = {"easy": 12, "medium": 24, "hard": 48}
+
+    def __init__(self, difficulty):
+        self.__difficulty = difficulty
+        self.__board = self.generate_new_board(self.__difficulty)
         self.__orig_board = deepcopy(self.__board)
 
-    def generate_new_board(self):
-        return self.get_random_filled_board()
+    def __fill_matrix_randomly(self, grid, start, end):
+        for row in range(start, end+1):
+            for col in range(start, end+1):
+                while not self.__is_safe(grid, row, col, num := randint(1, 9)):
+                    pass
+                grid[row][col] = num
+        return grid
+    
+    def get_random_filled_board(self):
+        board = [[0 for _ in range(9)] for _ in range(9)]
+        board = self.__fill_matrix_randomly(board, 0, 2)
+        board = self.__fill_matrix_randomly(board, 3, 5)
+        board = self.__fill_matrix_randomly(board, 6, 8)
+        return self.get_solved_board(board)
+
+    def generate_new_board(self, difficulty):
+        board = self.get_random_filled_board()
+        for _ in range(Board.num_nums_to_remove[difficulty]):
+            while board[row := randint(0, 8)][col := randint(0, 8)] == 0:
+                pass
+            board[row][col] = 0
+        return board
     
     def set_num_at(self, row, col, num):
+        row -= 1
+        col -= 1
+        # print(row, col, num)
         if self.__board[row][col] == 0:
+            # print(self.__board[row][col])
+            # print(self.__in_row(self.__board, row, num))
+            # print(self.__in_col(self.__board, row, col))
+            # print(self.__in_3x3_matrix(self.__board, row, col, num))
             if self.__is_safe(self.__board, row, col, num):
-                self.__board[row-1][col-1] = num
+                self.__board[row][col] = num
             else:
                 raise InvalidNumberError
         else:
+            # print(self.__board[row][col])
+            # print()
             raise SquareAlreadyFilledError
     
     def get_board(self):
@@ -79,18 +111,3 @@ class Board:
             return new_board
         else:
             return -1
-    
-    def __fill_matrix_randomly(self, grid, start, end):
-        for row in range(start, end+1):
-            for col in range(start, end+1):
-                while not self.__is_safe(grid, row, col, num := randint(1, 9)):
-                    pass
-                grid[row][col] = num
-        return grid
-    
-    def get_random_filled_board(self):
-        board = [[0 for _ in range(9)] for _ in range(9)]
-        board = self.__fill_matrix_randomly(board, 0, 2)
-        board = self.__fill_matrix_randomly(board, 3, 5)
-        board = self.__fill_matrix_randomly(board, 6, 8)
-        return self.get_solved_board(board)

@@ -34,9 +34,23 @@ class Sudoku:
         elif main_menu_choice == "Q":
             self.__ui.pop_ui_from_stack()
             return
+    
+    def __make_move(self):
+        try:
+            while True:
+                num = int(self.__ui.get_input("Enter the NUMBER you want to place: ", Board.valid_nums))
+                row = int(self.__ui.get_input("Enter the ROW you want to place the number at: ", Board.valid_nums))
+                col = int(self.__ui.get_input("Enter the COLUMN you want to place the number at: ", Board.valid_nums))
+                self.__board.set_num_at(row, col, num)
+                break
+        except InvalidNumberError:
+            input(f"ERROR: {num} cannot be placed in the square ({row}, {col}) ... Press enter to continue")
+        except SquareAlreadyFilledError:
+            input(f"ERROR: A number already exists at the square ({row}, {col}) ... Press enter to continue")
+
 
     def __play_new_game(self):
-        self.__board = Board()
+        self.__board = Board("hard")
         while True:
             self.__ui.print_header()
             self.__ui.print_board(self.__board.get_board())
@@ -46,17 +60,8 @@ class Sudoku:
                     input("Press enter to quit game")
                 self.__ui.pop_ui_from_stack()
                 return
-            try:
-                while True:
-                    num = int(self.__ui.get_input("Enter the NUMBER you want to place: ", Board.valid_nums))
-                    row = int(self.__ui.get_input("Enter the ROW you want to place the number at: ", Board.valid_nums))
-                    col = int(self.__ui.get_input("Enter the COLUMN you want to place the number at: ", Board.valid_nums))
-                    self.__board.set_num_at(row, col, num)
-                    break
-            except InvalidNumberError:
-                input(f"ERROR: {num} cannot be placed in the square ({row}, {col}) ... Press enter to continue")
-            except SquareAlreadyFilledError:
-                input(f"ERROR: A number already exists at the square ({row}, {col}) ... Press enter to continue")
+            self.__make_move()
+            
                 
 if __name__ in "__main__":
     game = Sudoku()
