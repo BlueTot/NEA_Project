@@ -11,7 +11,7 @@ class Board:
 
     valid_nums = [str(i) for i in range(1, 10)]
 
-    num_nums_to_remove = {"easy": 12, "medium": 24, "hard": 48}
+    num_nums_to_remove = {"easy": 12, "medium": 24, "hard": 48, "challenge": 60}
 
     def __init__(self, difficulty):
         self.__difficulty = difficulty
@@ -52,9 +52,15 @@ class Board:
         else:
             raise SquareAlreadyFilledError
     
-    def get_board(self):
+    def get_curr_board(self):
         return self.__board
     
+    def get_orig_board(self):
+        return self.__orig_board
+    
+    def get_difficulty(self):
+        return self.__difficulty
+
     @staticmethod
     def __in_row(grid, row, num):
         return num in grid[row]

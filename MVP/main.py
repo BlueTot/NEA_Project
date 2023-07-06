@@ -2,6 +2,9 @@ from ui import Terminal
 from board import *
 
 class Sudoku:
+
+    DIFFICULTY_NUMS = {1: "easy", 2: "medium", 3: "hard", 4:"challenge"}
+
     def __init__(self):
         self.__ui = Terminal()
 
@@ -48,15 +51,20 @@ class Sudoku:
         except SquareAlreadyFilledError:
             input(f"ERROR: A number already exists at the square ({row}, {col}) ... Press enter to continue")
 
+    def __config_game(self):
+        difficulty_num = int(self.__ui.get_input("Press (1) for Easy, (2) for Medium, (3) for Hard, (4) for Challenge: ", [str(i) for i in range(1, 5)]))
+        return Sudoku.DIFFICULTY_NUMS[difficulty_num]
 
     def __play_new_game(self):
-        self.__board = Board("hard")
+        difficulty = self.__config_game()
+        self.__board = Board(difficulty)
         while True:
             self.__ui.print_header()
-            self.__ui.print_board(self.__board.get_board())
+            self.__ui.print_game_stats(self.__board)
+            self.__ui.print_board(self.__board.get_curr_board(), self.__board.get_orig_board())
             if self.__ui.get_input("Would you like to continue (Y/N): ", ["Y", "N"]) == "N":
                 if self.__ui.get_input("Would you like to see the solution (Y/N): ", ["Y", "N"]) == "Y":
-                    self.__ui.print_board(self.__board.get_solved_board())
+                    self.__ui.print_board(self.__board.get_solved_board(), self.__board.get_orig_board())
                     input("Press enter to quit game")
                 self.__ui.pop_ui_from_stack()
                 return

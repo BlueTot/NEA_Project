@@ -1,6 +1,7 @@
 from stack import Stack
 from os import system
 from abc import ABC
+from colorama import Fore, Style
 
 class UI(ABC):
     def __init__(self):
@@ -32,22 +33,22 @@ class Terminal(UI):
     def get_curr_ui(self):
         return self._ui_stack.peek()
     
-    def print_board(self, board):
-        print()
-        print("    1   2   3   4   5   6   7   8   9", end='')
-        for rn, row in enumerate(board):
-            print()
-            print("  " + "-"*37)
-            print(rn+1, end=' ')
-            for num in row:
-                print("|", num if num != 0 else " ", end = ' ')
+    def print_board(self, board, orig_board):
+        print("\n" + "    1   2   3   4   5   6   7   8   9", end='')
+        for row in range(len(board)):
+            print("\n" + "  " + "-"*37)
+            print(row+1, end=' ')
+            for col in range(len(board[0])):
+                colour = Style.RESET_ALL if board[row][col] == orig_board[row][col] else Fore.BLUE
+                print("|", f"{colour}{num if (num := board[row][col]) != 0 else ' '}{Style.RESET_ALL}", end = ' ')
             print("|", end='')
-        print()
-        print("  " + "-"*37)
-        print()
+        print("\n" + "  " + "-"*37 + "\n")
 
     def print_header(self):
         system("cls")
-        print("-"*11)
-        print("SUDOKU v0.1")
-        print("-"*11)
+        print("-"*11 + "\n" + "SUDOKU v0.1" + "\n" + "-"*11)
+    
+    def print_game_stats(self, board):
+        print("\n" + "MODE: Normal")
+        print("SIZE: 9")
+        print("DIFFICULTY:", board.get_difficulty().capitalize())
