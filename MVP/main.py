@@ -54,6 +54,11 @@ class Sudoku:
     def __config_game(self):
         difficulty_num = int(self.__ui.get_input("Press (1) for Easy, (2) for Medium, (3) for Hard, (4) for Challenge: ", [str(i) for i in range(1, 5)]))
         return Sudoku.DIFFICULTY_NUMS[difficulty_num]
+    
+    def __print_solution(self):
+        self.__ui.print_board(self.__board.get_solved_board(), self.__board.get_orig_board())
+        input("Press enter to quit game")
+
 
     def __play_new_game(self):
         difficulty = self.__config_game()
@@ -62,10 +67,13 @@ class Sudoku:
             self.__ui.print_header()
             self.__ui.print_game_stats(self.__board)
             self.__ui.print_board(self.__board.get_curr_board(), self.__board.get_orig_board())
+            if self.__board.num_empty_squares(self.__board.get_curr_board()) == 0:
+                self.__ui.print_game_done()
+                self.__ui.pop_ui_from_stack()
+                return
             if self.__ui.get_input("Would you like to continue (Y/N): ", ["Y", "N"]) == "N":
                 if self.__ui.get_input("Would you like to see the solution (Y/N): ", ["Y", "N"]) == "Y":
-                    self.__ui.print_board(self.__board.get_solved_board(), self.__board.get_orig_board())
-                    input("Press enter to quit game")
+                    self.__print_solution()
                 self.__ui.pop_ui_from_stack()
                 return
             self.__make_move()

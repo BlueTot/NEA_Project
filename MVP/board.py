@@ -62,6 +62,15 @@ class Board:
         return self.__difficulty
 
     @staticmethod
+    def num_empty_squares(board):
+        num_empty = 0
+        for row in board:
+            for num in row:
+                if num == 0:
+                    num_empty += 1
+        return num_empty
+
+    @staticmethod
     def __in_row(grid, row, num):
         return num in grid[row]
 

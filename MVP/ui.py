@@ -51,4 +51,8 @@ class Terminal(UI):
     def print_game_stats(self, board):
         print("\n" + "MODE: Normal")
         print("SIZE: 9")
-        print("DIFFICULTY:", board.get_difficulty().capitalize())
+        print(f"DIFFICULTY: {board.get_difficulty().capitalize()}")
+        print(f"% COMPLETE: {round(((num_orig_empty := board.num_empty_squares(board.get_orig_board())) - board.num_empty_squares(board.get_curr_board()))/num_orig_empty * 100, 2)}%")
+    
+    def print_game_done(self):
+        print("\n" + "You completed the game!" + "\n")
