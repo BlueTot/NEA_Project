@@ -38,7 +38,7 @@ class Sudoku:
             self.__ui.pop_ui_from_stack()
             return
     
-    def __make_move(self):
+    def __put_down_number(self):
         try:
             while True:
                 num = int(self.__ui.get_input("Enter the NUMBER you want to place: ", Board.valid_nums))
@@ -50,6 +50,16 @@ class Sudoku:
             input(f"ERROR: {num} cannot be placed in the square ({row}, {col}) ... Press enter to continue")
         except SquareAlreadyFilledError:
             input(f"ERROR: A number already exists at the square ({row}, {col}) ... Press enter to continue")
+    
+    def __remove_number(self):
+        try:
+            while True:
+                row = int(self.__ui.get_input("Enter the ROW you want to remove the number at: ", Board.valid_nums))
+                col = int(self.__ui.get_input("Enter the COLUMN you want to remove the number at: ", Board.valid_nums))
+                self.__board.remove_num_at(row, col)
+                break
+        except SquareAlreadyEmptyError:
+            input(f"ERROR: There is no number at the square ({row}, {col}) that you can delete ... Press enter to continue")
 
     def __config_game(self):
         difficulty_num = int(self.__ui.get_input("Press (1) for Easy, (2) for Medium, (3) for Hard, (4) for Challenge: ", [str(i) for i in range(1, 5)]))
@@ -76,7 +86,10 @@ class Sudoku:
                     self.__print_solution()
                 self.__ui.pop_ui_from_stack()
                 return
-            self.__make_move()
+            if self.__ui.get_input("Would you like to (P)ut down a number or (R)emove a number: ", ["P", "R"]) == "P":
+                self.__put_down_number()
+            else:
+                self.__remove_number()
             
                 
 if __name__ in "__main__":

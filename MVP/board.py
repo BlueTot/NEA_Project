@@ -7,6 +7,9 @@ class InvalidNumberError(Exception):
 class SquareAlreadyFilledError(Exception):
     pass
 
+class SquareAlreadyEmptyError(Exception):
+    pass
+
 class Board:
 
     valid_nums = [str(i) for i in range(1, 10)]
@@ -51,6 +54,14 @@ class Board:
                 raise InvalidNumberError
         else:
             raise SquareAlreadyFilledError
+    
+    def remove_num_at(self, row, col):
+        row -= 1
+        col -= 1
+        if self.__board[row][col] == 0:
+            raise SquareAlreadyEmptyError
+        else:
+            self.__board[row][col] = 0
     
     def get_curr_board(self):
         return self.__board
