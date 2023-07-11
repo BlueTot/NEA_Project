@@ -10,6 +10,9 @@ class SquareAlreadyFilledError(Exception):
 class SquareAlreadyEmptyError(Exception):
     pass
 
+class SquareCannotBeDeletedError(Exception):
+    pass
+
 class Board:
 
     valid_nums = [str(i) for i in range(1, 10)]
@@ -61,7 +64,10 @@ class Board:
         if self.__board[row][col] == 0:
             raise SquareAlreadyEmptyError
         else:
-            self.__board[row][col] = 0
+            if self.__orig_board[row][col] != 0:
+                raise SquareCannotBeDeletedError
+            else:
+                self.__board[row][col] = 0
     
     def get_curr_board(self):
         return self.__board

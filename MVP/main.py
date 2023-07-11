@@ -60,6 +60,8 @@ class Sudoku:
                 break
         except SquareAlreadyEmptyError:
             input(f"ERROR: There is no number at the square ({row}, {col}) that you can delete ... Press enter to continue")
+        except SquareCannotBeDeletedError:
+            input(f"ERROR: This square ({row}, {col}) is part of the original board and cannot be deleted ... Press enter to continue")
 
     def __config_game(self):
         difficulty_num = int(self.__ui.get_input("Press (1) for Easy, (2) for Medium, (3) for Hard, (4) for Challenge: ", [str(i) for i in range(1, 5)]))
