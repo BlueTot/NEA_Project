@@ -46,7 +46,7 @@ class Terminal(UI):
 
     def print_header(self):
         system("cls")
-        print("-"*11 + "\n" + "SUDOKU v0.1" + "\n" + "-"*11)
+        print("-"*11 + "\n" + "SUDOKU v0.2" + "\n" + "-"*11)
     
     def print_game_stats(self, board):
         print("\n" + "MODE: Normal")
