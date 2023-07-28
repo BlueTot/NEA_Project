@@ -47,9 +47,9 @@ class Sudoku:
                 self.__board.set_num_at(row, col, num)
                 break
         except InvalidNumberError:
-            input(f"ERROR: {num} cannot be placed in the square ({row}, {col}) ... Press enter to continue")
+            self.__ui.print_message(f"ERROR: {num} cannot be placed in the square ({row}, {col}) ... Press enter to continue")
         except SquareAlreadyFilledError:
-            input(f"ERROR: A number already exists at the square ({row}, {col}) ... Press enter to continue")
+            self.__ui.print_message(f"ERROR: A number already exists at the square ({row}, {col}) ... Press enter to continue")
     
     def __remove_number(self):
         try:
@@ -59,9 +59,9 @@ class Sudoku:
                 self.__board.remove_num_at(row, col)
                 break
         except SquareAlreadyEmptyError:
-            input(f"ERROR: There is no number at the square ({row}, {col}) that you can delete ... Press enter to continue")
+            self.__ui.print_message(f"ERROR: There is no number at the square ({row}, {col}) that you can delete ... Press enter to continue")
         except SquareCannotBeDeletedError:
-            input(f"ERROR: This square ({row}, {col}) is part of the original board and cannot be deleted ... Press enter to continue")
+            self.__ui.print_message(f"ERROR: This square ({row}, {col}) is part of the original board and cannot be deleted ... Press enter to continue")
     
     def __get_hint(self):
         try:
@@ -70,7 +70,7 @@ class Sudoku:
                 col = int(self.__ui.get_input("Enter the COLUMN you want to get the hint for: ", Board.valid_nums))
                 return self.__board.get_hint_for_sq(row, col)
         except SquareAlreadyFilledError:
-            input(f"ERROR: This square ({row}, {col}) is filled so no numbers can be placed there ... Press enter to continue")
+            self.__ui.print_message(f"ERROR: This square ({row}, {col}) is filled so no numbers can be placed there ... Press enter to continue")
 
     def __config_game(self):
         difficulty_num = int(self.__ui.get_input("Press (1) for Easy, (2) for Medium, (3) for Hard, (4) for Challenge: ", [str(i) for i in range(1, 5)]))
@@ -78,7 +78,7 @@ class Sudoku:
     
     def __print_solution(self):
         self.__ui.print_board(self.__board.get_solved_board(), self.__board.get_orig_board())
-        input("Press enter to quit game")
+        self.__ui.print_message("Press enter to quit game")
 
     def __play_new_game(self):
         difficulty = self.__config_game()

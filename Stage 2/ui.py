@@ -60,3 +60,6 @@ class Terminal(UI):
     def print_hint(self, hint):
         print("HINT: The valid numbers that can be placed are ", ', '.join(list(map(str, hint))))
         input("Press enter to continue")
+    
+    def print_message(self, message):
+        input(message)
