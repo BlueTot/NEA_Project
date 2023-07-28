@@ -69,6 +69,13 @@ class Board:
             else:
                 self.__board[row][col] = 0
     
+    def get_hint_for_sq(self, row, col):
+        row -= 1
+        col -= 1
+        if self.__board[row][col] != 0:
+            raise SquareAlreadyFilledError
+        return [num for num in range(1, 10) if self.__is_safe(self.__board, row, col, num)]
+    
     def get_curr_board(self):
         return self.__board
     

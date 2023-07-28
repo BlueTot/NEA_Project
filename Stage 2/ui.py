@@ -56,3 +56,7 @@ class Terminal(UI):
     
     def print_game_done(self):
         print("\n" + "You completed the game!" + "\n")
+    
+    def print_hint(self, hint):
+        print("HINT: The valid numbers that can be placed are ", ', '.join(list(map(str, hint))))
+        input("Press enter to continue")

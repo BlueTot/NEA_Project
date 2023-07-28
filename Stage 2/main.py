@@ -62,6 +62,15 @@ class Sudoku:
             input(f"ERROR: There is no number at the square ({row}, {col}) that you can delete ... Press enter to continue")
         except SquareCannotBeDeletedError:
             input(f"ERROR: This square ({row}, {col}) is part of the original board and cannot be deleted ... Press enter to continue")
+    
+    def __get_hint(self):
+        try:
+            while True:
+                row = int(self.__ui.get_input("Enter the ROW you want to get the hint for: ", Board.valid_nums))
+                col = int(self.__ui.get_input("Enter the COLUMN you want to get the hint for: ", Board.valid_nums))
+                return self.__board.get_hint_for_sq(row, col)
+        except SquareAlreadyFilledError:
+            input(f"ERROR: This square ({row}, {col}) is filled so no numbers can be placed there ... Press enter to continue")
 
     def __config_game(self):
         difficulty_num = int(self.__ui.get_input("Press (1) for Easy, (2) for Medium, (3) for Hard, (4) for Challenge: ", [str(i) for i in range(1, 5)]))
@@ -70,7 +79,6 @@ class Sudoku:
     def __print_solution(self):
         self.__ui.print_board(self.__board.get_solved_board(), self.__board.get_orig_board())
         input("Press enter to quit game")
-
 
     def __play_new_game(self):
         difficulty = self.__config_game()
@@ -83,16 +91,19 @@ class Sudoku:
                 self.__ui.print_game_done()
                 self.__ui.pop_ui_from_stack()
                 return
-            if self.__ui.get_input("Would you like to continue (Y/N): ", ["Y", "N"]) == "N":
+            if self.__ui.get_input("Would you like to quit the game? (Y/N): ", ["Y", "N"]) == "Y":
                 if self.__ui.get_input("Would you like to see the solution (Y/N): ", ["Y", "N"]) == "Y":
                     self.__print_solution()
                 self.__ui.pop_ui_from_stack()
                 return
-            if self.__ui.get_input("Would you like to (P)ut down a number or (R)emove a number: ", ["P", "R"]) == "P":
-                self.__put_down_number()
-            else:
-                self.__remove_number()
-            
+            match self.__ui.get_input("Would you like to (P)ut down a number, (R)emove a number or get a (H)int: ", ["P", "R", "H"]):
+                case "P":
+                    self.__put_down_number()
+                case "R":
+                    self.__remove_number()
+                case "H":
+                    if isinstance(hint := self.__get_hint(), list):
+                        self.__ui.print_hint(hint)
                 
 if __name__ in "__main__":
     game = Sudoku()
