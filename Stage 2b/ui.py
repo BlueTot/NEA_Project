@@ -9,6 +9,7 @@ class UI(ABC):
     def __init__(self):
         self._ui_stack = Stack()
         self._push_ui_to_stack("home")
+        self._version = "v0.2.1"
     
     def _push_ui_to_stack(self, ui):
         self._ui_stack.push(ui)
@@ -52,47 +53,45 @@ class Terminal(UI):
     def __put_down_number(self):
         try:
             while True:
-                num = int(self.__get_input("Enter the NUMBER you want to place: ", Board.VALID_NUMS))
-                row = int(self.__get_input("Enter the ROW you want to place the number at: ", Board.VALID_NUMS))
-                col = int(self.__get_input("Enter the COLUMN you want to place the number at: ", Board.VALID_NUMS))
+                num = input("Enter the NUMBER you want to place: ")
+                row = input("Enter the ROW you want to place the number at: ")
+                col = input("Enter the COLUMN you want to place the number at: ")
                 self.__game.board.set_num_at(row, col, num)
                 break
         except BoardError as err:
-            print(err)
+            input(err)
     
     def __remove_number(self):
         try:
             while True:
-                row = int(self.__get_input("Enter the ROW you want to remove the number at: ", Board.VALID_NUMS))
-                col = int(self.__get_input("Enter the COLUMN you want to remove the number at: ", Board.VALID_NUMS))
+                row = input("Enter the ROW you want to remove the number at: ")
+                col = input("Enter the COLUMN you want to remove the number at: ")
                 self.__game.board.remove_num_at(row, col)
                 break
         except BoardError as err:
-            print(err)
+            input(err)
     
     def __get_hint(self):
         try:
             while True:
-                row = int(self.__get_input("Enter the ROW you want to get the hint for: ", Board.VALID_NUMS))
-                col = int(self.__get_input("Enter the COLUMN you want to get the hint for: ", Board.VALID_NUMS))
+                row = input("Enter the ROW you want to get the hint for: ")
+                col = input("Enter the COLUMN you want to get the hint for: ")
                 return self.__game.board.get_hint_for_sq(row, col)
         except BoardError as err:
-            print(err)
+            input(err)
 
     def __config_game(self):
         difficulty_num = int(self.__get_input("Press (1) for Easy, (2) for Medium, (3) for Hard, (4) for Challenge: ", [str(i) for i in range(1, 5)]))
         return Board.DIFFICULTY_NUMS[difficulty_num]
     
-    def __print_solution(self):
-        self.__print_board(self.__game.board.get_solved_board(), self.__game.board.get_orig_board())
-        print("Press enter to quit game")
+    
 
     def __play_new_game(self):
         difficulty = self.__config_game()
         self.__game = Game(difficulty)
         while True:
             self.__print_header()
-            self.__print_game_stats(self.__game.board)
+            self.__print_game_stats()
             self.__print_curr_board()
             if self.__game.is_complete():
                 print("\n" + "You completed the game!" + "\n")
@@ -121,9 +120,6 @@ class Terminal(UI):
             else:
                 print("Not one of the options ... try again!")
     
-    def __print_curr_board(self):
-        self.__print_board(self.__game.board.get_curr_board(), self.__game.board.get_orig_board())
-
     @staticmethod
     def __print_board(board, orig_board):
         print("\n" + "    1   2   3   4   5   6   7   8   9", end='')
@@ -135,14 +131,22 @@ class Terminal(UI):
                 print("|", f"{colour}{num if (num := board[row][col]) != 0 else ' '}{Style.RESET_ALL}", end = ' ')
             print("|", end='')
         print("\n" + "  " + "-"*37 + "\n")
+    
+    def __print_curr_board(self):
+        self.__print_board(self.__game.curr_board(), self.__game.orig_board())
+    
+    def __print_solution(self):
+        self.__print_board(self.__game.solved_board(), self.__game.orig_board())
+        input("Press enter to quit game")
+
 
     def __print_header(self):
         system("cls")
-        print("-"*11 + "\n" + "SUDOKU v0.2.1" + "\n" + "-"*11)
+        print("-"*(l := len(s := f'SUDOKU {self._version}')) + "\n" + s + "\n" + "-"*l)
     
     def __print_game_stats(self):
         print("\n" + f"MODE: {self.__game.mode}")
-        print("BOARD SIZE: 9")
+        print(f"BOARD SIZE: {self.__game.board_size}")
         print(f"DIFFICULTY: {self.__game.difficulty.capitalize()}")
         print(f"% COMPLETE: {self.__game.percent_complete()}%")
 
