@@ -1,23 +1,16 @@
 from copy import deepcopy
 from random import randint
 
-class InvalidNumberError(Exception):
-    pass
-
-class SquareAlreadyFilledError(Exception):
-    pass
-
-class SquareAlreadyEmptyError(Exception):
-    pass
-
-class SquareCannotBeDeletedError(Exception):
+class BoardError(Exception):
     pass
 
 class Board:
 
-    valid_nums = [str(i) for i in range(1, 10)]
+    VALID_NUMS = [str(i) for i in range(1, 10)]
 
-    num_nums_to_remove = {"easy": 36, "medium": 45, "hard": 54, "challenge": 60}
+    NUM_NUMS_TO_REMOVE = {"easy": 36, "medium": 45, "hard": 54, "challenge": 60}
+
+    DIFFICULTY_NUMS = {1: "easy", 2: "medium", 3: "hard", 4:"challenge"}
 
     def __init__(self, difficulty):
         self.__difficulty = difficulty
@@ -32,7 +25,7 @@ class Board:
                 grid[row][col] = num
         return grid
     
-    def get_random_filled_board(self):
+    def __get_random_filled_board(self):
         board = [[0 for _ in range(9)] for _ in range(9)]
         board = self.__fill_matrix_randomly(board, 0, 2)
         board = self.__fill_matrix_randomly(board, 3, 5)
@@ -40,40 +33,52 @@ class Board:
         return self.get_solved_board(board)
 
     def generate_new_board(self, difficulty):
-        board = self.get_random_filled_board()
-        for _ in range(Board.num_nums_to_remove[difficulty]):
+        board = self.__get_random_filled_board()
+        for _ in range(Board.NUM_NUMS_TO_REMOVE[difficulty]):
             while board[row := randint(0, 8)][col := randint(0, 8)] == 0:
                 pass
             board[row][col] = 0
         return board
     
+    def __validate(self, n):
+        try:
+            n = int(n)
+            if not (1 <= n <= 9):
+                raise BoardError("ERROR: Number inputted is not between 1 and 9")
+            return n
+        except ValueError:
+            raise BoardError("ERROR: Number inputted is not an integer")
+    
     def set_num_at(self, row, col, num):
+        row, col, num = self.__validate(row), self.__validate(col), self.__validate(num)
         row -= 1
         col -= 1
         if self.__board[row][col] == 0:
             if self.__is_safe(self.__board, row, col, num):
                 self.__board[row][col] = num
             else:
-                raise InvalidNumberError
+                raise BoardError(f"ERROR: {num} cannot be placed in the square ({row}, {col})")
         else:
-            raise SquareAlreadyFilledError
+            raise BoardError(f"ERROR: A number already exists at the square ({row}, {col})")
     
     def remove_num_at(self, row, col):
+        row, col = self.__validate(row), self.__validate(col)
         row -= 1
         col -= 1
         if self.__board[row][col] == 0:
-            raise SquareAlreadyEmptyError
+            raise BoardError(f"ERROR: There is no number at the square ({row}, {col}) that you can delete")
         else:
             if self.__orig_board[row][col] != 0:
-                raise SquareCannotBeDeletedError
+                raise BoardError(f"ERROR: This square ({row}, {col}) is part of the original board and cannot be deleted")
             else:
                 self.__board[row][col] = 0
     
     def get_hint_for_sq(self, row, col):
+        row, col = self.__validate(row), self.__validate(col)
         row -= 1
         col -= 1
         if self.__board[row][col] != 0:
-            raise SquareAlreadyFilledError
+            raise BoardError(f"ERROR: Hint is unavailable for this square ({row}, {col}) as it is not empty")
         return [num for num in range(1, 10) if self.__is_safe(self.__board, row, col, num)]
     
     def get_curr_board(self):
