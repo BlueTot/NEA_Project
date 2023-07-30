@@ -7,8 +7,8 @@ from board import BoardError
 from game import Game
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton
+from PyQt6.QtGui import QFont, QAction, QIcon
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar
 
 class UI(ABC):
 
@@ -30,6 +30,21 @@ class UI(ABC):
     @abstractmethod
     def run(self):
         raise NotImplementedError
+    
+class Button(QPushButton):
+    def __init__(self, text, window, x, y, width, height, font, command):
+        super().__init__(text, window)
+        self.setGeometry(x, y, width, height)
+        self.setFont(QFont(font))
+        if command is not None:
+            self.clicked.connect(command)
+
+class Action(QAction):
+    def __init__(self, window, text, command):
+        super().__init__(text, window)
+        self.setCheckable(False)
+        if command is not None:
+            self.triggered.connect(command)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -45,11 +60,28 @@ class MainWindow(QMainWindow):
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         title.setFont(QFont("FreeMono", 50))
 
-        quit_button = QPushButton("QUIT", self)
-        quit_button.setGeometry(910, 20, 70, 70)
-        quit_button.setStyleSheet("border : 2px solid black; border-radius : 35px")
-        quit_button.clicked.connect(self.quit_game)
-    
+        # quit_button = QPushButton("QUIT", self)
+        # quit_button.setGeometry(910, 20, 70, 70)
+        # quit_button.setStyleSheet("border : 2px solid black; border-radius : 35px")
+        # quit_button.clicked.connect(self.quit_game)
+
+        # account_button = QPushButton("ACCOUNT", self)
+        # account_button.setGeometry(910, 100, 70, 70)
+        # account_button.setStyleSheet("border : 2px solid black; border-radius : 35px")
+
+        play_singleplayer_button = Button("PLAY SINGLEPLAYER", self, 300, 250, 400, 50, QFont("FreeMono", 25), None)
+        play_multiplayer_button = Button("PLAY VS LAN PLAYER", self, 300, 320, 400, 50, QFont("FreeMono", 25), None)
+        leaderboard_button = Button("LEADERBOARD", self, 300, 390, 400, 50, QFont("FreeMono", 25), None)
+
+        toolbar = QToolBar(self)
+        self.addToolBar(Qt.ToolBarArea.RightToolBarArea, toolbar)
+        toolbar.setIconSize(QSize(70, 70))
+        toolbar.setStyleSheet("background : rgb(150, 150, 150)")
+        toolbar.addAction(Action(self, "Quit", self.quit_game))
+        toolbar.addAction(Action(self, "Account", self.quit_game))
+        toolbar.addAction(Action(self, "Settings", self.quit_game))
+        toolbar.addAction(Action(self, "Help", self.quit_game))
+
     def quit_game(self):
         exit()
         
