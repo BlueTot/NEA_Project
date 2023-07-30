@@ -1,3 +1,4 @@
+from sys import argv, exit
 from stack import Stack
 from os import system
 from abc import ABC, abstractmethod
@@ -5,11 +6,17 @@ from colorama import Fore, Style
 from board import BoardError
 from game import Game
 
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton
+
 class UI(ABC):
+
+    VERSION = "v0.2.1"
+
     def __init__(self):
         self._ui_stack = Stack()
         self._push_ui_to_stack("home")
-        self._version = "v0.2.1"
     
     def _push_ui_to_stack(self, ui):
         self._ui_stack.push(ui)
@@ -24,12 +31,39 @@ class UI(ABC):
     def run(self):
         raise NotImplementedError
 
+class MainWindow(QMainWindow):
+    def __init__(self):
+
+        super().__init__()
+
+        self.setWindowTitle(f"Sudoku {UI.VERSION}")
+        self.setMinimumSize(QSize(1000, 560))
+
+        title = QLabel(self)
+        title.setText("SUDOKU")
+        title.setGeometry(0, 0, 1000, 560)
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        title.setFont(QFont("FreeMono", 50))
+
+        quit_button = QPushButton("QUIT", self)
+        quit_button.setGeometry(910, 20, 70, 70)
+        quit_button.setStyleSheet("border : 2px solid black; border-radius : 35px")
+        quit_button.clicked.connect(self.quit_game)
+    
+    def quit_game(self):
+        exit()
+        
 class GUI(UI):
     def __init__(self):
         super().__init__()
+
+        self.app = QApplication(argv)
+        self.window = MainWindow() 
+        self.window.show()
     
     def run(self):
-        pass
+        
+        self.app.exec()
 
 class Terminal(UI):
 
@@ -147,7 +181,7 @@ class Terminal(UI):
 
     def __print_header(self):
         system("cls")
-        print("-"*(l := len(s := f'SUDOKU {self._version}')) + "\n" + s + "\n" + "-"*l)
+        print("-"*(l := len(s := f'SUDOKU {UI.VERSION}')) + "\n" + s + "\n" + "-"*l)
     
     def __print_game_stats(self):
         print("\n" + f"MODE: {self.__game.mode}")

@@ -17,12 +17,13 @@ def main():
 
     if argv[1] == "t":
         game = Terminal()
-        game.run()
     elif argv[1] == "g":
         game = GUI()
-        game.run()
     else:
         print_usage()
+        return
+    
+    game.run()
 
 if __name__ in "__main__":
     main()
