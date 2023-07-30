@@ -24,6 +24,13 @@ class UI(ABC):
     def run(self):
         raise NotImplementedError
 
+class GUI(UI):
+    def __init__(self):
+        super().__init__()
+    
+    def run(self):
+        pass
+
 class Terminal(UI):
 
     def __init__(self):
