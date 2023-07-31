@@ -7,7 +7,7 @@ from board import BoardError
 from game import Game
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QFont, QAction, QIcon
+from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar
 
 class UI(ABC):
@@ -40,9 +40,9 @@ class Button(QPushButton):
             self.clicked.connect(command)
 
 class Action(QAction):
-    def __init__(self, window, text, command):
-        super().__init__(text, window)
-        self.setCheckable(False)
+    def __init__(self, window, image, text, command):
+        super().__init__(image, text, window)
+        self.setStatusTip(text)
         if command is not None:
             self.triggered.connect(command)
 
@@ -54,20 +54,13 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
 
+        QFontDatabase.addApplicationFont("library-3-am.3amsoft.otf")
+
         title = QLabel(self)
-        title.setText("SUDOKU")
-        title.setGeometry(0, 0, 1000, 560)
+        title.setText("S U D O K U")
+        title.setGeometry(0, 75, 1000, 100)
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        title.setFont(QFont("FreeMono", 50))
-
-        # quit_button = QPushButton("QUIT", self)
-        # quit_button.setGeometry(910, 20, 70, 70)
-        # quit_button.setStyleSheet("border : 2px solid black; border-radius : 35px")
-        # quit_button.clicked.connect(self.quit_game)
-
-        # account_button = QPushButton("ACCOUNT", self)
-        # account_button.setGeometry(910, 100, 70, 70)
-        # account_button.setStyleSheet("border : 2px solid black; border-radius : 35px")
+        title.setFont(QFont("LIBRARY 3 AM soft", 70))
 
         play_singleplayer_button = Button("PLAY SINGLEPLAYER", self, 300, 250, 400, 50, QFont("FreeMono", 25), None)
         play_multiplayer_button = Button("PLAY VS LAN PLAYER", self, 300, 320, 400, 50, QFont("FreeMono", 25), None)
@@ -75,12 +68,12 @@ class MainWindow(QMainWindow):
 
         toolbar = QToolBar(self)
         self.addToolBar(Qt.ToolBarArea.RightToolBarArea, toolbar)
-        toolbar.setIconSize(QSize(70, 70))
+        toolbar.setIconSize(QSize(80, 80))
         toolbar.setStyleSheet("background : rgb(150, 150, 150)")
-        toolbar.addAction(Action(self, "Quit", self.quit_game))
-        toolbar.addAction(Action(self, "Account", self.quit_game))
-        toolbar.addAction(Action(self, "Settings", self.quit_game))
-        toolbar.addAction(Action(self, "Help", self.quit_game))
+        toolbar.addAction(Action(self, QIcon("exit.png"), "Quit", self.quit_game))
+        toolbar.addAction(Action(self, QIcon("account.png"), "Account", None))
+        toolbar.addAction(Action(self, QIcon("settings.png"), "Settings", None))
+        toolbar.addAction(Action(self, QIcon("help.png"), "Help", None))
 
     def quit_game(self):
         exit()
