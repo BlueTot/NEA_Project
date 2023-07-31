@@ -8,7 +8,7 @@ from game import Game
 
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QProxyStyle, QStyle
 
 class UI(ABC):
 
@@ -30,7 +30,7 @@ class UI(ABC):
     @abstractmethod
     def run(self):
         raise NotImplementedError
-    
+
 class Button(QPushButton):
     def __init__(self, text, window, x, y, width, height, font, command):
         super().__init__(text, window)
@@ -54,7 +54,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
 
-        QFontDatabase.addApplicationFont("library-3-am.3amsoft.otf")
+        QFontDatabase.addApplicationFont("resources/library-3-am.3amsoft.otf")
+        QFontDatabase.addApplicationFont("resources/Metropolis-Regular.otf")
 
         title = QLabel(self)
         title.setText("S U D O K U")
@@ -62,18 +63,18 @@ class MainWindow(QMainWindow):
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         title.setFont(QFont("LIBRARY 3 AM soft", 70))
 
-        play_singleplayer_button = Button("PLAY SINGLEPLAYER", self, 300, 250, 400, 50, QFont("FreeMono", 25), None)
-        play_multiplayer_button = Button("PLAY VS LAN PLAYER", self, 300, 320, 400, 50, QFont("FreeMono", 25), None)
-        leaderboard_button = Button("LEADERBOARD", self, 300, 390, 400, 50, QFont("FreeMono", 25), None)
+        play_singleplayer_button = Button("PLAY SINGLEPLAYER", self, 300, 250, 400, 50, QFont("Metropolis", 25), None)
+        play_multiplayer_button = Button("PLAY VS LAN PLAYER", self, 300, 320, 400, 50, QFont("Metropolis", 25), None)
+        leaderboard_button = Button("LEADERBOARD", self, 300, 390, 400, 50, QFont("Metropolis", 25), None)
 
         toolbar = QToolBar(self)
         self.addToolBar(Qt.ToolBarArea.RightToolBarArea, toolbar)
-        toolbar.setIconSize(QSize(80, 80))
+        toolbar.setIconSize(QSize(60, 60))
         toolbar.setStyleSheet("background : rgb(150, 150, 150)")
-        toolbar.addAction(Action(self, QIcon("exit.png"), "Quit", self.quit_game))
-        toolbar.addAction(Action(self, QIcon("account.png"), "Account", None))
-        toolbar.addAction(Action(self, QIcon("settings.png"), "Settings", None))
-        toolbar.addAction(Action(self, QIcon("help.png"), "Help", None))
+        toolbar.addAction(Action(self, QIcon("resources/exit.svg"), "Quit", self.quit_game))
+        toolbar.addAction(Action(self, QIcon("resources/account.svg"), "Account", None))
+        toolbar.addAction(Action(self, QIcon("resources/settings.svg"), "Settings", None))
+        toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", None))
 
     def quit_game(self):
         exit()
