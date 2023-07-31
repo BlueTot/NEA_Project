@@ -6,13 +6,13 @@ from colorama import Fore, Style
 from board import BoardError
 from game import Game
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, QRect, QPoint
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QProxyStyle, QStyle
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenuBar, QMenu, QToolButton
 
 class UI(ABC):
 
-    VERSION = "v0.2.1"
+    VERSION = "v0.3"
 
     def __init__(self):
         self._ui_stack = Stack()
@@ -41,10 +41,26 @@ class Button(QPushButton):
 
 class Action(QAction):
     def __init__(self, window, image, text, command):
-        super().__init__(image, text, window)
+        if image is None:
+            super().__init__(text, window)
+        else:
+            super().__init__(image, text, window)
         self.setStatusTip(text)
         if command is not None:
             self.triggered.connect(command)
+
+class MenuButton(QPushButton):
+    def __init__(self, window, icon, size, font, actions):
+        super().__init__(window)
+        self.setIcon(icon)
+        self.setIconSize(size) 
+        menu = QMenu()
+        menu.setFont(font)
+        for action in actions:
+            menu.addAction(action)
+        menu.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+        self.setMenu(menu)
+        self.setStyleSheet("QPushButton::menu-indicator {width:0px;}")
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -64,7 +80,7 @@ class MainWindow(QMainWindow):
         title.setFont(QFont("LIBRARY 3 AM soft", 70))
 
         play_singleplayer_button = Button("PLAY SINGLEPLAYER", self, 300, 250, 400, 50, QFont("Metropolis", 25), None)
-        play_multiplayer_button = Button("PLAY VS LAN PLAYER", self, 300, 320, 400, 50, QFont("Metropolis", 25), None)
+        play_multiplayer_button = Button("PLAY MULTIPLAYER", self, 300, 320, 400, 50, QFont("Metropolis", 25), None)
         leaderboard_button = Button("LEADERBOARD", self, 300, 390, 400, 50, QFont("Metropolis", 25), None)
 
         toolbar = QToolBar(self)
@@ -72,8 +88,8 @@ class MainWindow(QMainWindow):
         toolbar.setIconSize(QSize(60, 60))
         toolbar.setStyleSheet("background : rgb(150, 150, 150)")
         toolbar.addAction(Action(self, QIcon("resources/exit.svg"), "Quit", self.quit_game))
-        toolbar.addAction(Action(self, QIcon("resources/account.svg"), "Account", None))
-        toolbar.addAction(Action(self, QIcon("resources/settings.svg"), "Settings", None))
+        toolbar.addWidget(MenuButton(self, QIcon("resources/account.svg"), QSize(60, 60), QFont("Metropolis", 15), ["Create Account", "Sign In"]))
+        toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), QSize(60, 60), QFont("Metropolis", 15), ["Customise GUI"]))
         toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", None))
 
     def quit_game(self):
@@ -86,6 +102,12 @@ class GUI(UI):
         self.app = QApplication(argv)
         self.window = MainWindow() 
         self.window.show()
+
+        # self.menu = QMenu("&File", self.window)
+        # #self.menu.move(100, 100)
+        # self.menu.addAction(Action(self.window, QIcon("resources/exit.svg"), "Create Account", None))
+        # #self.menu.popup(QPoint(100, 100))
+        # self.menu.show()
     
     def run(self):
         
