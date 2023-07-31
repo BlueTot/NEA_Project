@@ -1,4 +1,7 @@
 from sys import argv, exit
+import typing
+
+from PyQt6 import QtCore
 from stack import Stack
 from os import system
 from abc import ABC, abstractmethod
@@ -8,7 +11,7 @@ from game import Game
 
 from PyQt6.QtCore import QSize, Qt, QRect, QPoint
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenuBar, QMenu, QToolButton
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenuBar, QMenu, QStackedWidget
 
 class UI(ABC):
 
@@ -62,10 +65,12 @@ class MenuButton(QPushButton):
         self.setMenu(menu)
         self.setStyleSheet("QPushButton::menu-indicator {width:0px;}")
 
-class MainWindow(QMainWindow):
-    def __init__(self):
+class HomeScreen(QMainWindow):
+    def __init__(self, widget):
 
         super().__init__()
+
+        self.widget = widget
 
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
@@ -79,7 +84,7 @@ class MainWindow(QMainWindow):
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         title.setFont(QFont("LIBRARY 3 AM soft", 70))
 
-        play_singleplayer_button = Button("PLAY SINGLEPLAYER", self, 300, 250, 400, 50, QFont("Metropolis", 25), None)
+        play_singleplayer_button = Button("PLAY SINGLEPLAYER", self, 300, 250, 400, 50, QFont("Metropolis", 25), self.play_singleplayer)
         play_multiplayer_button = Button("PLAY MULTIPLAYER", self, 300, 320, 400, 50, QFont("Metropolis", 25), None)
         leaderboard_button = Button("LEADERBOARD", self, 300, 390, 400, 50, QFont("Metropolis", 25), None)
 
@@ -92,23 +97,32 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), QSize(60, 60), QFont("Metropolis", 15), ["Customise GUI"]))
         toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", None))
 
+    def play_singleplayer(self):
+        global config
+        self.widget.setCurrentWidget(config)
+
     def quit_game(self):
         exit()
+
+class ConfigGameScreen(QMainWindow):
+    def __init__(self, ):
+        super().__init__()
         
 class GUI(UI):
+
     def __init__(self):
+        global config
         super().__init__()
 
         self.app = QApplication(argv)
-        self.window = MainWindow() 
-        self.window.show()
 
-        # self.menu = QMenu("&File", self.window)
-        # #self.menu.move(100, 100)
-        # self.menu.addAction(Action(self.window, QIcon("resources/exit.svg"), "Create Account", None))
-        # #self.menu.popup(QPoint(100, 100))
-        # self.menu.show()
-    
+        self.widget = QStackedWidget()
+        self.widget.addWidget(home := HomeScreen(self.widget))
+        self.widget.addWidget(config := ConfigGameScreen())
+        self.widget.setCurrentWidget(home)
+
+        self.widget.show()
+
     def run(self):
         
         self.app.exec()
