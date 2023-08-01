@@ -9,9 +9,9 @@ from colorama import Fore, Style
 from board import BoardError
 from game import Game
 
-from PyQt6.QtCore import QSize, Qt, QRect, QPoint
+from PyQt6.QtCore import QSize, Qt, QRect, QPoint, pyqtSignal
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenuBar, QMenu, QStackedWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenuBar, QMenu, QStackedWidget, QWidget
 
 class UI(ABC):
 
@@ -59,8 +59,8 @@ class MenuButton(QPushButton):
         self.setIconSize(size) 
         menu = QMenu()
         menu.setFont(font)
-        for action in actions:
-            menu.addAction(action)
+        for action, command in actions:
+            menu.addAction(Action(self, None, action, command))
         menu.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setMenu(menu)
         menu.move(QPoint(100,100))
@@ -73,14 +73,15 @@ class Label(QLabel):
         self.setGeometry(x, y, width, height)
         self.setFont(font)
 
-
 class HomeScreen(QMainWindow):
-    def __init__(self, parent):
+
+    play_singleplayer_signal = pyqtSignal()
+    create_new_account_signal = pyqtSignal()
+
+    def __init__(self): 
 
         super().__init__()
-
-        self.parent = parent
-
+    
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
 
@@ -99,23 +100,28 @@ class HomeScreen(QMainWindow):
         toolbar.setIconSize(QSize(60, 60))
         toolbar.setStyleSheet("background : rgb(150, 150, 150)")
         toolbar.addAction(Action(self, QIcon("resources/exit.svg"), "Quit", self.quit_game))
-        toolbar.addWidget(MenuButton(self, QIcon("resources/account.svg"), QSize(60, 60), QFont("Metropolis", 15), ["Create Account", "Sign In"]))
-        toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), QSize(60, 60), QFont("Metropolis", 15), ["Customise GUI"]))
+        toolbar.addWidget(MenuButton(self, QIcon("resources/account.svg"), QSize(60, 60), QFont("Metropolis", 15), [("Create Account", self.create_new_account), ("Sign In", None)]))
+        toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), QSize(60, 60), QFont("Metropolis", 15), [("Customise GUI", None)]))
         toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", None))
 
     def play_singleplayer(self):
-        global config
-        self.parent.setCurrentWidget(config)
+        self.play_singleplayer_signal.emit()
+    
+    def create_new_account(self):
+        self.create_new_account_signal.emit()
 
     def quit_game(self):
         exit()
 
 class ConfigGameScreen(QMainWindow):
-    def __init__(self, parent):
+
+    return_to_home_screen_signal = pyqtSignal()
+
+    def __init__(self):
 
         super().__init__()
 
-        self.parent = parent
+        self.setMinimumSize(QSize(1000, 560))
 
         title = Label(self, "CREATE NEW GAME", 0, 25, 1000, 100, QFont("LIBRARY 3 AM soft", 50))
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -128,32 +134,50 @@ class ConfigGameScreen(QMainWindow):
         back.setStyleSheet("border-radius:35px;")
     
     def return_to_home_screen(self):
-        global home
-        self.parent.setCurrentWidget(home)
+        self.return_to_home_screen_signal.emit()
+
+class CreateNewAccountScreen(QMainWindow):
+    
+    def __init__(self):
+
+        super().__init__()
+
+        self.setMinimumSize(QSize(1000, 560))
 
 class GUI(UI):
 
     def __init__(self):
-        global config, home
+
         super().__init__()
 
-        self.app = QApplication(argv)
+        self.__app = QApplication(argv)
 
-        self.widget = QStackedWidget()
+        self.__home_screen = HomeScreen()
+        self.__home_screen.play_singleplayer_signal.connect(self.__show_config_game_screen)
+        self.__home_screen.create_new_account_signal.connect(self.__show_create_new_account_screen)
 
-        self.windows = {}
+        self.__config_game_screen = ConfigGameScreen()
+        self.__config_game_screen.return_to_home_screen_signal.connect(self.__show_home_screen)
 
-        self.widget.addWidget(home := HomeScreen(self.widget))
-        self.windows["home"] = home
-        self.widget.addWidget(config := ConfigGameScreen(self.widget))
-        self.windows["config_game"] = config
-        self.widget.setCurrentWidget(home)
+        self.__create_new_account_screen = CreateNewAccountScreen()
 
-        self.widget.show()
+        self.__show_home_screen()
+    
+    def __show_home_screen(self):
+        self.__config_game_screen.close()
+        self.__home_screen.show()
+    
+    def __show_config_game_screen(self):
+        self.__home_screen.close()
+        self.__config_game_screen.show()
+    
+    def __show_create_new_account_screen(self):
+        self.__home_screen.close()
+        self.__create_new_account_screen.show()
 
     def run(self):
         
-        self.app.exec()
+        self.__app.exec()
 
 class Terminal(UI):
 
