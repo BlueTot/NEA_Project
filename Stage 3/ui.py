@@ -1,7 +1,5 @@
 from sys import argv, exit
 import typing
-
-from PyQt6 import QtCore
 from stack import Stack
 from os import system
 from abc import ABC, abstractmethod
@@ -9,9 +7,9 @@ from colorama import Fore, Style
 from board import BoardError
 from game import Game
 
-from PyQt6.QtCore import QSize, Qt, QRect, QPoint, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenuBar, QMenu, QStackedWidget, QWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenuBar, QMenu, QComboBox, QWidget
 
 class UI(ABC):
 
@@ -43,12 +41,12 @@ class Button(QPushButton):
             self.clicked.connect(command)
 
 class Action(QAction):
-    def __init__(self, window, image, text, command):
+    def __init__(self, window, image, text, command, checkable):
         if image is None:
             super().__init__(text, window)
         else:
             super().__init__(image, text, window)
-        self.setStatusTip(text)
+        self.setCheckable(checkable)
         if command is not None:
             self.triggered.connect(command)
 
@@ -60,10 +58,9 @@ class MenuButton(QPushButton):
         menu = QMenu()
         menu.setFont(font)
         for action, command in actions:
-            menu.addAction(Action(self, None, action, command))
-        menu.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+            menu.addAction(Action(self, None, action, command, False))
         self.setMenu(menu)
-        menu.move(QPoint(100,100))
+
         self.setStyleSheet("QPushButton::menu-indicator {width:0px;}")
 
 class Label(QLabel):
@@ -73,6 +70,25 @@ class Label(QLabel):
         self.setGeometry(x, y, width, height)
         self.setFont(font)
 
+# class MenuBar(QMenuBar):
+#     def __init__(self, window, x, y, width, height, font, options):
+#         super().__init__(window)
+#         self.setGeometry(x, y, width, height)
+#         self.setFont(font)
+#         menu = QMenu("hello", window)
+#         self.addMenu(menu)
+#         menu.setFont(font)
+#         for option in options:
+#             menu.addAction(Action(self, None, option, None, True)) 
+
+class ComboBox(QComboBox):
+    def __init__(self, window, x, y, width, height, font, options):
+        super().__init__(window)
+        self.setGeometry(x, y, width, height)
+        self.setFont(font)
+        self.addItems(options)
+        
+        
 class HomeScreen(QMainWindow):
 
     play_singleplayer_signal = pyqtSignal()
@@ -99,10 +115,10 @@ class HomeScreen(QMainWindow):
         self.addToolBar(Qt.ToolBarArea.RightToolBarArea, toolbar)
         toolbar.setIconSize(QSize(60, 60))
         toolbar.setStyleSheet("background : rgb(150, 150, 150)")
-        toolbar.addAction(Action(self, QIcon("resources/exit.svg"), "Quit", self.quit_game))
+        toolbar.addAction(Action(self, QIcon("resources/exit.svg"), "Quit", self.quit_game, False))
         toolbar.addWidget(MenuButton(self, QIcon("resources/account.svg"), QSize(60, 60), QFont("Metropolis", 15), [("Create Account", self.create_new_account), ("Sign In", None)]))
         toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), QSize(60, 60), QFont("Metropolis", 15), [("Customise GUI", None)]))
-        toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", None))
+        toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", None, False))
 
     def play_singleplayer(self):
         self.play_singleplayer_signal.emit()
@@ -121,12 +137,13 @@ class ConfigGameScreen(QMainWindow):
 
         super().__init__()
 
+        self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
 
         title = Label(self, "CREATE NEW GAME", 0, 25, 1000, 100, QFont("LIBRARY 3 AM soft", 50))
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        play = Button(self, "PLAY GAME", 400, 475, 200, 50, QFont("Metropolis", 20), None)
+        play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont("Metropolis", 20), None)
 
         back = Button(self, "", 925, 15, 60, 60, QFont("Metropolis", 20), self.return_to_home_screen)
         back.setIcon(QIcon("resources/back.svg"))
@@ -137,7 +154,12 @@ class ConfigGameScreen(QMainWindow):
         difficulty = Label(self, "DIFFICULTY: ", 50, 150, 300, 100, QFont("Metropolis", 24))
         timed = Label(self, "TIMED: ", 50, 300, 300, 100, QFont("Metropolis", 24))
         time_control = Label(self, "TIME CONTROL: ", 50, 375, 300, 100, QFont("Metropolis", 24))
-    
+
+        mode_menu = ComboBox(self, 330, 175, 200, 50, QFont("Metropolis", 20), ["Normal"])
+        difficulty_menu = ComboBox(self, 330, 250, 200, 50, QFont("Metropolis", 20), ["Easy", "Medium", "Hard", "Challenge"])
+        timed_menu = ComboBox(self, 330, 325, 200, 50, QFont("Metropolis", 20), ["Yes", "No"])
+        time_control_menu = ComboBox(self, 330, 400, 200, 50, QFont("Metropolis", 20), ["5 mins", "10 mins", "15 mins", "30 mins", "1 hour"])
+
     def return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
@@ -147,6 +169,7 @@ class CreateNewAccountScreen(QMainWindow):
 
         super().__init__()
 
+        self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
 
 class GUI(UI):
