@@ -1,5 +1,7 @@
 from sys import argv, exit
 import typing
+
+from PyQt6 import QtCore
 from stack import Stack
 from os import system
 from abc import ABC, abstractmethod
@@ -7,9 +9,9 @@ from colorama import Fore, Style
 from board import BoardError
 from game import Game
 
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, pyqtSignal, QRect
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenuBar, QMenu, QComboBox, QWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QGridLayout
 
 class UI(ABC):
 
@@ -70,24 +72,19 @@ class Label(QLabel):
         self.setGeometry(x, y, width, height)
         self.setFont(font)
 
-# class MenuBar(QMenuBar):
-#     def __init__(self, window, x, y, width, height, font, options):
-#         super().__init__(window)
-#         self.setGeometry(x, y, width, height)
-#         self.setFont(font)
-#         menu = QMenu("hello", window)
-#         self.addMenu(menu)
-#         menu.setFont(font)
-#         for option in options:
-#             menu.addAction(Action(self, None, option, None, True)) 
-
 class ComboBox(QComboBox):
     def __init__(self, window, x, y, width, height, font, options):
         super().__init__(window)
         self.setGeometry(x, y, width, height)
         self.setFont(font)
         self.addItems(options)
-        
+
+class BackButton(Button):
+    def __init__(self, window, command):
+        super().__init__(window, "", 925, 15, 60, 60, QFont("Metropolis", 20), command)
+        self.setIcon(QIcon("resources/back.svg"))
+        self.setIconSize(QSize(60, 60))
+        self.setStyleSheet("border-radius:30px;")
         
 class HomeScreen(QMainWindow):
 
@@ -132,6 +129,7 @@ class HomeScreen(QMainWindow):
 class ConfigGameScreen(QMainWindow):
 
     return_to_home_screen_signal = pyqtSignal()
+    play_game_signal = pyqtSignal()
 
     def __init__(self):
 
@@ -143,12 +141,8 @@ class ConfigGameScreen(QMainWindow):
         title = Label(self, "CREATE NEW GAME", 0, 25, 1000, 100, QFont("LIBRARY 3 AM soft", 50))
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont("Metropolis", 20), None)
-
-        back = Button(self, "", 925, 15, 60, 60, QFont("Metropolis", 20), self.return_to_home_screen)
-        back.setIcon(QIcon("resources/back.svg"))
-        back.setIconSize(QSize(60, 60))
-        back.setStyleSheet("border-radius:35px;")
+        play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont("Metropolis", 20), self.play_game)
+        back = BackButton(self, self.return_to_home_screen)
 
         mode = Label(self, "MODE: ", 50, 225, 300, 100, QFont("Metropolis", 24))
         difficulty = Label(self, "DIFFICULTY: ", 50, 150, 300, 100, QFont("Metropolis", 24))
@@ -160,6 +154,35 @@ class ConfigGameScreen(QMainWindow):
         timed_menu = ComboBox(self, 330, 325, 200, 50, QFont("Metropolis", 20), ["Yes", "No"])
         time_control_menu = ComboBox(self, 330, 400, 200, 50, QFont("Metropolis", 20), ["5 mins", "10 mins", "15 mins", "30 mins", "1 hour"])
 
+    def play_game(self):
+        self.play_game_signal.emit()
+
+    def return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+
+class GameScreen(QMainWindow):
+
+    return_to_home_screen_signal = pyqtSignal()
+
+    def __init__(self):
+        
+        super().__init__()
+
+        self.setWindowTitle(f"Sudoku {UI.VERSION}")
+        self.setMinimumSize(QSize(1000, 560))
+
+        title = Label(self, "S U D O K U", 0, 10, 1000, 100, QFont("LIBRARY 3 AM soft", 40))
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        back = BackButton(self, self.return_to_home_screen)
+
+        PADDING, STARTY = 20, 90
+        GRIDSIZE = (560 - STARTY - PADDING) // 9
+        STARTX = (1000 - 9 * GRIDSIZE) // 2
+
+        for row in range(9):
+            for col in range(9):
+                square = Button(self, "0", STARTX + GRIDSIZE*col, STARTY + GRIDSIZE*row, GRIDSIZE, GRIDSIZE, QFont("Metropolis", 20), None)
+    
     def return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
@@ -186,29 +209,49 @@ class GUI(UI):
 
         self.__config_game_screen = ConfigGameScreen()
         self.__config_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        self.__config_game_screen.play_game_signal.connect(self.__show_game_screen)
+
+        self.__game_screen = GameScreen()
+        self.__game_screen.return_to_home_screen_signal.connect(self.__quit_game)
 
         self.__create_new_account_screen = CreateNewAccountScreen()
 
-        self.__screens = {"home": self.__home_screen, "config game": self.__config_game_screen, "create new account": self.__create_new_account_screen}
+        self.__screens = {"home": self.__home_screen, "config game": self.__config_game_screen, 
+                          "game": self.__game_screen, "create new account": self.__create_new_account_screen}
 
         self._push_ui_to_stack("home")
         self.__home_screen.show()
+
+    def __close_curr_screen(self):
+        self.__screens[self._get_curr_ui()].close()
+    
+    def __show_curr_screen(self):
+        self.__screens[self._get_curr_ui()].show()
    
     def __push_screen(self, screen):
-        self.__screens[self._get_curr_ui()].close()
+        self.__close_curr_screen()
         self._push_ui_to_stack(screen)
-        self.__screens[self._get_curr_ui()].show()
-    
+        self.__show_curr_screen()
+        
     def __pop_screen(self):
-        self.__screens[self._get_curr_ui()].close()
+        self.__close_curr_screen()
         self._pop_ui_from_stack()
-        self.__screens[self._get_curr_ui()].show()
+        self.__show_curr_screen()
     
     def __show_config_game_screen(self):
         self.__push_screen("config game")
     
+    def __show_game_screen(self):
+        self.__push_screen("game")
+    
     def __show_create_new_account_screen(self):
         self.__push_screen("create new account")
+    
+    def __quit_game(self):
+        self.__close_curr_screen()
+        for _ in range(2):
+            self._pop_ui_from_stack()
+        self.__show_curr_screen()
 
     def run(self):
         self.__app.exec()
