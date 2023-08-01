@@ -35,7 +35,7 @@ class UI(ABC):
         raise NotImplementedError
 
 class Button(QPushButton):
-    def __init__(self, text, window, x, y, width, height, font, command):
+    def __init__(self, window, text, x, y, width, height, font, command):
         super().__init__(text, window)
         self.setGeometry(x, y, width, height)
         self.setFont(QFont(font))
@@ -63,14 +63,23 @@ class MenuButton(QPushButton):
             menu.addAction(action)
         menu.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setMenu(menu)
+        menu.move(QPoint(100,100))
         self.setStyleSheet("QPushButton::menu-indicator {width:0px;}")
 
+class Label(QLabel):
+    def __init__(self, window, text, x, y, width, height, font):
+        super().__init__(window)
+        self.setText(text)
+        self.setGeometry(x, y, width, height)
+        self.setFont(font)
+
+
 class HomeScreen(QMainWindow):
-    def __init__(self, widget):
+    def __init__(self, parent):
 
         super().__init__()
 
-        self.widget = widget
+        self.parent = parent
 
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
@@ -78,15 +87,12 @@ class HomeScreen(QMainWindow):
         QFontDatabase.addApplicationFont("resources/library-3-am.3amsoft.otf")
         QFontDatabase.addApplicationFont("resources/Metropolis-Regular.otf")
 
-        title = QLabel(self)
-        title.setText("S U D O K U")
-        title.setGeometry(0, 75, 1000, 100)
+        title = Label(self, "S U D O K U", 0, 75, 1000, 100, QFont("LIBRARY 3 AM soft", 70))
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        title.setFont(QFont("LIBRARY 3 AM soft", 70))
 
-        play_singleplayer_button = Button("PLAY SINGLEPLAYER", self, 300, 250, 400, 50, QFont("Metropolis", 25), self.play_singleplayer)
-        play_multiplayer_button = Button("PLAY MULTIPLAYER", self, 300, 320, 400, 50, QFont("Metropolis", 25), None)
-        leaderboard_button = Button("LEADERBOARD", self, 300, 390, 400, 50, QFont("Metropolis", 25), None)
+        play_singleplayer_button = Button(self, "PLAY SINGLEPLAYER", 300, 250, 400, 50, QFont("Metropolis", 25), self.play_singleplayer)
+        play_multiplayer_button = Button(self, "PLAY MULTIPLAYER", 300, 320, 400, 50, QFont("Metropolis", 25), None)
+        leaderboard_button = Button(self, "LEADERBOARD", 300, 390, 400, 50, QFont("Metropolis", 25), None)
 
         toolbar = QToolBar(self)
         self.addToolBar(Qt.ToolBarArea.RightToolBarArea, toolbar)
@@ -99,26 +105,48 @@ class HomeScreen(QMainWindow):
 
     def play_singleplayer(self):
         global config
-        self.widget.setCurrentWidget(config)
+        self.parent.setCurrentWidget(config)
 
     def quit_game(self):
         exit()
 
 class ConfigGameScreen(QMainWindow):
-    def __init__(self, ):
+    def __init__(self, parent):
+
         super().__init__()
-        
+
+        self.parent = parent
+
+        title = Label(self, "CREATE NEW GAME", 0, 25, 1000, 100, QFont("LIBRARY 3 AM soft", 50))
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        play = Button(self, "PLAY GAME", 400, 475, 200, 50, QFont("Metropolis", 20), None)
+
+        back = Button(self, "", 925, 15, 60, 60, QFont("Metropolis", 20), self.return_to_home_screen)
+        back.setIcon(QIcon("resources/back.svg"))
+        back.setIconSize(QSize(60, 60))
+        back.setStyleSheet("border-radius:35px;")
+    
+    def return_to_home_screen(self):
+        global home
+        self.parent.setCurrentWidget(home)
+
 class GUI(UI):
 
     def __init__(self):
-        global config
+        global config, home
         super().__init__()
 
         self.app = QApplication(argv)
 
         self.widget = QStackedWidget()
+
+        self.windows = {}
+
         self.widget.addWidget(home := HomeScreen(self.widget))
-        self.widget.addWidget(config := ConfigGameScreen())
+        self.windows["home"] = home
+        self.widget.addWidget(config := ConfigGameScreen(self.widget))
+        self.windows["config_game"] = config
         self.widget.setCurrentWidget(home)
 
         self.widget.show()
