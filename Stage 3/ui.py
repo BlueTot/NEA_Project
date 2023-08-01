@@ -132,6 +132,11 @@ class ConfigGameScreen(QMainWindow):
         back.setIcon(QIcon("resources/back.svg"))
         back.setIconSize(QSize(60, 60))
         back.setStyleSheet("border-radius:35px;")
+
+        mode = Label(self, "MODE: ", 50, 225, 300, 100, QFont("Metropolis", 24))
+        difficulty = Label(self, "DIFFICULTY: ", 50, 150, 300, 100, QFont("Metropolis", 24))
+        timed = Label(self, "TIMED: ", 50, 300, 300, 100, QFont("Metropolis", 24))
+        time_control = Label(self, "TIME CONTROL: ", 50, 375, 300, 100, QFont("Metropolis", 24))
     
     def return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
@@ -157,26 +162,32 @@ class GUI(UI):
         self.__home_screen.create_new_account_signal.connect(self.__show_create_new_account_screen)
 
         self.__config_game_screen = ConfigGameScreen()
-        self.__config_game_screen.return_to_home_screen_signal.connect(self.__show_home_screen)
+        self.__config_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
 
         self.__create_new_account_screen = CreateNewAccountScreen()
 
-        self.__show_home_screen()
-    
-    def __show_home_screen(self):
-        self.__config_game_screen.close()
+        self.__screens = {"home": self.__home_screen, "config game": self.__config_game_screen, "create new account": self.__create_new_account_screen}
+
+        self._push_ui_to_stack("home")
         self.__home_screen.show()
+   
+    def __push_screen(self, screen):
+        self.__screens[self._get_curr_ui()].close()
+        self._push_ui_to_stack(screen)
+        self.__screens[self._get_curr_ui()].show()
+    
+    def __pop_screen(self):
+        self.__screens[self._get_curr_ui()].close()
+        self._pop_ui_from_stack()
+        self.__screens[self._get_curr_ui()].show()
     
     def __show_config_game_screen(self):
-        self.__home_screen.close()
-        self.__config_game_screen.show()
+        self.__push_screen("config game")
     
     def __show_create_new_account_screen(self):
-        self.__home_screen.close()
-        self.__create_new_account_screen.show()
+        self.__push_screen("create new account")
 
     def run(self):
-        
         self.__app.exec()
 
 class Terminal(UI):
