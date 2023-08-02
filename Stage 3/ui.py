@@ -11,7 +11,7 @@ from game import Game
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal, QRect
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QGridLayout
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget
 
 class UI(ABC):
 
@@ -41,6 +41,12 @@ class Button(QPushButton):
         self.setFont(QFont(font))
         if command is not None:
             self.clicked.connect(command)
+
+class Border(QPushButton):
+    def __init__(self, window, x, y, width, height, border_width):
+        super().__init__(window)
+        self.setGeometry(x, y, width, height)
+        self.setStyleSheet("QPushButton{" + f"border: {border_width}px solid black;" + "}")
 
 class Action(QAction):
     def __init__(self, window, image, text, command, checkable):
@@ -79,12 +85,23 @@ class ComboBox(QComboBox):
         self.setFont(font)
         self.addItems(options)
 
-class BackButton(Button):
+class ProgressBar(QProgressBar):
+    def __init__(self, window, x, y, width, height):
+        super().__init__(window)
+        self.setGeometry(x, y, width, height)
+        self.setTextVisible(True)
+        self.setValue(0)
+
+class CircularButton(Button):
+    def __init__(self, window, x, y, width, height, image, command):
+        super().__init__(window, "", x, y, width, height, QFont("Metropolis", 20), command)
+        self.setIcon(image)
+        self.setIconSize(QSize(width, height))
+        self.setStyleSheet("border-radius:" + str(width//2) + "px;")
+    
+class BackButton(CircularButton):
     def __init__(self, window, command):
-        super().__init__(window, "", 925, 15, 60, 60, QFont("Metropolis", 20), command)
-        self.setIcon(QIcon("resources/back.svg"))
-        self.setIconSize(QSize(60, 60))
-        self.setStyleSheet("border-radius:30px;")
+        super().__init__(window, 925, 15, 60, 60, QIcon("resources/back.svg"), command)
         
 class HomeScreen(QMainWindow):
 
@@ -104,9 +121,9 @@ class HomeScreen(QMainWindow):
         title = Label(self, "S U D O K U", 0, 75, 1000, 100, QFont("LIBRARY 3 AM soft", 70))
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        play_singleplayer_button = Button(self, "PLAY SINGLEPLAYER", 300, 250, 400, 50, QFont("Metropolis", 25), self.play_singleplayer)
-        play_multiplayer_button = Button(self, "PLAY MULTIPLAYER", 300, 320, 400, 50, QFont("Metropolis", 25), None)
-        leaderboard_button = Button(self, "LEADERBOARD", 300, 390, 400, 50, QFont("Metropolis", 25), None)
+        self.play_singleplayer_button = Button(self, "PLAY SINGLEPLAYER", 300, 250, 400, 50, QFont("Metropolis", 25), self.play_singleplayer)
+        self.play_multiplayer_button = Button(self, "PLAY MULTIPLAYER", 300, 320, 400, 50, QFont("Metropolis", 25), None)
+        self.leaderboard_button = Button(self, "LEADERBOARD", 300, 390, 400, 50, QFont("Metropolis", 25), None)
 
         toolbar = QToolBar(self)
         self.addToolBar(Qt.ToolBarArea.RightToolBarArea, toolbar)
@@ -129,7 +146,7 @@ class HomeScreen(QMainWindow):
 class ConfigGameScreen(QMainWindow):
 
     return_to_home_screen_signal = pyqtSignal()
-    play_game_signal = pyqtSignal()
+    play_game_signal = pyqtSignal(str)
 
     def __init__(self):
 
@@ -141,21 +158,27 @@ class ConfigGameScreen(QMainWindow):
         title = Label(self, "CREATE NEW GAME", 0, 25, 1000, 100, QFont("LIBRARY 3 AM soft", 50))
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont("Metropolis", 20), self.play_game)
-        back = BackButton(self, self.return_to_home_screen)
+        self.play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont("Metropolis", 20), self.play_game)
+        self.back = BackButton(self, self.return_to_home_screen)
 
-        mode = Label(self, "MODE: ", 50, 225, 300, 100, QFont("Metropolis", 24))
-        difficulty = Label(self, "DIFFICULTY: ", 50, 150, 300, 100, QFont("Metropolis", 24))
-        timed = Label(self, "TIMED: ", 50, 300, 300, 100, QFont("Metropolis", 24))
-        time_control = Label(self, "TIME CONTROL: ", 50, 375, 300, 100, QFont("Metropolis", 24))
+        self.statusBar().setFont(QFont("Metropolis", 14))
+        self.statusBar().setStyleSheet("QStatusBar{color:red;}")
 
-        mode_menu = ComboBox(self, 330, 175, 200, 50, QFont("Metropolis", 20), ["Normal"])
-        difficulty_menu = ComboBox(self, 330, 250, 200, 50, QFont("Metropolis", 20), ["Easy", "Medium", "Hard", "Challenge"])
-        timed_menu = ComboBox(self, 330, 325, 200, 50, QFont("Metropolis", 20), ["Yes", "No"])
-        time_control_menu = ComboBox(self, 330, 400, 200, 50, QFont("Metropolis", 20), ["5 mins", "10 mins", "15 mins", "30 mins", "1 hour"])
+        self.mode = Label(self, "MODE: ", 50, 150, 300, 100, QFont("Metropolis", 24))
+        self.difficulty = Label(self, "DIFFICULTY: ", 50, 225, 300, 100, QFont("Metropolis", 24))
+        self.timed = Label(self, "TIMED: ", 50, 300, 300, 100, QFont("Metropolis", 24))
+        self.time_control = Label(self, "TIME CONTROL: ", 50, 375, 300, 100, QFont("Metropolis", 24))
+
+        self.mode_menu = ComboBox(self, 330, 175, 200, 50, QFont("Metropolis", 20), ["", "Normal"])
+        self.difficulty_menu = ComboBox(self, 330, 250, 200, 50, QFont("Metropolis", 20), ["", "Easy", "Medium", "Hard", "Challenge"])
+        self.timed_menu = ComboBox(self, 330, 325, 200, 50, QFont("Metropolis", 20), ["", "Yes", "No"])
+        self.time_control_menu = ComboBox(self, 330, 400, 200, 50, QFont("Metropolis", 20), ["", "5 mins", "10 mins", "15 mins", "30 mins", "1 hour"])
 
     def play_game(self):
-        self.play_game_signal.emit()
+        if difficulty := self.difficulty_menu.currentText():
+            self.play_game_signal.emit(difficulty)
+        else:
+            self.statusBar().showMessage("*To continue, please fill all boxes")
 
     def return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
@@ -171,18 +194,41 @@ class GameScreen(QMainWindow):
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
 
-        title = Label(self, "S U D O K U", 0, 10, 1000, 100, QFont("LIBRARY 3 AM soft", 40))
-        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        back = BackButton(self, self.return_to_home_screen)
-
-        PADDING, STARTY = 20, 90
-        GRIDSIZE = (560 - STARTY - PADDING) // 9
-        STARTX = (1000 - 9 * GRIDSIZE) // 2
-
-        for row in range(9):
-            for col in range(9):
-                square = Button(self, "0", STARTX + GRIDSIZE*col, STARTY + GRIDSIZE*row, GRIDSIZE, GRIDSIZE, QFont("Metropolis", 20), None)
+        self.back = BackButton(self, self.return_to_home_screen)
     
+    def set_game(self, game : Game):
+
+        self.__game = game
+
+        PADDING, STARTX = 20, 10
+        GRIDSIZE = (560 - 2 * PADDING) // 9
+
+
+        big_border = Border(self, STARTX + PADDING, PADDING, GRIDSIZE*9, GRIDSIZE*9, 5)
+        for ridx in range(3):
+            for cidx in range(3):
+                border = Border(self, STARTX + PADDING + GRIDSIZE*3*cidx, PADDING + GRIDSIZE*3*ridx, GRIDSIZE*3, GRIDSIZE*3, 3)
+
+        for ridx, row in enumerate(self.__game.board.get_curr_board()):
+            for cidx, num in enumerate(row):
+                square = Button(self, str(num) if num != 0 else "", STARTX + PADDING + GRIDSIZE*cidx, PADDING + GRIDSIZE*ridx, GRIDSIZE, GRIDSIZE, QFont("Metropolis", 20), self.clicked)
+                square.setStyleSheet("QPushButton{border: 2px solid black;}")
+        
+        NUM_INP_SIZE = 110
+        STARTX, STARTY = 610, 130
+        for ridx in range(3):
+            for cidx in range(3):
+                num_input = Button(self, str(ridx*3+cidx+1), STARTX+NUM_INP_SIZE*cidx, STARTY+NUM_INP_SIZE*ridx, NUM_INP_SIZE, NUM_INP_SIZE, QFont("Metropolis", 20), None)
+        
+        timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), None)
+        progress = ProgressBar(self, 610, 110, 330, 20)
+
+        undo_button = CircularButton(self, 610, 470, 60, 60, QIcon("resources/undo.svg"), None)
+                
+
+    def clicked(self):
+        print("clicked")
+
     def return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
@@ -203,24 +249,32 @@ class GUI(UI):
 
         self.__app = QApplication(argv)
 
-        self.__home_screen = HomeScreen()
-        self.__home_screen.play_singleplayer_signal.connect(self.__show_config_game_screen)
-        self.__home_screen.create_new_account_signal.connect(self.__show_create_new_account_screen)
-
-        self.__config_game_screen = ConfigGameScreen()
-        self.__config_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        self.__config_game_screen.play_game_signal.connect(self.__show_game_screen)
-
-        self.__game_screen = GameScreen()
-        self.__game_screen.return_to_home_screen_signal.connect(self.__quit_game)
-
-        self.__create_new_account_screen = CreateNewAccountScreen()
-
-        self.__screens = {"home": self.__home_screen, "config game": self.__config_game_screen, 
-                          "game": self.__game_screen, "create new account": self.__create_new_account_screen}
+        self.__screens = {"home": self.__home_screen(), "config game": self.__config_game_screen(), 
+                          "game": self.__game_screen(), "create new account": self.__create_new_account_screen()}
 
         self._push_ui_to_stack("home")
-        self.__home_screen.show()
+        self.__screens["home"].show()
+    
+    def __home_screen(self):
+        home_screen = HomeScreen()
+        home_screen.play_singleplayer_signal.connect(self.__show_config_game_screen)
+        home_screen.create_new_account_signal.connect(self.__show_create_new_account_screen)
+        return home_screen
+
+    def __config_game_screen(self):
+        config_game_screen = ConfigGameScreen()
+        config_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        config_game_screen.play_game_signal.connect(self.__show_game_screen)
+        return config_game_screen
+
+    def __game_screen(self):
+        game_screen = GameScreen()
+        game_screen.return_to_home_screen_signal.connect(self.__quit_game)
+        return game_screen
+
+    def __create_new_account_screen(self):
+        create_new_account_screen = CreateNewAccountScreen()
+        return create_new_account_screen
 
     def __close_curr_screen(self):
         self.__screens[self._get_curr_ui()].close()
@@ -239,12 +293,17 @@ class GUI(UI):
         self.__show_curr_screen()
     
     def __show_config_game_screen(self):
+        self.__screens["config game"] = self.__config_game_screen()
         self.__push_screen("config game")
     
-    def __show_game_screen(self):
+    def __show_game_screen(self, difficulty):
+        self.__game = Game(difficulty)
+        self.__screens["game"] = self.__game_screen()
+        self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")
     
     def __show_create_new_account_screen(self):
+        self.__screens["create new account"] = self.__create_new_account_screen()
         self.__push_screen("create new account")
     
     def __quit_game(self):

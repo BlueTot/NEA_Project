@@ -8,7 +8,7 @@ class Board:
 
     VALID_NUMS = [str(i) for i in range(1, 10)]
 
-    NUM_NUMS_TO_REMOVE = {"easy": 36, "medium": 45, "hard": 54, "challenge": 60}
+    NUM_NUMS_TO_REMOVE = {"Easy": 36, "Medium": 45, "Hard": 54, "Challenge": 60}
 
     def __init__(self, difficulty):
         self.__difficulty = difficulty
