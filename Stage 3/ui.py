@@ -195,6 +195,17 @@ class GameScreen(QMainWindow):
         self.setMinimumSize(QSize(1000, 560))
 
         self.back = BackButton(self, self.return_to_home_screen)
+
+        self.timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), None)
+        self.progress = ProgressBar(self, 610, 110, 330, 20)
+
+        self.undo_button = CircularButton(self, 610, 470, 58, 58, QIcon("resources/undo.svg"), None)
+        self.delete_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/delete.svg"), None)
+        self.delete_button.setIconSize(QSize(53, 53))
+        self.delete_button.setStyleSheet("QPushButton{border-radius: 29px; border: 5px solid black;}")
+        self.hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), None)
+        self.info_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/info.svg"), None)
+        self.resign_button = CircularButton(self, 878, 470, 58, 58, QIcon("resources/resign.svg"), None)
     
     def set_game(self, game : Game):
 
@@ -219,12 +230,6 @@ class GameScreen(QMainWindow):
         for ridx in range(3):
             for cidx in range(3):
                 num_input = Button(self, str(ridx*3+cidx+1), STARTX+NUM_INP_SIZE*cidx, STARTY+NUM_INP_SIZE*ridx, NUM_INP_SIZE, NUM_INP_SIZE, QFont("Metropolis", 20), None)
-        
-        timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), None)
-        progress = ProgressBar(self, 610, 110, 330, 20)
-
-        undo_button = CircularButton(self, 610, 470, 60, 60, QIcon("resources/undo.svg"), None)
-                
 
     def clicked(self):
         print("clicked")
