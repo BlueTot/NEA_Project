@@ -49,4 +49,3 @@ class Game:
 
     def percent_complete(self):
         return round(((num_orig_empty := self.__board.num_empty_squares(self.__board.get_orig_board())) - self.__board.num_empty_squares(self.__board.get_curr_board()))/num_orig_empty * 100, 2)
-

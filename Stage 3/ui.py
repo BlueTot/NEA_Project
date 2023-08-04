@@ -202,6 +202,7 @@ class GameScreen(QMainWindow):
         self.statusBar().setFont(QFont("Metropolis", 14))
 
         self.back = BackButton(self, self.return_to_home_screen)
+        self.info_button = CircularButton(self, 845, 15, 60, 60, QIcon("resources/info.svg"), None)
 
         self.timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), None)
         self.progress = ProgressBar(self, 610, 110, 330, 20)
@@ -218,7 +219,9 @@ class GameScreen(QMainWindow):
         self.delete_button.setIconSize(QSize(53, 53))
         self.delete_button.setStyleSheet("QPushButton{border-radius: 29px; border: 5px solid black;}")
         self.hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), self.show_hint)
-        self.info_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/info.svg"), None)
+        self.notes_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/notes.svg"), None)
+        self.notes_button.setIconSize(QSize(53, 53))
+        self.notes_button.setStyleSheet("QPushButton{border-radius: 29px; border: 5px solid black;}")
         self.resign_button = CircularButton(self, 878, 470, 58, 58, QIcon("resources/resign.svg"), None)
 
         big_border = Border(self, self.STARTX+self.PADDING-3, self.PADDING-3, 
