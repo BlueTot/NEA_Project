@@ -42,7 +42,7 @@ class Game:
         self.__board.remove_num_at(row, col)
     
     def get_hint_at(self, row, col):
-        self.__board.get_hint_for_sq(row, col)
+        return self.__board.get_hint_for_sq(row, col)
     
     def is_complete(self):
         return self.__board.num_empty_squares(self.__board.get_curr_board()) == 0

@@ -200,7 +200,6 @@ class GameScreen(QMainWindow):
         self.setMinimumSize(QSize(1000, 560))
 
         self.statusBar().setFont(QFont("Metropolis", 14))
-        self.statusBar().setStyleSheet("QStatusBar{color:red;}")
 
         self.back = BackButton(self, self.return_to_home_screen)
 
@@ -218,7 +217,7 @@ class GameScreen(QMainWindow):
         self.delete_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/delete.svg"), self.remove_num)
         self.delete_button.setIconSize(QSize(53, 53))
         self.delete_button.setStyleSheet("QPushButton{border-radius: 29px; border: 5px solid black;}")
-        self.hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), None)
+        self.hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), self.show_hint)
         self.info_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/info.svg"), None)
         self.resign_button = CircularButton(self, 878, 470, 58, 58, QIcon("resources/resign.svg"), None)
 
@@ -255,6 +254,10 @@ class GameScreen(QMainWindow):
                 square.show()
         
         self.progress.setValue(int(self.__game.percent_complete()))
+    
+    def show_error(self, err):
+        self.statusBar().setStyleSheet("QStatusBar{color:red;}")
+        self.statusBar().showMessage(str(err.args[0]))
 
     def select_square(self, row, col):
         self.__selected_square = (row, col)
@@ -264,7 +267,7 @@ class GameScreen(QMainWindow):
         try:
             self.__game.put_down_number(self.__selected_square[0], self.__selected_square[1], num)
         except BoardError as err:
-            self.statusBar().showMessage(str(err.args[0]))
+            self.show_error(err)
         self.__selected_square = (None, None)
         self.show_number_grid()
     
@@ -272,11 +275,19 @@ class GameScreen(QMainWindow):
         try:
             self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])
         except BoardError as err:
-            self.statusBar().showMessage(str(err.args[0]))
+            self.show_error(err)
         self.__selected_square = (None, None)
         self.show_number_grid()
-
-
+    
+    def show_hint(self):
+        try:
+            self.statusBar().setStyleSheet("QStatusBar{color:blue;}")
+            hint_lst = self.__game.get_hint_at(self.__selected_square[0], self.__selected_square[1])
+            self.statusBar().showMessage(f"HINT: The numbers that can be placed at this square are: {','.join(list(map(str, hint_lst)))}")
+        except BoardError as err:
+            self.show_error(err)
+        self.__selected_square = (None, None)
+        self.show_number_grid()
 
     def return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
