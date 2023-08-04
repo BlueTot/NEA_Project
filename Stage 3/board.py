@@ -6,7 +6,7 @@ class BoardError(Exception):
 
 class Board:
 
-    VALID_NUMS = [str(i) for i in range(1, 10)]
+    VALID_NUMS = [i for i in range(1, 10)]
 
     NUM_NUMS_TO_REMOVE = {"Easy": 36, "Medium": 45, "Hard": 54, "Challenge": 60}
 
@@ -53,6 +53,8 @@ class Board:
             if n not in Board.VALID_NUMS:
                 raise BoardError("Number inputted is not between 1 and 9")
             return n
+        except TypeError:
+            raise BoardError("Number inputted is not an integer")
         except ValueError:
             raise BoardError("Number inputted is not an integer")
     

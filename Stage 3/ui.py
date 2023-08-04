@@ -1,15 +1,14 @@
 from sys import argv, exit
 import typing
-
-from PyQt6 import QtCore
 from stack import Stack
 from os import system
+from functools import partial
 from abc import ABC, abstractmethod
 from colorama import Fore, Style
 from board import BoardError
 from game import Game
 
-from PyQt6.QtCore import QSize, Qt, pyqtSignal, QRect
+from PyQt6.QtCore import QSize, QTimerEvent, Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget
 
@@ -83,6 +82,7 @@ class ComboBox(QComboBox):
         super().__init__(window)
         self.setGeometry(x, y, width, height)
         self.setFont(font)
+        self.addItem("")
         self.addItems(options)
 
 class ProgressBar(QProgressBar):
@@ -169,10 +169,10 @@ class ConfigGameScreen(QMainWindow):
         self.timed = Label(self, "TIMED: ", 50, 300, 300, 100, QFont("Metropolis", 24))
         self.time_control = Label(self, "TIME CONTROL: ", 50, 375, 300, 100, QFont("Metropolis", 24))
 
-        self.mode_menu = ComboBox(self, 330, 175, 200, 50, QFont("Metropolis", 20), ["", "Normal"])
-        self.difficulty_menu = ComboBox(self, 330, 250, 200, 50, QFont("Metropolis", 20), ["", "Easy", "Medium", "Hard", "Challenge"])
-        self.timed_menu = ComboBox(self, 330, 325, 200, 50, QFont("Metropolis", 20), ["", "Yes", "No"])
-        self.time_control_menu = ComboBox(self, 330, 400, 200, 50, QFont("Metropolis", 20), ["", "5 mins", "10 mins", "15 mins", "30 mins", "1 hour"])
+        self.mode_menu = ComboBox(self, 330, 175, 200, 50, QFont("Metropolis", 20), ["Normal"])
+        self.difficulty_menu = ComboBox(self, 330, 250, 200, 50, QFont("Metropolis", 20), ["Easy", "Medium", "Hard", "Challenge"])
+        self.timed_menu = ComboBox(self, 330, 325, 200, 50, QFont("Metropolis", 20), ["Yes", "No"])
+        self.time_control_menu = ComboBox(self, 330, 400, 200, 50, QFont("Metropolis", 20), ["5 mins", "10 mins", "15 mins", "30 mins", "1 hour"])
 
     def play_game(self):
         if difficulty := self.difficulty_menu.currentText():
@@ -187,52 +187,96 @@ class GameScreen(QMainWindow):
 
     return_to_home_screen_signal = pyqtSignal()
 
+    PADDING, STARTX = 25, 10
+    GRIDSIZE = (560 - 2 * PADDING) // 9
+
     def __init__(self):
         
         super().__init__()
 
+        self.__selected_square = (None, None)
+
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
+
+        self.statusBar().setFont(QFont("Metropolis", 14))
+        self.statusBar().setStyleSheet("QStatusBar{color:red;}")
 
         self.back = BackButton(self, self.return_to_home_screen)
 
         self.timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), None)
         self.progress = ProgressBar(self, 610, 110, 330, 20)
+        self.progress.setStyleSheet("QProgressBar::chunk{background-color: #99d9ea;}")
+
+        NUM_INP_SIZE = 110
+        STARTX, STARTY = 610, 130
+        for ridx in range(3):
+            for cidx in range(3):
+                num_input = Button(self, str(num := ridx*3+cidx+1), STARTX+NUM_INP_SIZE*cidx, STARTY+NUM_INP_SIZE*ridx, NUM_INP_SIZE, NUM_INP_SIZE, QFont("Metropolis", 20), partial(self.place_num, num))
 
         self.undo_button = CircularButton(self, 610, 470, 58, 58, QIcon("resources/undo.svg"), None)
-        self.delete_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/delete.svg"), None)
+        self.delete_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/delete.svg"), self.remove_num)
         self.delete_button.setIconSize(QSize(53, 53))
         self.delete_button.setStyleSheet("QPushButton{border-radius: 29px; border: 5px solid black;}")
         self.hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), None)
         self.info_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/info.svg"), None)
         self.resign_button = CircularButton(self, 878, 470, 58, 58, QIcon("resources/resign.svg"), None)
-    
+
+        big_border = Border(self, self.STARTX+self.PADDING-3, self.PADDING-3, 
+                            self.GRIDSIZE*9+6+6, self.GRIDSIZE*9+6+6, 3)
+        big_border.show()
+        for row in range(3):
+            for col in range(3):
+                border = Border(self, self.STARTX + self.PADDING + self.GRIDSIZE*3*col + 3*col, 
+                                self.PADDING + self.GRIDSIZE*3*row + 3*row, 
+                                self.GRIDSIZE*3+3, self.GRIDSIZE*3+3, 3)
+                border.show()
+
     def set_game(self, game : Game):
-
         self.__game = game
+        self.show_number_grid()
 
-        PADDING, STARTX = 20, 10
-        GRIDSIZE = (560 - 2 * PADDING) // 9
-
-
-        big_border = Border(self, STARTX + PADDING, PADDING, GRIDSIZE*9, GRIDSIZE*9, 5)
-        for ridx in range(3):
-            for cidx in range(3):
-                border = Border(self, STARTX + PADDING + GRIDSIZE*3*cidx, PADDING + GRIDSIZE*3*ridx, GRIDSIZE*3, GRIDSIZE*3, 3)
-
-        for ridx, row in enumerate(self.__game.board.get_curr_board()):
-            for cidx, num in enumerate(row):
-                square = Button(self, str(num) if num != 0 else "", STARTX + PADDING + GRIDSIZE*cidx, PADDING + GRIDSIZE*ridx, GRIDSIZE, GRIDSIZE, QFont("Metropolis", 20), self.clicked)
-                square.setStyleSheet("QPushButton{border: 2px solid black;}")
+    def show_number_grid(self):
+    
+        for row, row_lst in enumerate(self.__game.board.get_curr_board()):
+            for col, num in enumerate(row_lst):
+                square = Button(window = self, 
+                                text = str(num) if num != 0 else "",
+                                x = self.STARTX + self.PADDING + self.GRIDSIZE*col + 3*(col//3),
+                                y = self.PADDING + self.GRIDSIZE*row + 3*(row//3), 
+                                width = self.GRIDSIZE, 
+                                height = self.GRIDSIZE, 
+                                font = QFont("Metropolis", 20), 
+                                command = partial(self.select_square, row+1, col+1))
+                square.setStyleSheet("QPushButton{border: 2px solid black; background-color:" + 
+                                     ("#99d9ea" if (row+1, col+1) == self.__selected_square else "white") + 
+                                     ";color:" + ("black" if self.__game.board.get_orig_board()[row][col] != 0 else "blue") + 
+                                     ";}")
+                square.show()
         
-        NUM_INP_SIZE = 110
-        STARTX, STARTY = 610, 130
-        for ridx in range(3):
-            for cidx in range(3):
-                num_input = Button(self, str(ridx*3+cidx+1), STARTX+NUM_INP_SIZE*cidx, STARTY+NUM_INP_SIZE*ridx, NUM_INP_SIZE, NUM_INP_SIZE, QFont("Metropolis", 20), None)
+        self.progress.setValue(int(self.__game.percent_complete()))
 
-    def clicked(self):
-        print("clicked")
+    def select_square(self, row, col):
+        self.__selected_square = (row, col)
+        self.show_number_grid()
+
+    def place_num(self, num):
+        try:
+            self.__game.put_down_number(self.__selected_square[0], self.__selected_square[1], num)
+        except BoardError as err:
+            self.statusBar().showMessage(str(err.args[0]))
+        self.__selected_square = (None, None)
+        self.show_number_grid()
+    
+    def remove_num(self):
+        try:
+            self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])
+        except BoardError as err:
+            self.statusBar().showMessage(str(err.args[0]))
+        self.__selected_square = (None, None)
+        self.show_number_grid()
+
+
 
     def return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
