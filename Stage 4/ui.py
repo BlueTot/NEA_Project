@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToo
 
 class UI(ABC):
 
-    VERSION = "v0.3"
+    VERSION = "v0.4"
 
     def __init__(self):
         self._ui_stack = Stack()
