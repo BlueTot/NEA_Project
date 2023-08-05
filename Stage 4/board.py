@@ -15,6 +15,10 @@ class Board:
         self.__board = self.generate_new_board(self.__difficulty)
         self.__orig_board = deepcopy(self.__board)
     
+    def load_board(self, hash):
+        for idx, num in enumerate(hash):
+            self.__board[idx // 9][idx % 9] = int(num)
+    
     def get_curr_board(self):
         return self.__board
     
@@ -23,6 +27,16 @@ class Board:
     
     def get_difficulty(self):
         return self.__difficulty
+    
+    @staticmethod
+    def __hash(board):
+        return "".join(["".join(list(map(str, row))) for row in board])
+    
+    def hash(self):
+        return self.__hash(self.__board)
+    
+    def orig_hash(self):
+        return self.__hash(self.__orig_board)
 
     def __fill_matrix_randomly(self, grid, start, end):
         for row in range(start, end+1):
@@ -142,3 +156,34 @@ class Board:
             return new_board
         else:
             return -1
+
+class Notes:
+    def __init__(self):
+        self.__notes = [[set() for _ in range(9)] for _ in range(9)]
+    
+    @property
+    def notes(self):
+        return self.__notes
+    
+    def __validate(self, n):
+        try:
+            n = int(n)
+            if n not in Board.VALID_NUMS:
+                raise BoardError("Number inputted is not between 1 and 9")
+            return n
+        except TypeError:
+            raise BoardError("Number inputted is not an integer")
+        except ValueError:
+            raise BoardError("Number inputted is not an integer")
+    
+    def add_note(self, row, col, num):
+        row, col, num = self.__validate(row)-1, self.__validate(col)-1, self.__validate(num)
+        if num in self.__notes[row][col]:
+            raise BoardError(f"ERROR: {num} is already added to this note")
+        self.__notes[row][col].add(num)
+    
+    def remove_note(self, row, col, num):
+        if num not in self.__notes[row][col]:
+            raise BoardError(f"ERROR: {num} doesn't exist at this note")
+        self.__notes[row][col].remove(num)
+

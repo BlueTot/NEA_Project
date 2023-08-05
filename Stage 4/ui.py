@@ -1,4 +1,7 @@
 from sys import argv, exit
+import typing
+
+from PyQt6 import QtCore
 from stack import Stack
 from os import system
 from functools import partial
@@ -9,7 +12,7 @@ from game import Game
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget, QTextEdit
 
 class UI(ABC):
 
@@ -106,6 +109,7 @@ class HomeScreen(QMainWindow):
 
     play_singleplayer_signal = pyqtSignal()
     create_new_account_signal = pyqtSignal()
+    help_signal = pyqtSignal()
 
     def __init__(self): 
 
@@ -129,15 +133,18 @@ class HomeScreen(QMainWindow):
         toolbar.setIconSize(QSize(60, 60))
         toolbar.setStyleSheet("background : rgb(150, 150, 150)")
         toolbar.addAction(Action(self, QIcon("resources/exit.svg"), "Quit", self.quit_game, False))
-        toolbar.addWidget(MenuButton(self, QIcon("resources/account.svg"), QSize(60, 60), QFont("Metropolis", 15), [("Create Account", self.create_new_account), ("Sign In", None)]))
-        toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), QSize(60, 60), QFont("Metropolis", 15), [("Customise GUI", None)]))
-        toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", None, False))
+        toolbar.addWidget(MenuButton(self, QIcon("resources/account.svg"), QSize(60, 60), QFont("Metropolis", 15), [("Create Account", self.create_new_account), ("Sign In", None), ("Sign Out", None), ("Show Stats", None),]))
+        toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), QSize(60, 60), QFont("Metropolis", 15), [("Customise GUI", None), ("Manage Account", None)]))
+        toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", self.help_screen, False))
 
     def play_singleplayer(self):
         self.play_singleplayer_signal.emit()
     
     def create_new_account(self):
         self.create_new_account_signal.emit()
+    
+    def help_screen(self):
+        self.help_signal.emit()
 
     def quit_game(self):
         exit()
@@ -194,7 +201,7 @@ class GameScreen(QMainWindow):
         super().__init__()
 
         self.__selected_square = (None, None)
-
+        self.__notes_mode = False
         self.__running = True
 
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
@@ -202,12 +209,12 @@ class GameScreen(QMainWindow):
 
         self.statusBar().setFont(QFont("Metropolis", 14))
 
-        self.back = BackButton(self, self.__return_to_home_screen)
-        self.info_button = CircularButton(self, 845, 15, 60, 60, QIcon("resources/info.svg"), None)
+        self.__back = BackButton(self, self.__return_to_home_screen)
+        self.__info_button = CircularButton(self, 845, 15, 60, 60, QIcon("resources/info.svg"), None)
 
-        self.timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), None)
-        self.progress = ProgressBar(self, 610, 110, 330, 20)
-        self.progress.setStyleSheet("QProgressBar::chunk{background-color: #99d9ea;}")
+        self.__timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), None)
+        self.__progress = ProgressBar(self, 610, 110, 330, 20)
+        self.__progress.setStyleSheet("QProgressBar::chunk{background-color: #99d9ea;}")
 
         NUM_INP_SIZE = 110
         STARTX, STARTY = 610, 130
@@ -215,15 +222,15 @@ class GameScreen(QMainWindow):
             for cidx in range(3):
                 num_input = Button(self, str(num := ridx*3+cidx+1), STARTX+NUM_INP_SIZE*cidx, STARTY+NUM_INP_SIZE*ridx, NUM_INP_SIZE, NUM_INP_SIZE, QFont("Metropolis", 20), partial(self.__place_num, num))
 
-        self.undo_button = CircularButton(self, 610, 470, 58, 58, QIcon("resources/undo.svg"), None)
-        self.delete_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/delete.svg"), self.__remove_num)
-        self.delete_button.setIconSize(QSize(53, 53))
-        self.delete_button.setStyleSheet("QPushButton{border-radius: 29px; border: 5px solid black;}")
-        self.hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), self.__show_hint)
-        self.notes_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/notes.svg"), None)
-        self.notes_button.setIconSize(QSize(53, 53))
-        self.notes_button.setStyleSheet("QPushButton{border-radius: 29px; border: 5px solid black;}")
-        self.resign_button = CircularButton(self, 878, 470, 58, 58, QIcon("resources/resign.svg"), partial(self.__show_end_screen, False))
+        self.__undo_button = CircularButton(self, 610, 470, 58, 58, QIcon("resources/undo.svg"), self.__undo_move)
+        self.__delete_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/delete.svg"), self.__remove_num)
+        self.__delete_button.setIconSize(QSize(53, 53))
+        self.__delete_button.setStyleSheet("QPushButton{border-radius: 29px; border: 5px solid black;}")
+        self.__hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), self.__show_hint)
+        self.__notes_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/notes_off.svg"), self.__toggle_notes_mode)
+        self.__notes_button.setIconSize(QSize(53, 53))
+        self.__notes_button.setStyleSheet("QPushButton{border-radius: 29px; border: 5px solid black;}")
+        self.__resign_button = CircularButton(self, 878, 470, 58, 58, QIcon("resources/resign.svg"), partial(self.__show_end_screen, False))
 
         self.__show_border()
 
@@ -271,16 +278,16 @@ class GameScreen(QMainWindow):
                                      ("#99d9ea" if (row+1, col+1) == self.__selected_square else "white") + 
                                      ";color:" + ("black" if orig_board[row][col] != 0 else "blue") + 
                                      ";}")
-        self.progress.setValue(int(self.__game.percent_complete()))
+        self.__progress.setValue(int(self.__game.percent_complete()))
     
     def __create_curr_grid(self):
-        self.__create_number_grid(self.__game.curr_board(), self.__game.orig_board())
+        self.__create_number_grid(self.__game.curr_board, self.__game.orig_board)
     
     def __update_curr_grid(self):
-        self.__update_number_grid(self.__game.curr_board(), self.__game.orig_board())
+        self.__update_number_grid(self.__game.curr_board, self.__game.orig_board)
     
     def __create_solution_grid(self):
-        self.__create_number_grid(self.__game.solved_board(), self.__game.orig_board())
+        self.__create_number_grid(self.__game.solved_board, self.__game.orig_board)
     
     def __show_end_screen(self, win):
 
@@ -336,7 +343,10 @@ class GameScreen(QMainWindow):
 
     def __place_num(self, num):
         try:
-            self.__game.put_down_number(self.__selected_square[0], self.__selected_square[1], num)
+            if self.__notes_mode:
+                pass
+            else:
+                self.__game.put_down_number(self.__selected_square[0], self.__selected_square[1], num)            
         except BoardError as err:
             self.__show_error(err)
         self.__selected_square = (None, None)
@@ -346,7 +356,10 @@ class GameScreen(QMainWindow):
             
     def __remove_num(self):
         try:
-            self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])
+            if self.__notes_mode:
+                pass
+            else:
+                self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])
         except BoardError as err:
             self.__show_error(err)
         self.__selected_square = (None, None)
@@ -361,6 +374,15 @@ class GameScreen(QMainWindow):
             self.__show_error(err)
         self.__selected_square = (None, None)
         self.__update_curr_grid()
+    
+    def __toggle_notes_mode(self):
+        self.__notes_mode = not self.__notes_mode
+        self.__notes_button.setIcon(QIcon("resources/notes_on.svg" if self.__notes_mode else "resources/notes_off.svg"))
+    
+    def __undo_move(self):
+        self.__game.pop_state()
+        self.__game.load_board(self.__game.curr_state())
+        self.__update_curr_grid()
 
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
@@ -374,6 +396,31 @@ class CreateNewAccountScreen(QMainWindow):
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
 
+class HelpScreen(QMainWindow):
+
+    return_to_home_screen_signal = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle(f"Sudoku {UI.VERSION}")
+        self.setMinimumSize(QSize(1000, 560))
+
+        self.back = BackButton(self, self.__return_to_home_screen)
+        self.setStyleSheet("background: rgb(150, 150, 150);")
+
+        self.txt_window = QTextEdit(self)
+        self.txt_window.setGeometry(100, 20, 800, 520)
+        self.txt_window.setStyleSheet("QTextEdit{background: white; border: 5px solid black;}")
+        self.txt_window.setFont(QFont("Metropolis", 20))
+        self.txt_window.setReadOnly(True)
+        self.txt_window.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        with open("resources/help.txt", "r") as f:
+            self.txt_window.insertPlainText(f.read())
+        
+    def __return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+
 class GUI(UI):
 
     def __init__(self):
@@ -383,15 +430,16 @@ class GUI(UI):
         self.__app = QApplication(argv)
 
         self.__screens = {"home": self.__home_screen(), "config game": self.__config_game_screen(), 
-                          "game": self.__game_screen(), "create new account": self.__create_new_account_screen()}
+                          "game": self.__game_screen(), "create new account": self.__create_new_account_screen(),
+                          "help": self.__help_screen()}
 
-        self._push_ui_to_stack("home")
         self.__screens["home"].show()
     
     def __home_screen(self):
         home_screen = HomeScreen()
         home_screen.play_singleplayer_signal.connect(self.__show_config_game_screen)
         home_screen.create_new_account_signal.connect(self.__show_create_new_account_screen)
+        home_screen.help_signal.connect(self.__show_help_screen)
         return home_screen
 
     def __config_game_screen(self):
@@ -408,6 +456,11 @@ class GUI(UI):
     def __create_new_account_screen(self):
         create_new_account_screen = CreateNewAccountScreen()
         return create_new_account_screen
+
+    def __help_screen(self):
+        help_screen = HelpScreen()
+        help_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        return help_screen
 
     def __close_curr_screen(self):
         self.__screens[self._get_curr_ui()].close()
@@ -438,6 +491,10 @@ class GUI(UI):
     def __show_create_new_account_screen(self):
         self.__screens["create new account"] = self.__create_new_account_screen()
         self.__push_screen("create new account")
+    
+    def __show_help_screen(self):
+        self.__screens["help"] = self.__help_screen()
+        self.__push_screen("help")
     
     def __quit_game(self):
         self.__close_curr_screen()
@@ -514,7 +571,7 @@ class Terminal(UI):
         while True:
             self.__print_header()
             self.__print_game_stats()
-            self.__print_curr_board()
+            self.__print_curr_board
             if self.__game.is_complete():
                 print("\n" + "You completed the game!" + "\n")
                 self._pop_ui_from_stack()
@@ -555,10 +612,10 @@ class Terminal(UI):
         print("\n" + "  " + "-"*37 + "\n")
     
     def __print_curr_board(self):
-        self.__print_board(self.__game.curr_board(), self.__game.orig_board())
+        self.__print_board(self.__game.curr_board, self.__game.orig_board)
     
     def __print_solution(self):
-        self.__print_board(self.__game.solved_board(), self.__game.orig_board())
+        self.__print_board(self.__game.solved_board, self.__game.orig_board)
         input("Press enter to quit game")
 
 
