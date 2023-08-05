@@ -102,6 +102,13 @@ class CircularButton(Button):
 class BackButton(CircularButton):
     def __init__(self, window, command):
         super().__init__(window, 925, 15, 60, 60, QIcon("resources/back.svg"), command)
+
+class Background(QWidget):
+    def __init__(self, window, x, y, width, height, colour):
+        super().__init__(window)
+        self.setGeometry(x, y, width, height)
+        # self.setStyleSheet("QWidget{background: rgba(153, 217, 234, 150);}")
+        self.setStyleSheet("background: " + colour + ";")    
         
 class HomeScreen(QMainWindow):
 
@@ -201,7 +208,7 @@ class GameScreen(QMainWindow):
 
         self.statusBar().setFont(QFont("Metropolis", 14))
 
-        self.back = BackButton(self, self.return_to_home_screen)
+        self.back = BackButton(self, self.__return_to_home_screen)
         self.info_button = CircularButton(self, 845, 15, 60, 60, QIcon("resources/info.svg"), None)
 
         self.timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), None)
@@ -212,17 +219,21 @@ class GameScreen(QMainWindow):
         STARTX, STARTY = 610, 130
         for ridx in range(3):
             for cidx in range(3):
-                num_input = Button(self, str(num := ridx*3+cidx+1), STARTX+NUM_INP_SIZE*cidx, STARTY+NUM_INP_SIZE*ridx, NUM_INP_SIZE, NUM_INP_SIZE, QFont("Metropolis", 20), partial(self.place_num, num))
+                num_input = Button(self, str(num := ridx*3+cidx+1), STARTX+NUM_INP_SIZE*cidx, STARTY+NUM_INP_SIZE*ridx, NUM_INP_SIZE, NUM_INP_SIZE, QFont("Metropolis", 20), partial(self.__place_num, num))
 
         self.undo_button = CircularButton(self, 610, 470, 58, 58, QIcon("resources/undo.svg"), None)
-        self.delete_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/delete.svg"), self.remove_num)
+        self.delete_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/delete.svg"), self.__remove_num)
         self.delete_button.setIconSize(QSize(53, 53))
         self.delete_button.setStyleSheet("QPushButton{border-radius: 29px; border: 5px solid black;}")
-        self.hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), self.show_hint)
+        self.hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), self.__show_hint)
         self.notes_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/notes.svg"), None)
         self.notes_button.setIconSize(QSize(53, 53))
         self.notes_button.setStyleSheet("QPushButton{border-radius: 29px; border: 5px solid black;}")
-        self.resign_button = CircularButton(self, 878, 470, 58, 58, QIcon("resources/resign.svg"), None)
+        self.resign_button = CircularButton(self, 878, 470, 58, 58, QIcon("resources/resign.svg"), partial(self.__show_end_screen, False))
+
+        self.__show_border()
+
+    def __show_border(self):
 
         big_border = Border(self, self.STARTX+self.PADDING-3, self.PADDING-3, 
                             self.GRIDSIZE*9+6+6, self.GRIDSIZE*9+6+6, 3)
@@ -236,11 +247,11 @@ class GameScreen(QMainWindow):
 
     def set_game(self, game : Game):
         self.__game = game
-        self.show_number_grid()
+        self.__show_curr_grid()
 
-    def show_number_grid(self):
+    def __show_number_grid(self, curr_board, orig_board):
     
-        for row, row_lst in enumerate(self.__game.board.get_curr_board()):
+        for row, row_lst in enumerate(curr_board):
             for col, num in enumerate(row_lst):
                 square = Button(window = self, 
                                 text = str(num) if num != 0 else "",
@@ -249,50 +260,101 @@ class GameScreen(QMainWindow):
                                 width = self.GRIDSIZE, 
                                 height = self.GRIDSIZE, 
                                 font = QFont("Metropolis", 20), 
-                                command = partial(self.select_square, row+1, col+1))
+                                command = partial(self.__select_square, row+1, col+1))
                 square.setStyleSheet("QPushButton{border: 2px solid black; background-color:" + 
                                      ("#99d9ea" if (row+1, col+1) == self.__selected_square else "white") + 
-                                     ";color:" + ("black" if self.__game.board.get_orig_board()[row][col] != 0 else "blue") + 
+                                     ";color:" + ("black" if orig_board[row][col] != 0 else "blue") + 
                                      ";}")
                 square.show()
         
         self.progress.setValue(int(self.__game.percent_complete()))
     
-    def show_error(self, err):
+    def __show_curr_grid(self):
+        self.__show_number_grid(self.__game.curr_board(), self.__game.orig_board())
+    
+    def __show_solution_grid(self):
+        self.__show_number_grid(self.__game.solved_board(), self.__game.orig_board())
+    
+    def __show_end_screen(self, win):
+
+        bg = QWidget(self)
+        bg.setGeometry(0, 0, 1000, 560)
+        bg.setStyleSheet("QWidget{background: rgba(153, 217, 234, 150);}")
+        bg.show()
+
+        # bg = Background(self, 0, 0, 1000, 560, "rgba(153, 217, 234, 150)")
+        # bg.show()
+
+        window = QWidget(self)
+        window.setGeometry(200, 30, 600, 500)
+        window.setStyleSheet("QWidget{background:white; border: 5px solid black;}")
+        window.show()
+    
+        title = Label(self, "You Won!" if win else "Game Over!", 0, 50, 1000, 100, QFont("LIBRARY 3 AM soft", 40))
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        title.show()
+
+        rating = Label(self, "500", 0, 200, 1000, 100, QFont("Metropolis", 60))
+        rating.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        rating.show()
+
+        home_screen_button = Button(self, "RETURN TO HOME", 350, 450, 300, 50, QFont("Metropolis", 20), self.__return_to_home_screen)
+        home_screen_button.show()
+
+        solution_button = Button(self, "SEE SOLUTION", 350, 390, 300, 50, QFont("Metropolis", 20),self.__show_solution_screen)
+        if not win:
+            solution_button.show()
+    
+    def __show_solution_screen(self):
+
+        bg = QWidget(self)
+        bg.setGeometry(0, 0, 1000, 560)
+        bg.setStyleSheet("QWidget{background: white;}")
+        bg.show()
+        
+        self.__show_border()
+        self.__show_solution_grid()
+
+        home_screen_button = Button(self, "RETURN TO HOME", 625, 250, 300, 50, QFont("Metropolis", 20), self.__return_to_home_screen)
+        home_screen_button.show()
+
+    def __show_error(self, err):
         self.statusBar().setStyleSheet("QStatusBar{color:red;}")
         self.statusBar().showMessage(str(err.args[0]))
 
-    def select_square(self, row, col):
+    def __select_square(self, row, col):
         self.__selected_square = (row, col)
-        self.show_number_grid()
+        self.__show_curr_grid()
 
-    def place_num(self, num):
+    def __place_num(self, num):
         try:
             self.__game.put_down_number(self.__selected_square[0], self.__selected_square[1], num)
         except BoardError as err:
-            self.show_error(err)
+            self.__show_error(err)
         self.__selected_square = (None, None)
-        self.show_number_grid()
-    
-    def remove_num(self):
+        self.__show_curr_grid()
+        if round(self.__game.percent_complete()) == 100:
+            self.__show_end_screen(True)
+            
+    def __remove_num(self):
         try:
             self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])
         except BoardError as err:
-            self.show_error(err)
+            self.__show_error(err)
         self.__selected_square = (None, None)
-        self.show_number_grid()
+        self.__show_curr_grid()
     
-    def show_hint(self):
+    def __show_hint(self):
         try:
             self.statusBar().setStyleSheet("QStatusBar{color:blue;}")
             hint_lst = self.__game.get_hint_at(self.__selected_square[0], self.__selected_square[1])
             self.statusBar().showMessage(f"HINT: The numbers that can be placed at this square are: {','.join(list(map(str, hint_lst)))}")
         except BoardError as err:
-            self.show_error(err)
+            self.__show_error(err)
         self.__selected_square = (None, None)
-        self.show_number_grid()
+        self.__show_curr_grid()
 
-    def return_to_home_screen(self):
+    def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
 class CreateNewAccountScreen(QMainWindow):
@@ -415,12 +477,12 @@ class Terminal(UI):
         except BoardError as err:
             input(err)
     
-    def __remove_number(self):
+    def ____remove_number(self):
         try:
             while True:
                 row = input("Enter the ROW you want to remove the number at: ")
                 col = input("Enter the COLUMN you want to remove the number at: ")
-                self.__game.remove_number(row, col)
+                self.__game.__remove_number(row, col)
                 break
         except BoardError as err:
             input(err)
@@ -458,7 +520,7 @@ class Terminal(UI):
                 case "P":
                     self.__put_down_number()
                 case "R":
-                    self.__remove_number()
+                    self.____remove_number()
                 case "H":
                     if isinstance(hint := self.__get_hint(), list):
                         self.__print_hint(hint)
