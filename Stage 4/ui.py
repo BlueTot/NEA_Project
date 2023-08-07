@@ -256,27 +256,32 @@ class GameScreen(QMainWindow):
         for row, row_lst in enumerate(curr_board):
             for col, num in enumerate(row_lst):
                 square = Button(window = self, 
-                                text = str(num) if num != 0 else "",
+                                text = str(num) if num != 0 else self.__game.note_at(row, col),
                                 x = self.STARTX + self.PADDING + self.GRIDSIZE*col + 3*(col//3),
                                 y = self.PADDING + self.GRIDSIZE*row + 3*(row//3), 
                                 width = self.GRIDSIZE, 
                                 height = self.GRIDSIZE, 
-                                font = QFont("Metropolis", 20), 
+                                font = QFont("Metropolis", 20 if num != 0 else 13), 
                                 command = partial(self.__select_square, row+1, col+1))
+                square.setFont(QFont("Metropolis", 20 if num != 0 else 13))
                 square.setStyleSheet("QPushButton{border: 2px solid black; background-color:" + 
                                      ("#99d9ea" if (row+1, col+1) == self.__selected_square else "white") + 
-                                     ";color:" + ("black" if orig_board[row][col] != 0 else "blue") + 
+                                     ";color:" + ("black" if orig_board[row][col] != 0 else ("blue" if num != 0 else "red")) + 
+                                     (";text-align: left" if num == 0 else "") + 
                                      ";}")
+                
                 self.__sqrs[row][col] = square
                 square.show()
 
     def __update_number_grid(self, curr_board, orig_board):
         for row, row_lst in enumerate(self.__sqrs):
             for col, sq in enumerate(row_lst):
-                sq.setText(str(num) if (num := curr_board[row][col]) != 0 else "")
+                sq.setText(str(num) if (num := curr_board[row][col]) != 0 else self.__game.note_at(row, col))
+                sq.setFont(QFont("Metropolis", 20 if num != 0 else 13))
                 sq.setStyleSheet("QPushButton{border: 2px solid black; background-color:" + 
                                      ("#99d9ea" if (row+1, col+1) == self.__selected_square else "white") + 
-                                     ";color:" + ("black" if orig_board[row][col] != 0 else "blue") + 
+                                     ";color:" + ("black" if orig_board[row][col] != 0 else ("blue" if num != 0 else "red")) + 
+                                     (";text-align: left" if num == 0 else "") + 
                                      ";}")
         self.__progress.setValue(int(self.__game.percent_complete()))
     
@@ -344,7 +349,7 @@ class GameScreen(QMainWindow):
     def __place_num(self, num):
         try:
             if self.__notes_mode:
-                pass
+                self.__game.edit_note(self.__selected_square[0], self.__selected_square[1], num)
             else:
                 self.__game.put_down_number(self.__selected_square[0], self.__selected_square[1], num)            
         except BoardError as err:
@@ -356,10 +361,7 @@ class GameScreen(QMainWindow):
             
     def __remove_num(self):
         try:
-            if self.__notes_mode:
-                pass
-            else:
-                self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])
+            self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])
         except BoardError as err:
             self.__show_error(err)
         self.__selected_square = (None, None)

@@ -11,7 +11,7 @@ class Game:
         self.__board_size = 9
         self.__board = Board(self.__difficulty)
         self.__state_stack = Stack()
-        #self.__notes = Notes()
+        self.__notes = Notes()
     
     @property
     def difficulty(self):
@@ -26,16 +26,15 @@ class Game:
         return self.__board_size
     
     @property
-    def board(self):
-        return self.__board
-    
-    @property
     def curr_board(self):
         return self.__board.get_curr_board()
     
     @property
     def orig_board(self):
         return self.__board.get_orig_board()
+
+    def note_at(self, row, col):
+        return self.__notes.note_str(row, col)
 
     def push_state(self):
         self.__state_stack.push(self.__board.hash())
@@ -62,6 +61,9 @@ class Game:
     
     def get_hint_at(self, row, col):
         return self.__board.get_hint_for_sq(row, col)
+    
+    def edit_note(self, row, col, num):
+        self.__notes.toggle_number_at_note(row, col, num)
     
     def load_board(self, hash):
         self.__board.load_board(hash)
