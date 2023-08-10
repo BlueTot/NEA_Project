@@ -263,6 +263,7 @@ class GameScreen(QMainWindow):
         self.__paused_label = Label(self.__board_cover, "GAME PAUSED", 0, 0, width, height, QFont("Metropolis", 24))
         self.__paused_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.__board_cover.hide()
+
     def __create_number_grid(self, curr_board, orig_board):
         self.__sqrs = [[0 for _ in range(9)] for _ in range(9)]
     
