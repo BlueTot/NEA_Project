@@ -1,6 +1,3 @@
-- Info Box:
-    - Create box
-    - Render mode, difficulty, time control
 - Game Pausing/Resuming:
     - Save game to json file when paused
     - Add option to open game
