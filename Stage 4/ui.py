@@ -210,12 +210,13 @@ class GameScreen(QMainWindow):
         self.statusBar().setStyleSheet("QStatusBar{color:red;}")
         self.statusBar().setFont(QFont("Metropolis", 14))
 
-        self.__timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), None)
+        self.__timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), self.__pause_game)
+        self.__timer.setStyleSheet("border: 2px solid black;")
         self.__progress = ProgressBar(self, 610, 110, 330, 20)
         self.__progress.setStyleSheet("QProgressBar::chunk{background-color: #99d9ea;}")
 
         self.__back = BackButton(self, self.__return_to_home_screen)
-        self.__info_label = Label(self, "", 620, 15, 285, 100, QFont("Metropolis", 15))
+        self.__info_label = Label(self, "", 595, 15, 310, 90, QFont("Metropolis", 15))
         self.__info_label.setStyleSheet("background: #aee8f5; border: 2px solid black; border-radius: 30px;")
         self.__info_label.hide()
         self.__info_button = CircularButton(self, 845, 15, 60, 60, QIcon("resources/info.svg"), self.__toggle_info_screen)
@@ -251,10 +252,17 @@ class GameScreen(QMainWindow):
                 border.show()
 
     def set_game(self, game : Game):
+
         self.__game = game
         self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nTime Control: ---")
         self.__create_curr_grid()
 
+        self.__board_cover = QWidget(self)
+        self.__board_cover.setGeometry(self.STARTX+self.PADDING-3, self.PADDING-3, width:= self.GRIDSIZE*9+12, height := self.GRIDSIZE*9+12)
+        self.__board_cover.setStyleSheet("background: #aee8f5; border: 5px solid black;")
+        self.__paused_label = Label(self.__board_cover, "GAME PAUSED", 0, 0, width, height, QFont("Metropolis", 24))
+        self.__paused_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.__board_cover.hide()
     def __create_number_grid(self, curr_board, orig_board):
         self.__sqrs = [[0 for _ in range(9)] for _ in range(9)]
     
@@ -344,6 +352,9 @@ class GameScreen(QMainWindow):
 
     def __show_error(self, err):
         self.statusBar().showMessage(str(err.args[0]))
+    
+    def __show_game_paused_error(self):
+        self.statusBar().showMessage("ERROR: This action cannot be performed while the game is paused")
 
     def __select_square(self, row, col):
         if self.__running:
@@ -351,46 +362,66 @@ class GameScreen(QMainWindow):
             self.__update_curr_grid()
 
     def __place_num(self, num):
-        try:
-            if self.__notes_mode:
-                self.__game.edit_note(self.__selected_square[0], self.__selected_square[1], num)
-            else:
-                self.__game.put_down_number(self.__selected_square[0], self.__selected_square[1], num)            
-        except BoardError as err:
-            self.__show_error(err)
-        self.__selected_square = (None, None)
-        self.__update_curr_grid()
-        if self.__game.is_complete():
-            self.__show_end_screen(True)
+        if self.__running:
+            try:
+                if self.__notes_mode:
+                    self.__game.edit_note(self.__selected_square[0], self.__selected_square[1], num)
+                else:
+                    self.__game.put_down_number(self.__selected_square[0], self.__selected_square[1], num)            
+            except BoardError as err:
+                self.__show_error(err)
+            self.__selected_square = (None, None)
+            self.__update_curr_grid()
+            if self.__game.is_complete():
+                self.__show_end_screen(True)
+        else:
+            self.__show_game_paused_error()
             
     def __remove_num(self):
-        try:
-            self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])
-        except BoardError as err:
-            self.__show_error(err)
-        self.__selected_square = (None, None)
-        self.__update_curr_grid()
+        if self.__running:
+            try:
+                self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])
+            except BoardError as err:
+                self.__show_error(err)
+            self.__selected_square = (None, None)
+            self.__update_curr_grid()
+        else:
+            self.__show_game_paused_error()
     
     def __show_hint(self):
-        try:
-            hint_lst = self.__game.get_hint_at(self.__selected_square[0], self.__selected_square[1])
-            self.__game.add_hint_to_notes(self.__selected_square[0], self.__selected_square[1], hint_lst)
-        except BoardError as err:
-            self.__show_error(err)
-        self.__selected_square = (None, None)
-        self.__update_curr_grid()
+        if self.__running:
+            try:
+                hint_lst = self.__game.get_hint_at(self.__selected_square[0], self.__selected_square[1])
+                self.__game.add_hint_to_notes(self.__selected_square[0], self.__selected_square[1], hint_lst)
+            except BoardError as err:
+                self.__show_error(err)
+            self.__selected_square = (None, None)
+            self.__update_curr_grid()
+        else:
+            self.__show_game_paused_error()
     
     def __toggle_notes_mode(self):
-        self.__notes_mode = not self.__notes_mode
-        self.__notes_button.setIcon(QIcon("resources/notes_on.svg" if self.__notes_mode else "resources/notes_off.svg"))
+        if self.__running:
+            self.__notes_mode = not self.__notes_mode
+            self.__notes_button.setIcon(QIcon("resources/notes_on.svg" if self.__notes_mode else "resources/notes_off.svg"))
+        else:
+            self.__show_game_paused_error()
     
     def __undo_move(self):
-        self.__game.pop_state()
-        self.__game.load_state(self.__game.curr_state())
-        self.__update_curr_grid()
+        if self.__running:
+            self.__game.pop_state()
+            self.__game.load_state(self.__game.curr_state())
+            self.__update_curr_grid()
+        else:
+            self.__show_game_paused_error()
     
     def __toggle_info_screen(self):
         self.__info_label.setHidden(not self.__info_label.isHidden())
+    
+    def __pause_game(self):
+        self.__running = not self.__running
+        self.__timer.setStyleSheet(f"background: {'white' if self.__running else '#aee8f5'}; border: 2px solid black;")
+        self.__board_cover.setHidden(not self.__board_cover.isHidden())
 
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
