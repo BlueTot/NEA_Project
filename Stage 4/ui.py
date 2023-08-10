@@ -210,12 +210,15 @@ class GameScreen(QMainWindow):
         self.statusBar().setStyleSheet("QStatusBar{color:red;}")
         self.statusBar().setFont(QFont("Metropolis", 14))
 
-        self.__back = BackButton(self, self.__return_to_home_screen)
-        self.__info_button = CircularButton(self, 845, 15, 60, 60, QIcon("resources/info.svg"), None)
-
         self.__timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), None)
         self.__progress = ProgressBar(self, 610, 110, 330, 20)
         self.__progress.setStyleSheet("QProgressBar::chunk{background-color: #99d9ea;}")
+
+        self.__back = BackButton(self, self.__return_to_home_screen)
+        self.__info_label = Label(self, "", 620, 15, 285, 100, QFont("Metropolis", 15))
+        self.__info_label.setStyleSheet("background: #aee8f5; border: 2px solid black; border-radius: 30px;")
+        self.__info_label.hide()
+        self.__info_button = CircularButton(self, 845, 15, 60, 60, QIcon("resources/info.svg"), self.__toggle_info_screen)
 
         NUM_INP_SIZE = 110
         STARTX, STARTY = 610, 130
@@ -249,6 +252,7 @@ class GameScreen(QMainWindow):
 
     def set_game(self, game : Game):
         self.__game = game
+        self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nTime Control: ---")
         self.__create_curr_grid()
 
     def __create_number_grid(self, curr_board, orig_board):
@@ -384,6 +388,9 @@ class GameScreen(QMainWindow):
         self.__game.pop_state()
         self.__game.load_state(self.__game.curr_state())
         self.__update_curr_grid()
+    
+    def __toggle_info_screen(self):
+        self.__info_label.setHidden(not self.__info_label.isHidden())
 
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
@@ -572,7 +579,7 @@ class Terminal(UI):
         while True:
             self.__print_header()
             self.__print_game_stats()
-            self.__print_curr_board
+            self.__print_curr_board()
             if self.__game.is_complete():
                 print("\n" + "You completed the game!" + "\n")
                 self._pop_ui_from_stack()
