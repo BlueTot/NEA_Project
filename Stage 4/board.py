@@ -107,9 +107,16 @@ class Board(Grid):
         self.__board = BoardGenerator.new_board(self.__difficulty)
         self.__orig_board = deepcopy(self.__board)
     
-    def load_board(self, hash):
+    @staticmethod
+    def __load(arr, hash):
         for idx, num in enumerate(hash):
-            self.__board[idx // 9][idx % 9] = int(num)
+            arr[idx // 9][idx % 9] = int(num)
+ 
+    def load_board(self, hash):
+        self.__load(self.__board, hash)
+    
+    def set_orig_board(self, hash):
+        self.__load(self.__orig_board, hash)
     
     def get_curr_board(self):
         return self.__board

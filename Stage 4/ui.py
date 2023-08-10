@@ -104,29 +104,29 @@ class CircularButton(Button):
 class BackButton(CircularButton):
     def __init__(self, window, command):
         super().__init__(window, 925, 15, 60, 60, QIcon("resources/back.svg"), command)
+
+class Screen(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle(f"Sudoku {UI.VERSION}")
+        self.setMinimumSize(QSize(1000, 560))
         
-class HomeScreen(QMainWindow):
+class HomeScreen(Screen):
 
     play_singleplayer_signal = pyqtSignal()
     create_new_account_signal = pyqtSignal()
     help_signal = pyqtSignal()
 
-    def __init__(self): 
+    def __init__(self):
 
         super().__init__()
-    
-        self.setWindowTitle(f"Sudoku {UI.VERSION}")
-        self.setMinimumSize(QSize(1000, 560))
+        
+        self.__title = Label(self, "S U D O K U", 0, 75, 1000, 100, QFont("LIBRARY 3 AM soft", 70))
+        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        QFontDatabase.addApplicationFont("resources/library-3-am.3amsoft.otf")
-        QFontDatabase.addApplicationFont("resources/Metropolis-Regular.otf")
-
-        title = Label(self, "S U D O K U", 0, 75, 1000, 100, QFont("LIBRARY 3 AM soft", 70))
-        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        self.play_singleplayer_button = Button(self, "PLAY SINGLEPLAYER", 300, 250, 400, 50, QFont("Metropolis", 25), self.play_singleplayer)
-        self.play_multiplayer_button = Button(self, "PLAY MULTIPLAYER", 300, 320, 400, 50, QFont("Metropolis", 25), None)
-        self.leaderboard_button = Button(self, "LEADERBOARD", 300, 390, 400, 50, QFont("Metropolis", 25), None)
+        self.__play_singleplayer_button = Button(self, "PLAY SINGLEPLAYER", 300, 250, 400, 50, QFont("Metropolis", 25), self.play_singleplayer)
+        self.__play_multiplayer_button = Button(self, "PLAY MULTIPLAYER", 300, 320, 400, 50, QFont("Metropolis", 25), None)
+        self.__leaderboard_button = Button(self, "LEADERBOARD", 300, 390, 400, 50, QFont("Metropolis", 25), None)
 
         toolbar = QToolBar(self)
         self.addToolBar(Qt.ToolBarArea.RightToolBarArea, toolbar)
@@ -149,7 +149,33 @@ class HomeScreen(QMainWindow):
     def quit_game(self):
         exit()
 
-class ConfigGameScreen(QMainWindow):
+class OpenOrCreateNewGameScreen(Screen):
+
+    return_to_home_screen_signal = pyqtSignal()
+    create_new_game_signal = pyqtSignal()
+    open_game_signal = pyqtSignal()
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.__open_game_button = Button(self, "OPEN EXISTING GAME", 70, 80, 400, 400, QFont("Metropolis", 25), self.open_game)
+        self.__open_game_button.setStyleSheet("background: #ffcccb; border: 5px solid black;")
+        self.__create_new_game_button = Button(self, "CREATE NEW GAME", 530, 80, 400, 400, QFont("Metropolis", 25), self.create_new_game)
+        self.__create_new_game_button.setStyleSheet("background: #aee8f5; border: 5px solid black;")
+
+        self.__back_button = BackButton(self, self.return_to_home_screen)
+    
+    def open_game(self):
+        self.open_game_signal.emit()
+
+    def create_new_game(self):
+        self.create_new_game_signal.emit()
+
+    def return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+
+class OpenGameScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
     play_game_signal = pyqtSignal(str)
@@ -158,30 +184,49 @@ class ConfigGameScreen(QMainWindow):
 
         super().__init__()
 
-        self.setWindowTitle(f"Sudoku {UI.VERSION}")
-        self.setMinimumSize(QSize(1000, 560))
+        self.__title = Label(self, "OPEN EXISTING GAME", 0, 25, 1000, 100, QFont("LIBRARY 3 AM soft", 50))
+        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        title = Label(self, "CREATE NEW GAME", 0, 25, 1000, 100, QFont("LIBRARY 3 AM soft", 50))
-        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont("Metropolis", 20), None)
+        self.__back = BackButton(self, self.return_to_home_screen)
 
-        self.play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont("Metropolis", 20), self.play_game)
-        self.back = BackButton(self, self.return_to_home_screen)
+        self.statusBar().setFont(QFont("Metropolis", 14))
+        self.statusBar().setStyleSheet("QStatusBar{color:red;}")
+    
+    def return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+
+
+class ConfigGameScreen(Screen):
+
+    return_to_home_screen_signal = pyqtSignal()
+    play_game_signal = pyqtSignal(str)
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.__title = Label(self, "CREATE NEW GAME", 0, 25, 1000, 100, QFont("LIBRARY 3 AM soft", 50))
+        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont("Metropolis", 20), self.play_game)
+        self.__back = BackButton(self, self.return_to_home_screen)
 
         self.statusBar().setFont(QFont("Metropolis", 14))
         self.statusBar().setStyleSheet("QStatusBar{color:red;}")
 
-        self.mode = Label(self, "MODE: ", 50, 150, 300, 100, QFont("Metropolis", 24))
-        self.difficulty = Label(self, "DIFFICULTY: ", 50, 225, 300, 100, QFont("Metropolis", 24))
-        self.timed = Label(self, "TIMED: ", 50, 300, 300, 100, QFont("Metropolis", 24))
-        self.time_control = Label(self, "TIME CONTROL: ", 50, 375, 300, 100, QFont("Metropolis", 24))
+        self.__mode = Label(self, "MODE: ", 50, 150, 300, 100, QFont("Metropolis", 24))
+        self.__difficulty = Label(self, "DIFFICULTY: ", 50, 225, 300, 100, QFont("Metropolis", 24))
+        self.__timed = Label(self, "TIMED: ", 50, 300, 300, 100, QFont("Metropolis", 24))
+        self.__time_control = Label(self, "TIME CONTROL: ", 50, 375, 300, 100, QFont("Metropolis", 24))
 
-        self.mode_menu = ComboBox(self, 330, 175, 200, 50, QFont("Metropolis", 20), ["Normal"])
-        self.difficulty_menu = ComboBox(self, 330, 250, 200, 50, QFont("Metropolis", 20), ["Easy", "Medium", "Hard", "Challenge"])
-        self.timed_menu = ComboBox(self, 330, 325, 200, 50, QFont("Metropolis", 20), ["Yes", "No"])
-        self.time_control_menu = ComboBox(self, 330, 400, 200, 50, QFont("Metropolis", 20), ["5 mins", "10 mins", "15 mins", "30 mins", "1 hour"])
+        self.__mode_menu = ComboBox(self, 330, 175, 200, 50, QFont("Metropolis", 20), ["Normal"])
+        self.__difficulty_menu = ComboBox(self, 330, 250, 200, 50, QFont("Metropolis", 20), ["Easy", "Medium", "Hard", "Challenge"])
+        self.__timed_menu = ComboBox(self, 330, 325, 200, 50, QFont("Metropolis", 20), ["Yes", "No"])
+        self.__time_control_menu = ComboBox(self, 330, 400, 200, 50, QFont("Metropolis", 20), ["5 mins", "10 mins", "15 mins", "30 mins", "1 hour"])
 
     def play_game(self):
-        if difficulty := self.difficulty_menu.currentText():
+        if difficulty := self.__difficulty_menu.currentText():
             self.play_game_signal.emit(difficulty)
         else:
             self.statusBar().showMessage("*To continue, please fill all boxes")
@@ -189,7 +234,7 @@ class ConfigGameScreen(QMainWindow):
     def return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
-class GameScreen(QMainWindow):
+class GameScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
 
@@ -203,9 +248,6 @@ class GameScreen(QMainWindow):
         self.__selected_square = (None, None)
         self.__notes_mode = False
         self.__running = True
-
-        self.setWindowTitle(f"Sudoku {UI.VERSION}")
-        self.setMinimumSize(QSize(1000, 560))
         
         self.statusBar().setStyleSheet("QStatusBar{color:red;}")
         self.statusBar().setFont(QFont("Metropolis", 14))
@@ -425,26 +467,29 @@ class GameScreen(QMainWindow):
         self.__board_cover.setHidden(not self.__board_cover.isHidden())
 
     def __return_to_home_screen(self):
+        if self.__running: # game quit from the "back" button
+            self.__game.save_game("games")
         self.return_to_home_screen_signal.emit()
 
-class CreateNewAccountScreen(QMainWindow):
+class CreateNewAccountScreen(Screen):
+
+    return_to_home_screen_signal = pyqtSignal()
     
     def __init__(self):
 
         super().__init__()
 
-        self.setWindowTitle(f"Sudoku {UI.VERSION}")
-        self.setMinimumSize(QSize(1000, 560))
+        self.__back = BackButton(self, self.__return_to_home_screen)
+    
+    def __return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
 
-class HelpScreen(QMainWindow):
+class HelpScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
 
     def __init__(self):
         super().__init__()
-
-        self.setWindowTitle(f"Sudoku {UI.VERSION}")
-        self.setMinimumSize(QSize(1000, 560))
 
         self.back = BackButton(self, self.__return_to_home_screen)
         self.setStyleSheet("background: rgb(150, 150, 150);")
@@ -469,18 +514,34 @@ class GUI(UI):
 
         self.__app = QApplication(argv)
 
-        self.__screens = {"home": self.__home_screen(), "config game": self.__config_game_screen(), 
-                          "game": self.__game_screen(), "create new account": self.__create_new_account_screen(),
-                          "help": self.__help_screen()}
+        QFontDatabase.addApplicationFont("resources/library-3-am.3amsoft.otf")
+        QFontDatabase.addApplicationFont("resources/Metropolis-Regular.otf")
+
+        self.__screens = {"home": self.__home_screen(), "open or create new game": self.__open_or_create_new_game_screen(),
+                           "config game": self.__config_game_screen(), "open game": self.__open_game_screen(),
+                           "game": self.__game_screen(), "create new account": self.__create_new_account_screen(), 
+                           "help": self.__help_screen()}
 
         self.__screens["home"].show()
     
     def __home_screen(self):
         home_screen = HomeScreen()
-        home_screen.play_singleplayer_signal.connect(self.__show_config_game_screen)
+        home_screen.play_singleplayer_signal.connect(self.__show_open_or_create_new_game_screen)
         home_screen.create_new_account_signal.connect(self.__show_create_new_account_screen)
         home_screen.help_signal.connect(self.__show_help_screen)
         return home_screen
+    
+    def __open_or_create_new_game_screen(self):
+        open_or_create_new_game_screen = OpenOrCreateNewGameScreen()
+        open_or_create_new_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        open_or_create_new_game_screen.open_game_signal.connect(self.__show_open_game_screen)
+        open_or_create_new_game_screen.create_new_game_signal.connect(self.__show_config_game_screen)  
+        return open_or_create_new_game_screen
+    
+    def __open_game_screen(self):
+        open_game_screen = OpenGameScreen()
+        open_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        return open_game_screen
 
     def __config_game_screen(self):
         config_game_screen = ConfigGameScreen()
@@ -495,6 +556,7 @@ class GUI(UI):
 
     def __create_new_account_screen(self):
         create_new_account_screen = CreateNewAccountScreen()
+        create_new_account_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         return create_new_account_screen
 
     def __help_screen(self):
@@ -518,6 +580,14 @@ class GUI(UI):
         self._pop_ui_from_stack()
         self.__show_curr_screen()
     
+    def __show_open_or_create_new_game_screen(self):
+        self.__screens["open or create new game"] = self.__open_or_create_new_game_screen()
+        self.__push_screen("open or create new game")
+    
+    def __show_open_game_screen(self):
+        self.__screens["open game"] = self.__open_game_screen()
+        self.__push_screen("open game")
+    
     def __show_config_game_screen(self):
         self.__screens["config game"] = self.__config_game_screen()
         self.__push_screen("config game")
@@ -538,7 +608,7 @@ class GUI(UI):
     
     def __quit_game(self):
         self.__close_curr_screen()
-        for _ in range(2):
+        for _ in range(3):
             self._pop_ui_from_stack()
         self.__show_curr_screen()
 

@@ -1,5 +1,7 @@
 from board import *
 from stack import Stack
+from datetime import datetime
+import json
 
 class Game:
 
@@ -78,10 +80,21 @@ class Game:
             if (num in curr_note) != (num in nums):
                 self.__notes.toggle_number_at_note(row, col, num)
         self.push_state()
-
     
     def is_complete(self):
         return self.__board.num_empty_squares(self.__board.get_curr_board()) == 0
 
     def percent_complete(self):
         return round(((num_orig_empty := self.__board.num_empty_squares(self.__board.get_orig_board())) - self.__board.num_empty_squares(self.__board.get_curr_board()))/num_orig_empty * 100, 2)
+
+    def load_game(self, difficulty, board_hash, orig_board_hash, notes_hash):
+        self.__difficulty = difficulty
+        self.__board.load_board(board_hash)
+        self.__board.set_orig_board(orig_board_hash)
+        self.__notes.load_notes(notes_hash)
+    
+    def save_game(self, directory):
+        with open(f"{directory}/sudokugame_{datetime.now().strftime('%d-%m-%y_%H-%M-%S')}.json", "w") as f:
+            f.write(json.dumps({"difficulty": self.__difficulty, "board": self.__board.hash(), 
+                                "orig board": self.__board.orig_hash(), "notes": self.__notes.hash()}, indent=4))
+            
