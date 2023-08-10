@@ -1,7 +1,3 @@
-- Notes Mode:
-    - add methods to game class to add/remove notes
-    - make Grid class and make Board/Notes inherit from it
-    - render notes on the GUI
 - Info Box:
     - Create box
     - Render mode, difficulty, time control

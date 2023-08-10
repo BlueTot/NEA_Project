@@ -206,7 +206,8 @@ class GameScreen(QMainWindow):
 
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
-
+        
+        self.statusBar().setStyleSheet("QStatusBar{color:red;}")
         self.statusBar().setFont(QFont("Metropolis", 14))
 
         self.__back = BackButton(self, self.__return_to_home_screen)
@@ -338,7 +339,6 @@ class GameScreen(QMainWindow):
         home_screen_button.show()
 
     def __show_error(self, err):
-        self.statusBar().setStyleSheet("QStatusBar{color:red;}")
         self.statusBar().showMessage(str(err.args[0]))
 
     def __select_square(self, row, col):
@@ -356,7 +356,7 @@ class GameScreen(QMainWindow):
             self.__show_error(err)
         self.__selected_square = (None, None)
         self.__update_curr_grid()
-        if round(self.__game.percent_complete()) == 100:
+        if self.__game.is_complete():
             self.__show_end_screen(True)
             
     def __remove_num(self):
@@ -369,9 +369,8 @@ class GameScreen(QMainWindow):
     
     def __show_hint(self):
         try:
-            self.statusBar().setStyleSheet("QStatusBar{color:blue;}")
             hint_lst = self.__game.get_hint_at(self.__selected_square[0], self.__selected_square[1])
-            self.statusBar().showMessage(f"HINT: The numbers that can be placed at this square are: {','.join(list(map(str, hint_lst)))}")
+            self.__game.add_hint_to_notes(self.__selected_square[0], self.__selected_square[1], hint_lst)
         except BoardError as err:
             self.__show_error(err)
         self.__selected_square = (None, None)
@@ -383,7 +382,7 @@ class GameScreen(QMainWindow):
     
     def __undo_move(self):
         self.__game.pop_state()
-        self.__game.load_board(self.__game.curr_state())
+        self.__game.load_state(self.__game.curr_state())
         self.__update_curr_grid()
 
     def __return_to_home_screen(self):

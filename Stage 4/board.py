@@ -166,7 +166,25 @@ class Notes(Grid):
     def __init__(self):
         super().__init__()
         self.__notes = [[set() for _ in range(9)] for _ in range(9)]
-
+        self.__orig_notes = deepcopy(self.__notes)
+    
+    def note_at(self, row, col):
+        return self.__notes[row - 1][col - 1]
+    
+    def load_notes(self, notes):
+        for idx, nums in enumerate(notes.split(",")):
+            self.__notes[idx // 9][idx % 9] = set([int(num) for num in nums if num != "0"])
+    
+    @staticmethod
+    def __hash(notes):
+        return ",".join([",".join([("0" if (string := "".join(list(map(str, nums)))) == "" else string) for nums in row]) for row in notes])
+    
+    def orig_hash(self):
+        return self.__hash(self.__orig_notes)
+    
+    def hash(self):
+        return self.__hash(self.__notes)
+        
     def note_str(self, row, col):
         return "\n".join([" " + " ".join([str(j+1) if j+1 in self.__notes[row][col] else "  " for j in range(i*3, (i+1)*3)]) for i in range(3)])
     

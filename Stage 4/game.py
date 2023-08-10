@@ -10,7 +10,8 @@ class Game:
         self.__mode = "Normal"
         self.__board_size = 9
         self.__board = Board(self.__difficulty)
-        self.__state_stack = Stack()
+        self.__board_state_stack = Stack()
+        self.__notes_state_stack = Stack()
         self.__notes = Notes()
     
     @property
@@ -37,15 +38,20 @@ class Game:
         return self.__notes.note_str(row, col)
 
     def push_state(self):
-        self.__state_stack.push(self.__board.hash())
+        self.__board_state_stack.push(self.__board.hash())
+        self.__notes_state_stack.push(self.__notes.hash())
 
     def pop_state(self):
-        return self.__state_stack.pop()
+        return self.__board_state_stack.pop(), self.__notes_state_stack.pop()
     
     def curr_state(self):
-        if (state := self.__state_stack.peek()) != -1:
-            return state
-        return self.__board.orig_hash()
+        board_state = state if (state := self.__board_state_stack.peek()) != -1 else self.__board.orig_hash()
+        notes_state = state if (state := self.__notes_state_stack.peek()) != -1 else self.__notes.orig_hash()
+        return board_state, notes_state
+
+    def load_state(self, states):
+        self.__board.load_board(states[0])
+        self.__notes.load_notes(states[1])
     
     @property
     def solved_board(self):
@@ -64,9 +70,15 @@ class Game:
     
     def edit_note(self, row, col, num):
         self.__notes.toggle_number_at_note(row, col, num)
+        self.push_state()
     
-    def load_board(self, hash):
-        self.__board.load_board(hash)
+    def add_hint_to_notes(self, row, col, nums):
+        curr_note = self.__notes.note_at(row, col)
+        for num in range(1, 10):
+            if (num in curr_note) != (num in nums):
+                self.__notes.toggle_number_at_note(row, col, num)
+        self.push_state()
+
     
     def is_complete(self):
         return self.__board.num_empty_squares(self.__board.get_curr_board()) == 0
