@@ -1,7 +1,7 @@
 from sys import argv
 from ui import Terminal, GUI
 
-def print_usage():
+def print_usage(): # print how to run the game
     print("""Welcome to Sudoku
           
     To start the program in terminal: 
@@ -15,15 +15,15 @@ def main():
         print_usage()
         return
 
-    if argv[1] == "t":
+    if argv[1] == "t": # terminal
         game = Terminal()
-    elif argv[1] == "g":
+    elif argv[1] == "g": # gui
         game = GUI()
     else:
         print_usage()
         return
     
-    game.run()
+    game.run() # start game
 
-if __name__ in "__main__":
+if __name__ in "__main__": # driver code
     main()
