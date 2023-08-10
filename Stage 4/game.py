@@ -2,19 +2,23 @@ from board import *
 from stack import Stack
 from datetime import datetime
 import json
+import os
 
 class Game:
 
     DIFFICULTY_NUMS = {1: "Easy", 2: "Medium", 3: "Hard", 4:"Challenge"}
+    DEFAULT_DIRECTORY = "games"
+    DEFAULT_DIFFICULTY = "Easy"
+    DEFAULT_MODE = "Normal"
     
-    def __init__(self, difficulty):
+    def __init__(self, difficulty=DEFAULT_DIFFICULTY):
         self.__difficulty = difficulty
-        self.__mode = "Normal"
-        self.__board_size = 9
+        self.__mode = self.DEFAULT_MODE
         self.__board = Board(self.__difficulty)
         self.__board_state_stack = Stack()
         self.__notes_state_stack = Stack()
         self.__notes = Notes()
+        self.__file = None
     
     @property
     def difficulty(self):
@@ -23,10 +27,6 @@ class Game:
     @property
     def mode(self):
         return self.__mode
-    
-    @property
-    def board_size(self):
-        return self.__board_size
     
     @property
     def curr_board(self):
@@ -87,14 +87,27 @@ class Game:
     def percent_complete(self):
         return round(((num_orig_empty := self.__board.num_empty_squares(self.__board.get_orig_board())) - self.__board.num_empty_squares(self.__board.get_curr_board()))/num_orig_empty * 100, 2)
 
-    def load_game(self, difficulty, board_hash, orig_board_hash, notes_hash):
-        self.__difficulty = difficulty
-        self.__board.load_board(board_hash)
-        self.__board.set_orig_board(orig_board_hash)
-        self.__notes.load_notes(notes_hash)
+    @staticmethod
+    def get_stats_from(file):
+        with open(f"{Game.DEFAULT_DIRECTORY}/{file}") as f:
+            return json.load(f)
+
+    def load_game(self, file):
+        data = self.get_stats_from(file)
+        self.__file = file
+        self.__difficulty = data["difficulty"]
+        self.__board.load_board(data["board"])
+        self.__board.set_orig_board(data["orig board"])
+        self.__notes.load_notes(data["notes"])
     
-    def save_game(self, directory):
-        with open(f"{directory}/sudokugame_{datetime.now().strftime('%d-%m-%y_%H-%M-%S')}.json", "w") as f:
-            f.write(json.dumps({"difficulty": self.__difficulty, "board": self.__board.hash(), 
+    def save_game(self):
+        file_name = f"singleplayer_{datetime.now().strftime('%d-%m-%y_%H-%M-%S')}.json" if self.__file is None else self.__file
+        with open(f"{self.DEFAULT_DIRECTORY}/{file_name}", "w") as f:
+            f.write(json.dumps({"creation date": str(datetime.now().date()), "creation time": str(datetime.now().time()), 
+                                "mode": self.__mode, "difficulty": self.__difficulty, "board": self.__board.hash(), 
                                 "orig board": self.__board.orig_hash(), "notes": self.__notes.hash()}, indent=4))
-            
+    
+    def remove_game_file(self):
+        if self.__file is not None:
+            if os.path.exists(path := f"{self.DEFAULT_DIRECTORY}/{self.__file}"):
+                os.remove(path)

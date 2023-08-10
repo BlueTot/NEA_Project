@@ -1,9 +1,6 @@
 from sys import argv, exit
-import typing
-
-from PyQt6 import QtCore
 from stack import Stack
-from os import system
+import os
 from functools import partial
 from abc import ABC, abstractmethod
 from colorama import Fore, Style
@@ -110,6 +107,8 @@ class Screen(QMainWindow):
         super().__init__()
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
+        self.statusBar().setFont(QFont("Metropolis", 14))
+        self.statusBar().setStyleSheet("QStatusBar{color:red;}")
         
 class HomeScreen(Screen):
 
@@ -167,7 +166,10 @@ class OpenOrCreateNewGameScreen(Screen):
         self.__back_button = BackButton(self, self.return_to_home_screen)
     
     def open_game(self):
-        self.open_game_signal.emit()
+        if os.listdir("games"):
+            self.open_game_signal.emit()
+        else:
+            self.statusBar().showMessage("*There are no saved games at this moment, please create a new game")
 
     def create_new_game(self):
         self.create_new_game_signal.emit()
@@ -187,15 +189,38 @@ class OpenGameScreen(Screen):
         self.__title = Label(self, "OPEN EXISTING GAME", 0, 25, 1000, 100, QFont("LIBRARY 3 AM soft", 50))
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont("Metropolis", 20), None)
-        self.__back = BackButton(self, self.return_to_home_screen)
+        self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont("Metropolis", 20), self.__play_game)
+        self.__back = BackButton(self, self.__return_to_home_screen)
+
+        self.__choose_game = Label(self, "CHOOSE A GAME: ", 50, 150, 300, 100, QFont("Metropolis", 20))
+        self.__choose_game_menu = ComboBox(self, 50, 230, 400, 50, QFont("Metropolis", 15), os.listdir("games"))
+        self.__choose_game_menu.activated.connect(self.__show_game_info)
 
         self.statusBar().setFont(QFont("Metropolis", 14))
         self.statusBar().setStyleSheet("QStatusBar{color:red;}")
-    
-    def return_to_home_screen(self):
-        self.return_to_home_screen_signal.emit()
 
+        self.__game_info = QTextEdit(self)
+        self.__game_info.setGeometry(50, 300, 400, 235)
+        self.__game_info.setStyleSheet("background: #aee8f5; border: 2px solid black;")
+        self.__game_info.setFont(QFont("Metropolis", 18))
+        self.__game_info.setReadOnly(True)
+    
+    def __show_game_info(self):
+        if file := self.__choose_game_menu.currentText():
+            stats = Game.get_stats_from(file)
+            labels = ["Creation Date", "Creation Time", "Mode", "Difficulty"]
+            self.__game_info.setText("\n".join([f"{label}: {stats[label.lower()]}" for label in labels]))
+        else:
+            self.__game_info.setText("")
+            
+    def __return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+    
+    def __play_game(self):
+        if file := self.__choose_game_menu.currentText():
+            self.play_game_signal.emit(file)
+        else:
+            self.statusBar().showMessage("*To continue, please select a game file to play")
 
 class ConfigGameScreen(Screen):
 
@@ -211,9 +236,6 @@ class ConfigGameScreen(Screen):
 
         self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont("Metropolis", 20), self.play_game)
         self.__back = BackButton(self, self.return_to_home_screen)
-
-        self.statusBar().setFont(QFont("Metropolis", 14))
-        self.statusBar().setStyleSheet("QStatusBar{color:red;}")
 
         self.__mode = Label(self, "MODE: ", 50, 150, 300, 100, QFont("Metropolis", 24))
         self.__difficulty = Label(self, "DIFFICULTY: ", 50, 225, 300, 100, QFont("Metropolis", 24))
@@ -248,9 +270,6 @@ class GameScreen(Screen):
         self.__selected_square = (None, None)
         self.__notes_mode = False
         self.__running = True
-        
-        self.statusBar().setStyleSheet("QStatusBar{color:red;}")
-        self.statusBar().setFont(QFont("Metropolis", 14))
 
         self.__timer = Button(self, "00:00", 610, 20, 130, 65, QFont("Metropolis", 26), self.__pause_game)
         self.__timer.setStyleSheet("border: 2px solid black;")
@@ -354,6 +373,7 @@ class GameScreen(Screen):
 
         self.__running = False
         self.__selected_square = (None, None)
+        self.__game.remove_game_file()
 
         bg = QWidget(self)
         bg.setGeometry(0, 0, 1000, 560)
@@ -415,10 +435,10 @@ class GameScreen(Screen):
                 self.__show_error(err)
             self.__selected_square = (None, None)
             self.__update_curr_grid()
-            if self.__game.is_complete():
-                self.__show_end_screen(True)
         else:
             self.__show_game_paused_error()
+        if self.__game.is_complete():
+            self.__show_end_screen(True)
             
     def __remove_num(self):
         if self.__running:
@@ -468,7 +488,7 @@ class GameScreen(Screen):
 
     def __return_to_home_screen(self):
         if self.__running: # game quit from the "back" button
-            self.__game.save_game("games")
+            self.__game.save_game()
         self.return_to_home_screen_signal.emit()
 
 class CreateNewAccountScreen(Screen):
@@ -541,6 +561,7 @@ class GUI(UI):
     def __open_game_screen(self):
         open_game_screen = OpenGameScreen()
         open_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        open_game_screen.play_game_signal.connect(self.__load_game_screen)
         return open_game_screen
 
     def __config_game_screen(self):
@@ -594,6 +615,13 @@ class GUI(UI):
     
     def __show_game_screen(self, difficulty):
         self.__game = Game(difficulty)
+        self.__screens["game"] = self.__game_screen()
+        self.__screens["game"].set_game(self.__game)
+        self.__push_screen("game")
+    
+    def __load_game_screen(self, file):
+        self.__game = Game()
+        self.__game.load_game(file)
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")
@@ -728,9 +756,8 @@ class Terminal(UI):
         self.__print_board(self.__game.solved_board, self.__game.orig_board)
         input("Press enter to quit game")
 
-
     def __print_header(self):
-        system("cls")
+        os.system("cls")
         print("-"*(l := len(s := f'SUDOKU {UI.VERSION}')) + "\n" + s + "\n" + "-"*l)
     
     def __print_game_stats(self):

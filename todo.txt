@@ -1,5 +1,2 @@
-- Game Pausing/Resuming:
-    - Save game to json file when paused
-    - Add option to open game
 - Game Stats
     - Save game stats to json file if a player resigns or wins

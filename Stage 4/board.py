@@ -201,4 +201,3 @@ class Notes(Grid):
             self.__notes[row][col].remove(num)
         else:
             self.__notes[row][col].add(num)
-
