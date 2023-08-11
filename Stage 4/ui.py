@@ -317,6 +317,7 @@ class GameScreen(Screen):
         self.__game = game
         self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nTime Control: ---")
         self.__create_curr_grid()
+        self.__progress.setValue(int(self.__game.percent_complete()))
 
         self.__board_cover = QWidget(self)
         self.__board_cover.setGeometry(self.STARTX+self.PADDING-3, self.PADDING-3, width:= self.GRIDSIZE*9+12, height := self.GRIDSIZE*9+12)
