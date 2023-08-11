@@ -19,6 +19,8 @@ class Game:
         self.__notes_state_stack = Stack()
         self.__notes = Notes()
         self.__file = None
+        self.__creation_date = str(datetime.now().date())
+        self.__creation_time = str(datetime.now().time())
     
     @property
     def difficulty(self):
@@ -81,6 +83,10 @@ class Game:
                 self.__notes.toggle_number_at_note(row, col, num)
         self.push_state()
     
+    def undo_last_move(self):
+        self.pop_state()
+        self.load_state(self.curr_state())
+    
     def is_complete(self):
         return self.__board.num_empty_squares(self.__board.get_curr_board()) == 0
 
@@ -99,11 +105,13 @@ class Game:
         self.__board.load_board(data["board"])
         self.__board.set_orig_board(data["orig board"])
         self.__notes.load_notes(data["notes"])
+        self.__creation_date = data["creation date"]
+        self.__creation_time = data["creation time"]
     
     def save_game(self):
         file_name = f"singleplayer_{datetime.now().strftime('%d-%m-%y_%H-%M-%S')}.json" if self.__file is None else self.__file
         with open(f"{self.DEFAULT_DIRECTORY}/{file_name}", "w") as f:
-            f.write(json.dumps({"creation date": str(datetime.now().date()), "creation time": str(datetime.now().time()), 
+            f.write(json.dumps({"creation date": self.__creation_date, "creation time": self.__creation_time, 
                                 "mode": self.__mode, "difficulty": self.__difficulty, "board": self.__board.hash(), 
                                 "orig board": self.__board.orig_hash(), "notes": self.__notes.hash()}, indent=4))
     

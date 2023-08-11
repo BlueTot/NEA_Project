@@ -1,5 +1,6 @@
 from sys import argv
-from ui import Terminal, GUI
+from terminal import Terminal
+from gui import GUI
 
 def print_usage(): # print how to run the game
     print("""Welcome to Sudoku
