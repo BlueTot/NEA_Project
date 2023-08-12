@@ -176,7 +176,8 @@ class Notes(Grid):
         self.__orig_notes = deepcopy(self.__notes)
     
     def note_at(self, row, col):
-        return self.__notes[row - 1][col - 1]
+        row, col = self._validate(row)-1, self._validate(col)-1
+        return self.__notes[row][col]
     
     def load_notes(self, notes):
         for idx, nums in enumerate(notes.split(",")):
@@ -194,6 +195,9 @@ class Notes(Grid):
         
     def note_str(self, row, col):
         return "\n".join([" " + " ".join([str(j+1) if j+1 in self.__notes[row][col] else "  " for j in range(i*3, (i+1)*3)]) for i in range(3)])
+
+    def pieced_note_str(self, row, col, piece):
+        return "".join([str(i+1) if i+1 in self.__notes[row][col] else " " for i in range((piece-1)*3, piece*3)])
     
     def toggle_number_at_note(self, row, col, num):
         row, col, num = self._validate(row)-1, self._validate(col)-1, self._validate(num)

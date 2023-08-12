@@ -19,6 +19,8 @@ class Game:
         self.__notes_state_stack = Stack()
         self.__notes = Notes()
         self.__file = None
+        self.__last_saved_board_state = self.__board.orig_hash()
+        self.__last_saved_notes_state = self.__notes.orig_hash()
         self.__creation_date = str(datetime.now().date())
         self.__creation_time = str(datetime.now().time())
     
@@ -41,6 +43,9 @@ class Game:
     def note_at(self, row, col):
         return self.__notes.note_str(row, col)
 
+    def pieced_note_at(self, row, col, piece):
+        return self.__notes.pieced_note_str(row, col, piece)
+
     def push_state(self):
         self.__board_state_stack.push(self.__board.hash())
         self.__notes_state_stack.push(self.__notes.hash())
@@ -49,8 +54,8 @@ class Game:
         return self.__board_state_stack.pop(), self.__notes_state_stack.pop()
     
     def curr_state(self):
-        board_state = state if (state := self.__board_state_stack.peek()) != -1 else self.__board.orig_hash()
-        notes_state = state if (state := self.__notes_state_stack.peek()) != -1 else self.__notes.orig_hash()
+        board_state = state if (state := self.__board_state_stack.peek()) != -1 else self.__last_saved_board_state
+        notes_state = state if (state := self.__notes_state_stack.peek()) != -1 else self.__last_saved_notes_state
         return board_state, notes_state
 
     def load_state(self, states):
@@ -101,6 +106,8 @@ class Game:
     def load_game(self, file):
         data = self.get_stats_from(file)
         self.__file = file
+        self.__last_saved_board_state = data["orig board"]
+        self.__last_saved_notes_state = data["notes"]
         self.__difficulty = data["difficulty"]
         self.__board.load_board(data["board"])
         self.__board.set_orig_board(data["orig board"])

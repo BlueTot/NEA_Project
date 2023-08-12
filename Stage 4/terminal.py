@@ -86,8 +86,9 @@ class Terminal(UI):
                 case "P": self.__put_down_number() # place command
                 case "D": self.__remove_number() # delete command
                 case "H": # hint command
-                    if isinstance(hint := self.__get_hint(), list):
-                        self.__print_hint(hint)
+                    self.__get_hint()
+                    # if isinstance(hint := self.__get_hint(), list):
+                    #     self.__print_hint(hint)
                 case "E": self.__edit_note() # edit note command
                 case "U": self.__game.undo_last_move() # undo command
                 case "N": self.__notes_mode = not self.__notes_mode # toggle notes mode command
@@ -131,7 +132,9 @@ class Terminal(UI):
             while True:
                 row = input("Enter the ROW you want to get the hint for: ")
                 col = input("Enter the COLUMN you want to get the hint for: ")
-                return self.__game.get_hint_at(row, col)
+                print(self.__game.get_hint_at(row, col))
+                self.__game.add_hint_to_notes(row, col, self.__game.get_hint_at(row, col))
+                break
         except BoardError as err:
             input(err)
     
@@ -155,17 +158,24 @@ class Terminal(UI):
             else:
                 print("Not one of the options ... try again!")
     
-    @staticmethod
-    def __print_board(board, orig_board):
-        print("\n" + "    1   2   3   4   5   6   7   8   9", end='')
+    def __print_board(self, board, orig_board):
+        print("\n" + (s := " "* 5 + f"{' '*5}".join(str(i) for i in range(1, 10))), end='')
         for row in range(len(board)):
-            print("\n" + "  " + "-"*37)
-            print(row+1, end=' ')
-            for col in range(len(board[0])):
-                colour = Style.RESET_ALL if board[row][col] == orig_board[row][col] else Fore.BLUE
-                print("|", f"{colour}{num if (num := board[row][col]) != 0 else ' '}{Style.RESET_ALL}", end = ' ')
-            print("|", end='')
-        print("\n" + "  " + "-"*37 + "\n")
+            print("\n" + "  " + "-"*(len(s)+1), end='')
+            for piece in range(3):
+                print()
+                for col in range(len(board[0])):
+                    if (num := board[row][col]) == orig_board[row][col] and num != 0:
+                        colour = Style.RESET_ALL
+                    elif num == 0:
+                        colour = Fore.RED
+                    else:
+                        colour = Fore.BLUE
+                    print((f"{row+1}" if piece == 1 else " ") if col == 0 else "", 
+                          "|", f"{colour}{(' '*3 if piece != 1 else f' {num} ') if (num := board[row][col]) != 0 else self.__game.pieced_note_at(row, col, piece+1)}{Style.RESET_ALL}", 
+                          end='')
+                print(" |", end='')
+        print("\n" + "  " + "-"*(len(s)+1) + "\n")
     
     def __print_curr_board(self):
         self.__print_board(self.__game.curr_board, self.__game.orig_board)
