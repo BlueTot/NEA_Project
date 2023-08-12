@@ -1,8 +1,5 @@
-- Update Terminal with all features:
-    - notes mode (+ change hints)
+- Internal changes
+    - combine Board and Notes classes
 - Customise GUI
     - make new screen for customising GUI
     - add a few combo boxes for background colour, background image, font, button colour etc.
-- Game Stats
-    - Save game stats to json file if a player resigns or wins
-    - Make show stats menu and display the stats of the player (in categories)
