@@ -194,7 +194,3 @@ class Terminal(UI):
         print("\n" + f"MODE: {self.__game.mode}")
         print(f"DIFFICULTY: {self.__game.difficulty.capitalize()}")
         print(f"% COMPLETE: {self.__game.percent_complete()}%")
-
-    def __print_hint(self, hint):
-        print("HINT: The valid numbers that can be placed are ", ', '.join(list(map(str, hint))))
-        input("Press enter to continue")

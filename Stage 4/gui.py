@@ -307,20 +307,20 @@ class GameScreen(Screen):
         self.__sqrs = [[0 for _ in range(9)] for _ in range(9)]
     
         for row, row_lst in enumerate(curr_board):
-            for col, num in enumerate(row_lst):
+            for col, sq in enumerate(row_lst):
                 square = Button(window = self, 
-                                text = str(num) if num != 0 else self.__game.note_at(row, col),
+                                text = str(sq.num) if sq.num != 0 else self.__game.note_at(row, col),
                                 x = self.STARTX + self.PADDING + self.GRIDSIZE*col + 3*(col//3),
                                 y = self.PADDING + self.GRIDSIZE*row + 3*(row//3), 
                                 width = self.GRIDSIZE, 
                                 height = self.GRIDSIZE, 
-                                font = QFont("Metropolis", 20 if num != 0 else 13), 
+                                font = QFont("Metropolis", 20 if sq.num != 0 else 13), 
                                 command = partial(self.__select_square, row+1, col+1))
-                square.setFont(QFont("Metropolis", 20 if num != 0 else 13))
+                square.setFont(QFont("Metropolis", 20 if sq.num != 0 else 13))
                 square.setStyleSheet("QPushButton{border: 2px solid black; background-color:" + 
                                      ("#99d9ea" if (row+1, col+1) == self.__selected_square else "white") + 
-                                     ";color:" + ("black" if orig_board[row][col] != 0 else ("blue" if num != 0 else "red")) + 
-                                     (";text-align: left" if num == 0 else "") + 
+                                     ";color:" + ("black" if orig_board[row][col].num != 0 else ("blue" if sq.num != 0 else "red")) + 
+                                     (";text-align: left" if sq.num == 0 else "") + 
                                      ";}")
                 
                 self.__sqrs[row][col] = square
@@ -329,11 +329,11 @@ class GameScreen(Screen):
     def __update_number_grid(self, curr_board, orig_board):
         for row, row_lst in enumerate(self.__sqrs):
             for col, sq in enumerate(row_lst):
-                sq.setText(str(num) if (num := curr_board[row][col]) != 0 else self.__game.note_at(row, col))
+                sq.setText(str(num) if (num := curr_board[row][col].num) != 0 else self.__game.note_at(row, col))
                 sq.setFont(QFont("Metropolis", 20 if num != 0 else 13))
                 sq.setStyleSheet("QPushButton{border: 2px solid black; background-color:" + 
                                      ("#99d9ea" if (row+1, col+1) == self.__selected_square else "white") + 
-                                     ";color:" + ("black" if orig_board[row][col] != 0 else ("blue" if num != 0 else "red")) + 
+                                     ";color:" + ("black" if orig_board[row][col].num != 0 else ("blue" if num != 0 else "red")) + 
                                      (";text-align: left" if num == 0 else "") + 
                                      ";}")
         self.__progress.setValue(int(self.__game.percent_complete()))
