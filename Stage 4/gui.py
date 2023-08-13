@@ -91,6 +91,7 @@ class HomeScreen(Screen):
 
     play_singleplayer_signal = pyqtSignal()
     create_new_account_signal = pyqtSignal()
+    customise_gui_signal = pyqtSignal()
     help_signal = pyqtSignal()
 
     def __init__(self):
@@ -110,7 +111,7 @@ class HomeScreen(Screen):
         toolbar.setStyleSheet("background : rgb(150, 150, 150)")
         toolbar.addAction(Action(self, QIcon("resources/exit.svg"), "Quit", self.__quit_game, False))
         toolbar.addWidget(MenuButton(self, QIcon("resources/account.svg"), QSize(60, 60), QFont("Metropolis", 15), [("Create Account", self.__create_new_account), ("Sign In", None), ("Sign Out", None), ("Show Stats", None),]))
-        toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), QSize(60, 60), QFont("Metropolis", 15), [("Customise GUI", None), ("Manage Account", None)]))
+        toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), QSize(60, 60), QFont("Metropolis", 15), [("Customise GUI", self.__customise_gui), ("Manage Account", None)]))
         toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", self.__help_screen, False))
 
     def __play_singleplayer(self):
@@ -118,6 +119,9 @@ class HomeScreen(Screen):
     
     def __create_new_account(self):
         self.create_new_account_signal.emit()
+    
+    def __customise_gui(self):
+        self.customise_gui_signal.emit()
     
     def __help_screen(self):
         self.help_signal.emit()
@@ -481,6 +485,19 @@ class CreateNewAccountScreen(Screen):
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
+class CustomiseGUIScreen(Screen):
+
+    return_to_home_screen_signal = pyqtSignal()
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.__back = BackButton(self, self.__return_to_home_screen)
+    
+    def __return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+
 class HelpScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
@@ -517,22 +534,23 @@ class GUI(UI):
         self.__screens = {"home": self.__home_screen(), "open or create new game": self.__open_or_create_new_game_screen(),
                            "config game": self.__config_game_screen(), "open game": self.__open_game_screen(),
                            "game": self.__game_screen(), "create new account": self.__create_new_account_screen(), 
-                           "help": self.__help_screen()}
+                           "customise gui": self.__customise_gui_screen(), "help": self.__help_screen()}
 
         self.__screens["home"].show()
     
     def __home_screen(self):
         home_screen = HomeScreen()
-        home_screen.play_singleplayer_signal.connect(self.__show_open_or_create_new_game_screen)
-        home_screen.create_new_account_signal.connect(self.__show_create_new_account_screen)
-        home_screen.help_signal.connect(self.__show_help_screen)
+        home_screen.play_singleplayer_signal.connect(partial(self.__show_screen, "open or create new game", self.__open_or_create_new_game_screen))
+        home_screen.create_new_account_signal.connect(partial(self.__show_screen, "create new account", self.__create_new_account_screen))
+        home_screen.customise_gui_signal.connect(partial(self.__show_screen, "customise gui", self.__customise_gui_screen))
+        home_screen.help_signal.connect(partial(self.__show_screen, "help", self.__help_screen))
         return home_screen
     
     def __open_or_create_new_game_screen(self):
         open_or_create_new_game_screen = OpenOrCreateNewGameScreen()
         open_or_create_new_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        open_or_create_new_game_screen.open_game_signal.connect(self.__show_open_game_screen)
-        open_or_create_new_game_screen.create_new_game_signal.connect(self.__show_config_game_screen)  
+        open_or_create_new_game_screen.open_game_signal.connect(partial(self.__show_screen, "open game", self.__open_game_screen))
+        open_or_create_new_game_screen.create_new_game_signal.connect(partial(self.__show_screen, "config game", self.__config_game_screen))  
         return open_or_create_new_game_screen
     
     def __open_game_screen(self):
@@ -556,6 +574,11 @@ class GUI(UI):
         create_new_account_screen = CreateNewAccountScreen()
         create_new_account_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         return create_new_account_screen
+    
+    def __customise_gui_screen(self):
+        customise_gui_screen = CustomiseGUIScreen()
+        customise_gui_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        return customise_gui_screen
 
     def __help_screen(self):
         help_screen = HelpScreen()
@@ -578,17 +601,9 @@ class GUI(UI):
         self._pop_ui_from_stack()
         self.__show_curr_screen()
     
-    def __show_open_or_create_new_game_screen(self):
-        self.__screens["open or create new game"] = self.__open_or_create_new_game_screen()
-        self.__push_screen("open or create new game")
-    
-    def __show_open_game_screen(self):
-        self.__screens["open game"] = self.__open_game_screen()
-        self.__push_screen("open game")
-    
-    def __show_config_game_screen(self):
-        self.__screens["config game"] = self.__config_game_screen()
-        self.__push_screen("config game")
+    def __show_screen(self, screen_name, screen_func):
+        self.__screens[screen_name] = screen_func()
+        self.__push_screen(screen_name)
     
     def __show_game_screen(self, difficulty):
         self.__game = Game(difficulty)
@@ -602,14 +617,6 @@ class GUI(UI):
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")
-    
-    def __show_create_new_account_screen(self):
-        self.__screens["create new account"] = self.__create_new_account_screen()
-        self.__push_screen("create new account")
-    
-    def __show_help_screen(self):
-        self.__screens["help"] = self.__help_screen()
-        self.__push_screen("help")
     
     def __quit_game(self):
         self.__close_curr_screen()
