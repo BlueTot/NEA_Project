@@ -1,7 +1,7 @@
 from sys import argv, exit
 import os
 from functools import partial
-from board import BoardError
+from board import GameError
 from game import Game
 from ui import UI
 
@@ -409,7 +409,7 @@ class GameScreen(Screen):
                     self.__game.edit_note(self.__selected_square[0], self.__selected_square[1], num)
                 else:
                     self.__game.put_down_number(self.__selected_square[0], self.__selected_square[1], num)            
-            except BoardError as err:
+            except GameError as err:
                 self.__show_error(err)
             self.__selected_square = (None, None)
             self.__update_curr_grid()
@@ -422,7 +422,7 @@ class GameScreen(Screen):
         if self.__running:
             try:
                 self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])
-            except BoardError as err:
+            except GameError as err:
                 self.__show_error(err)
             self.__selected_square = (None, None)
             self.__update_curr_grid()
@@ -434,7 +434,7 @@ class GameScreen(Screen):
             try:
                 hint_lst = self.__game.get_hint_at(self.__selected_square[0], self.__selected_square[1])
                 self.__game.add_hint_to_notes(self.__selected_square[0], self.__selected_square[1], hint_lst)
-            except BoardError as err:
+            except GameError as err:
                 self.__show_error(err)
             self.__selected_square = (None, None)
             self.__update_curr_grid()

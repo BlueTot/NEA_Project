@@ -2,7 +2,7 @@ from ui import UI
 import os
 from colorama import Fore, Style
 from game import Game
-from board import BoardError
+from board import GameError
 
 class Terminal(UI):
 
@@ -75,7 +75,7 @@ class Terminal(UI):
             self.__print_game_stats() # print stats
             self.__print_curr_board() # print board
             if self.__game.is_complete(): # exit game if game finished
-                print("\n" + "You completed the game!" + "\n")
+                input("\n" + "You completed the game!" + "\n")
                 self.__game.remove_game_file()
                 self.__exit_to_home_screen()
                 return
@@ -114,7 +114,7 @@ class Terminal(UI):
                 col = input("Enter the COLUMN you want to place the number at: ")
                 self.__game.put_down_number(row, col, num)
                 break
-        except BoardError as err:
+        except GameError as err:
             input(err)
     
     def __remove_number(self):
@@ -122,9 +122,9 @@ class Terminal(UI):
             while True:
                 row = input("Enter the ROW you want to remove the number at: ")
                 col = input("Enter the COLUMN you want to remove the number at: ")
-                self.__game.__remove_number(row, col)
+                self.__game.remove_number(row, col)
                 break
-        except BoardError as err:
+        except GameError as err:
             input(err)
     
     def __get_hint(self):
@@ -135,7 +135,7 @@ class Terminal(UI):
                 print(self.__game.get_hint_at(row, col))
                 self.__game.add_hint_to_notes(row, col, self.__game.get_hint_at(row, col))
                 break
-        except BoardError as err:
+        except GameError as err:
             input(err)
     
     def __edit_note(self):
@@ -146,7 +146,7 @@ class Terminal(UI):
                 col = input("Enter the COLUMN you want to edit the note at: ")
                 self.__game.edit_note(row, col, num)
                 break
-        except BoardError as err:
+        except GameError as err:
             input(err)
     
     @staticmethod
@@ -165,14 +165,14 @@ class Terminal(UI):
             for piece in range(3):
                 print()
                 for col in range(len(board[0])):
-                    if (num := board[row][col]) == orig_board[row][col] and num != 0:
+                    if (num := board[row][col].num) == orig_board[row][col].num and num != 0:
                         colour = Style.RESET_ALL
                     elif num == 0:
                         colour = Fore.RED
                     else:
                         colour = Fore.BLUE
                     print((f"{row+1}" if piece == 1 else " ") if col == 0 else "", 
-                          "|", f"{colour}{(' '*3 if piece != 1 else f' {num} ') if (num := board[row][col]) != 0 else self.__game.pieced_note_at(row, col, piece+1)}{Style.RESET_ALL}", 
+                          "|", f"{colour}{(' '*3 if piece != 1 else f' {num} ') if (num := board[row][col].num) != 0 else self.__game.pieced_note_at(row, col, piece+1)}{Style.RESET_ALL}", 
                           end='')
                 print(" |", end='')
         print("\n" + "  " + "-"*(len(s)+1) + "\n")

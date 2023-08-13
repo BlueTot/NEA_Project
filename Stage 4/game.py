@@ -4,6 +4,9 @@ from datetime import datetime
 import json
 import os
 
+class GameError(Exception):
+    pass
+
 class Game:
 
     DIFFICULTY_NUMS = {1: "Easy", 2: "Medium", 3: "Hard", 4:"Challenge"}
@@ -15,12 +18,9 @@ class Game:
         self.__difficulty = difficulty
         self.__mode = self.DEFAULT_MODE
         self.__board = Board(self.__difficulty)
-        self.__board_state_stack = Stack()
-        self.__notes_state_stack = Stack()
-        self.__notes = Notes()
+        self.__state_stack = Stack()
         self.__file = None
-        self.__last_saved_board_state = self.__board.orig_hash()
-        self.__last_saved_notes_state = self.__notes.orig_hash()
+        self.__last_saved_state = self.__board.orig_hash()
         self.__creation_date = str(datetime.now().date())
         self.__creation_time = str(datetime.now().time())
     
@@ -41,31 +41,27 @@ class Game:
         return self.__board.get_orig_board()
 
     def note_at(self, row, col):
-        return self.__notes.note_str(row, col)
+        return self.__board.note_str(row, col)
 
     def pieced_note_at(self, row, col, piece):
-        return self.__notes.pieced_note_str(row, col, piece)
+        return self.__board.pieced_note_str(row, col, piece)
 
     def push_state(self):
-        self.__board_state_stack.push(self.__board.hash())
-        self.__notes_state_stack.push(self.__notes.hash())
+        self.__state_stack.push(self.__board.hash())
 
     def pop_state(self):
-        return self.__board_state_stack.pop(), self.__notes_state_stack.pop()
+        return self.__state_stack.pop()
     
     def curr_state(self):
-        board_state = state if (state := self.__board_state_stack.peek()) != -1 else self.__last_saved_board_state
-        notes_state = state if (state := self.__notes_state_stack.peek()) != -1 else self.__last_saved_notes_state
-        return board_state, notes_state
+        return state if (state := self.__state_stack.peek()) != -1 else self.__last_saved_state
 
-    def load_state(self, states):
-        self.__board.load_board(states[0])
-        self.__notes.load_notes(states[1])
+    def load_state(self, state):
+        self.__board.load_board(state)
     
     @property
     def solved_board(self):
         return self.__board.get_solved_board()
-    
+
     def put_down_number(self, row, col, num):
         self.__board.set_num_at(row, col, num)
         self.push_state()
@@ -78,14 +74,14 @@ class Game:
         return self.__board.get_hint_for_sq(row, col)
     
     def edit_note(self, row, col, num):
-        self.__notes.toggle_number_at_note(row, col, num)
+        self.__board.toggle_number_at_note(row, col, num)
         self.push_state()
     
     def add_hint_to_notes(self, row, col, nums):
-        curr_note = self.__notes.note_at(row, col)
+        curr_note = self.__board.note_at(row, col)
         for num in range(1, 10):
-            if (num in curr_note) != (num in nums):
-                self.__notes.toggle_number_at_note(row, col, num)
+            if curr_note[num-1] != (num in nums):
+                self.__board.toggle_number_at_note(row, col, num)
         self.push_state()
     
     def undo_last_move(self):
@@ -106,12 +102,10 @@ class Game:
     def load_game(self, file):
         data = self.get_stats_from(file)
         self.__file = file
-        self.__last_saved_board_state = data["orig board"]
-        self.__last_saved_notes_state = data["notes"]
+        self.__last_saved_state = data["board"]
         self.__difficulty = data["difficulty"]
         self.__board.load_board(data["board"])
         self.__board.set_orig_board(data["orig board"])
-        self.__notes.load_notes(data["notes"])
         self.__creation_date = data["creation date"]
         self.__creation_time = data["creation time"]
     
@@ -120,7 +114,7 @@ class Game:
         with open(f"{self.DEFAULT_DIRECTORY}/{file_name}", "w") as f:
             f.write(json.dumps({"creation date": self.__creation_date, "creation time": self.__creation_time, 
                                 "mode": self.__mode, "difficulty": self.__difficulty, "board": self.__board.hash(), 
-                                "orig board": self.__board.orig_hash(), "notes": self.__notes.hash()}, indent=4))
+                                "orig board": self.__board.orig_hash()}, indent=4))
     
     def remove_game_file(self):
         if self.__file is not None:
