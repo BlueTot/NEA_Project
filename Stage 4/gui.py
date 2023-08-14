@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToo
 
 class AppearanceConfiguration:
     def __init__(self):
-        self.__background_colour = "default"
+        self.__background_colour = "rgb(240, 240, 240)"
         self.__colour1 = "rgb(255, 255, 255)"
         self.__colour2 = "#aee8f5"
         self.__colour2_translucent = "rgba(153, 217, 234, 150)"
@@ -146,10 +146,14 @@ class HomeScreen(Screen):
         
         self.__title = Label(self, "S U D O K U", 0, 75, 1000, 100, QFont(self._appearance_config.title_font, 70))
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.__title.setStyleSheet("background: transparent;")
 
         self.__play_singleplayer_button = Button(self, "PLAY SINGLEPLAYER", 300, 250, 400, 50, QFont(self._appearance_config.regular_font, 25), self.__play_singleplayer)
+        self.__play_singleplayer_button.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__play_multiplayer_button = Button(self, "PLAY MULTIPLAYER", 300, 320, 400, 50, QFont(self._appearance_config.regular_font, 25), None)
+        self.__play_multiplayer_button.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__leaderboard_button = Button(self, "LEADERBOARD", 300, 390, 400, 50, QFont(self._appearance_config.regular_font, 25), None)
+        self.__leaderboard_button.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
 
         toolbar = QToolBar(self)
         self.addToolBar(Qt.ToolBarArea.RightToolBarArea, toolbar)
@@ -219,10 +223,12 @@ class OpenGameScreen(Screen):
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont(self._appearance_config.regular_font, 20), self.__play_game)
+        self.__play.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__back = BackButton(self, self.__return_to_home_screen)
 
         self.__choose_game = Label(self, "CHOOSE A GAME: ", 50, 150, 300, 100, QFont(self._appearance_config.regular_font, 20))
         self.__choose_game_menu = ComboBox(self, 50, 230, 400, 50, QFont(self._appearance_config.regular_font, 15), os.listdir(Game.DEFAULT_DIRECTORY))
+        self.__choose_game_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__choose_game_menu.activated.connect(self.__show_game_info)
 
         self.statusBar().setFont(QFont(self._appearance_config.regular_font, 14))
@@ -264,6 +270,7 @@ class ConfigGameScreen(Screen):
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont(self._appearance_config.regular_font, 20), self.__play_game)
+        self.__play.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__back = BackButton(self, self.__return_to_home_screen)
 
         self.__mode = Label(self, "MODE: ", 50, 150, 300, 100, QFont(self._appearance_config.regular_font, 24))
@@ -272,9 +279,13 @@ class ConfigGameScreen(Screen):
         self.__time_control = Label(self, "TIME CONTROL: ", 50, 375, 300, 100, QFont(self._appearance_config.regular_font, 24))
 
         self.__mode_menu = ComboBox(self, 330, 175, 200, 50, QFont(self._appearance_config.regular_font, 20), ["Normal"])
+        self.__mode_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__difficulty_menu = ComboBox(self, 330, 250, 200, 50, QFont(self._appearance_config.regular_font, 20), ["Easy", "Medium", "Hard", "Challenge"])
+        self.__difficulty_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__timed_menu = ComboBox(self, 330, 325, 200, 50, QFont(self._appearance_config.regular_font, 20), ["Yes", "No"])
+        self.__timed_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__time_control_menu = ComboBox(self, 330, 400, 200, 50, QFont(self._appearance_config.regular_font, 20), ["5 mins", "10 mins", "15 mins", "30 mins", "1 hour"])
+        self.__time_control_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
 
     def __play_game(self):
         if difficulty := self.__difficulty_menu.currentText():
@@ -316,6 +327,7 @@ class GameScreen(Screen):
         for ridx in range(3):
             for cidx in range(3):
                 num_input = Button(self, str(num := ridx*3+cidx+1), STARTX+NUM_INP_SIZE*cidx, STARTY+NUM_INP_SIZE*ridx, NUM_INP_SIZE, NUM_INP_SIZE, QFont(self._appearance_config.regular_font, 20), partial(self.__place_num, num))
+                num_input.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
 
         self.__undo_button = CircularButton(self, 610, 470, 58, 58, QIcon("resources/undo.svg"), self.__undo_move)
         self.__delete_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/delete.svg"), self.__remove_num)
@@ -417,10 +429,12 @@ class GameScreen(Screen):
     
         title = Label(self, "You Won!" if win else "Game Over!", 0, 50, 1000, 100, QFont(self._appearance_config.title_font, 40))
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        title.setStyleSheet("background: transparent;")
         title.show()
 
         rating = Label(self, "500", 0, 200, 1000, 100, QFont(self._appearance_config.regular_font, 60))
         rating.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        rating.setStyleSheet("background: transparent;")
         rating.show()
 
         home_screen_button = Button(self, "RETURN TO HOME", 350, 450, 300, 50, QFont(self._appearance_config.regular_font, 20), self.__return_to_home_screen)
@@ -540,9 +554,12 @@ class CustomiseGUIScreen(Screen):
     def __init__(self, appearance_config):
 
         super().__init__(appearance_config)
+        
+        self.__title = Label(self, "CUSTOMISE GUI", 0, 25, 1000, 100, QFont(self._appearance_config.title_font, 50))
+        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.__back = BackButton(self, self.__return_to_home_screen)
-    
+
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
@@ -555,7 +572,7 @@ class HelpScreen(Screen):
         super().__init__(appearance_config)
 
         self.back = BackButton(self, self.__return_to_home_screen)
-        self.setStyleSheet(f"background: {self._appearance_config.colour4};")
+        self.setStyleSheet(f"background: {self._appearance_config.colour3};")
 
         self.txt_window = QTextEdit(self)
         self.txt_window.setGeometry(100, 20, 800, 520)
