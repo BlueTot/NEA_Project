@@ -10,4 +10,5 @@ Milestones:
 - Stage 5 Commence: August 14th 2023
 - Stage 6 Commence: ???
 - Stage 7 Commence: ???
+- Stage 8 Commence: ???
 - COMPLETION: ???
