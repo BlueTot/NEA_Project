@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class UI(ABC):
 
-    VERSION = "v0.4"
+    VERSION = "v0.5"
 
     def __init__(self):
         self._ui_stack = Stack()

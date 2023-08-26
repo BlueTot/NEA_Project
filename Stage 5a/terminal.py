@@ -2,7 +2,7 @@ from ui import UI
 import os
 from colorama import Fore, Style
 from game import Game
-from board import GameError
+from game import GameError
 
 class Terminal(UI):
 

@@ -1,7 +1,7 @@
 from sys import argv, exit
 import os
 from functools import partial
-from board import GameError
+from game import GameError
 from game import Game
 from ui import UI
 
@@ -11,7 +11,8 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToo
 
 class AppearanceConfiguration:
     def __init__(self):
-        self.__background_colour = "rgb(240, 240, 240)"
+        # rgb(240, 240, 240)
+        self.__background_colour = "default"
         self.__colour1 = "rgb(255, 255, 255)"
         self.__colour2 = "#aee8f5"
         self.__colour2_translucent = "rgba(153, 217, 234, 150)"
