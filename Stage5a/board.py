@@ -98,6 +98,33 @@ class Board:
 
     def __init__(self):
         self._board = [[Square() for _ in range(9)] for _ in range(9)]
+        self._row_digits = [0 for _ in range(9)]
+        self._col_digits = [0 for _ in range(9)]
+        self._matrix_digits = [0 for _ in range(9)]
+    
+    @property
+    def row_digits(self):
+        return [bin(n) for n in self._row_digits]
+    
+    @property
+    def col_digits(self):
+        return [bin(n) for n in self._col_digits]
+    
+    @property
+    def matrix_digits(self):
+        return [bin(n) for n in self._matrix_digits]
+    
+    @staticmethod
+    def _bwn(num):
+        return num ^ ((2**9) - 1)
+    
+    @staticmethod
+    def _bin(num):
+        return 2 ** (num - 1)
+    
+    @staticmethod
+    def _matrix_num(row, col):
+        return 3 * (row // 3) + col // 3
     
     @property
     def board(self):
@@ -110,6 +137,14 @@ class Board:
         return self._board[row][col].note
     
     def set_num_at(self, row, col, num):
+        if num > 0:
+            self._row_digits[row] += (bin := self._bin(num))
+            self._col_digits[col] += bin
+            self._matrix_digits[self._matrix_num(row, col)] += bin
+        elif (orig_num := self.get_num_at(row, col)) != 0:
+            self._row_digits[row] -= (bin := self._bin(orig_num))
+            self._col_digits[col] -= bin
+            self._matrix_digits[self._matrix_num(row, col)] -= bin
         self._board[row][col].set_num(num)
     
     def toggle_num_at_note(self, row, col, num):
@@ -137,21 +172,16 @@ class Board:
 class NormalModeBoard(Board):
     def __init__(self):
         super().__init__()
-    
-    def __in_row(self, row, num):
-        return num in [sq.num for sq in self._board[row]]
 
-    def __in_col(self, col, num):
-        return num in [row[col].num for row in self._board]
+    def __not_in_row(self, row, num):
+        return self._bwn(self._row_digits[row]) & self._bin(num)
 
-    def __in_3x3_matrix(self, row, col, num):
-        box_row, box_col = row // 3, col // 3
-        box = []
-        for row in range(3*box_row, 3*(box_row + 1)):
-            for col in range(3*box_col, 3*(box_col+1)):
-                box.append(self._board[row][col].num)
-        return num in box
+    def __not_in_col(self, col, num):
+        return self._bwn(self._col_digits[col]) & self._bin(num)
+
+    def __not_in_3x3_matrix(self, row, col, num):
+        return self._bwn(self._matrix_digits[self._matrix_num(row, col)]) & self._bin(num)
 
     def is_safe(self, row, col, num):
-        return (not self.__in_row(row, num)) and (not self.__in_col(col, num)) and (not self.__in_3x3_matrix(row, col, num))
+        return self.__not_in_row(row, num) and self.__not_in_col(col, num) and self.__not_in_3x3_matrix(row, col, num)
     
