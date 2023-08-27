@@ -28,7 +28,36 @@ class BoardSolver:
     def solver(board):
         return new_board if BoardSolver.solvable(new_board := deepcopy(board)) else -1
 
+    @staticmethod
+    def num_solutions(board, row=0, col=0, num_sols=0):
+        if col == 9 and row == 8:
+            return num_sols + 1
+        
+        if col == 9:
+            col = 0
+            row += 1
+        
+        if board.get_num_at(row, col) > 0:
+            return BoardSolver.num_solutions(board, row, col+1, num_sols)
+        
+        for num in range(1, 10):
+            if board.is_safe(row, col, num):
+                board.set_num_at(row, col, num)
+                num_sols = BoardSolver.num_solutions(board, row, col+1, num_sols)
+            if num_sols > 1:
+                break
+
+        board.set_num_at(row, col, 0)
+                
+        return num_sols
+    
+    def is_unique(board):
+        return BoardSolver.num_solutions(board) == 1
+
+
 class BoardGenerator:
+
+    NUM_GIVENS = {"Easy": 30, "Medium": 25, "Hard": 22, "Challenge": 20}
 
     @staticmethod
     def __fill_matrix_randomly(board, start, end):
@@ -50,10 +79,16 @@ class BoardGenerator:
     @staticmethod
     def new_board(difficulty):
         board = BoardGenerator.__get_random_filled_board()
-        for _ in range(Board.NUM_NUMS_TO_REMOVE[difficulty]):
+        num_remaining = 81
+        while num_remaining > BoardGenerator.NUM_GIVENS[difficulty]:
             while board.get_num_at(row := randint(0, 8), col := randint(0, 8)) == 0:
                 pass
+            orig_num = board.get_num_at(row, col)
             board.set_num_at(row, col, 0)
+            if not BoardSolver.is_unique(deepcopy(board)):
+                board.set_num_at(row, col, orig_num)
+            else:
+                num_remaining -= 1
         return board
 
 class Square:
@@ -93,8 +128,6 @@ class Square:
         return str(self.__num)
 
 class Board:
-
-    NUM_NUMS_TO_REMOVE = {"Easy": 36, "Medium": 45, "Hard": 54, "Challenge": 60}
 
     def __init__(self):
         self._board = [[Square() for _ in range(9)] for _ in range(9)]
@@ -155,7 +188,7 @@ class Board:
             self._board[idx // 9][idx % 9].load(sq_hash)
     
     def hash(self):
-        return ";".join([";".join([sq.hash() for sq in row]) for row in self._board])
+        return ";".join([";".join([sq.hash() for sq in row]) for row in self._board]) 
     
     def num_empty_squares(self):
         return sum([sum([1 for sq in row if sq.num == 0]) for row in self._board])
