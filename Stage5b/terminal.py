@@ -66,7 +66,8 @@ class Terminal(UI):
 
     def __create_new_game(self):
         difficulty_num = int(self.__get_input("Press (1) for Easy, (2) for Medium, (3) for Hard, (4) for Challenge: ", [str(i) for i in range(1, 5)]))
-        self.__game = Game(Game.DIFFICULTY_NUMS[difficulty_num])
+        self.__game = Game()
+        self.__game.generate(Game.DIFFICULTY_NUMS[difficulty_num])
         self._push_ui_to_stack("game")
 
     def __play_game(self):
@@ -132,8 +133,7 @@ class Terminal(UI):
             while True:
                 row = input("Enter the ROW you want to get the hint for: ")
                 col = input("Enter the COLUMN you want to get the hint for: ")
-                print(self.__game.get_hint_at(row, col))
-                self.__game.add_hint_to_notes(row, col, self.__game.get_hint_at(row, col))
+                self.__game.add_hint_to_notes(row, col)
                 break
         except GameError as err:
             input(err)

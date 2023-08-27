@@ -499,8 +499,7 @@ class GameScreen(Screen):
     def __show_hint(self):
         if self.__running:
             try:
-                hint_lst = self.__game.get_hint_at(self.__selected_square[0], self.__selected_square[1])
-                self.__game.add_hint_to_notes(self.__selected_square[0], self.__selected_square[1], hint_lst)
+                self.__game.add_hint_to_notes(self.__selected_square[0], self.__selected_square[1])
             except GameError as err:
                 self.__show_error(err)
             self.__selected_square = (None, None)
@@ -675,7 +674,8 @@ class GUI(UI):
         self.__push_screen(screen_name)
     
     def __show_game_screen(self, difficulty):
-        self.__game = Game(difficulty)
+        self.__game = Game()
+        self.__game.generate(difficulty)
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")

@@ -1,5 +1,6 @@
 from copy import deepcopy
 from random import randint
+from abc import ABC
 
 class BoardSolver:
 
@@ -54,7 +55,6 @@ class BoardSolver:
     def is_unique(board):
         return BoardSolver.num_solutions(board) == 1
 
-
 class BoardGenerator:
 
     NUM_GIVENS = {"Easy": 30, "Medium": 27, "Hard": 24, "Challenge": 22}
@@ -106,6 +106,9 @@ class Square:
     
     def set_num(self, num):
         self.__num = num
+    
+    def set_note(self, note):
+        self.__note = note
 
     def edit_note(self, num):
         self.__note[num - 1] = not self.__note[num - 1]
@@ -126,6 +129,68 @@ class Square:
     
     def __repr__(self):
         return str(self.__num)
+    
+class BoardAction(ABC):
+    def __init__(self, row, col):
+        self._row = row
+        self._col = col
+    
+    @property
+    def row(self):
+        return self._row
+    
+    @property
+    def col(self):
+        return self._col
+    
+    def reverse(self):
+        raise NotImplementedError
+
+class SetNumAction(BoardAction):
+    def __init__(self, row, col, orig_num, new_num):
+        super().__init__(row, col)
+        self._orig_num = orig_num
+        self._new_num = new_num
+    
+    @property
+    def orig_num(self):
+        return self._orig_num
+    
+    @property
+    def new_num(self):
+        return self._new_num
+    
+    def reverse(self):
+        return SetNumAction(self._row, self._col, self._new_num, self._orig_num)
+    
+class EditNoteAction(BoardAction):
+    def __init__(self, row, col, num):
+        super().__init__(row, col)
+        self._num = num
+    
+    @property
+    def num(self):
+        return self._num
+    
+    def reverse(self):
+        return EditNoteAction(self._row, self._col, self._num)
+
+class SetNoteAction(BoardAction):
+    def __init__(self, row, col, orig_note, new_note):
+        super().__init__(row, col)
+        self._orig_note = orig_note
+        self._new_note = new_note
+    
+    @property
+    def orig_note(self):
+        return self._orig_note
+    
+    @property
+    def new_note(self):
+        return self._new_note
+    
+    def reverse(self):
+        return SetNoteAction(self._row, self._col, self._new_note, self._orig_note)
 
 class Board:
 
@@ -134,7 +199,7 @@ class Board:
         self._row_digits = [0 for _ in range(9)]
         self._col_digits = [0 for _ in range(9)]
         self._matrix_digits = [0 for _ in range(9)]
-    
+        
     @property
     def row_digits(self):
         return [bin(n) for n in self._row_digits]
@@ -180,15 +245,11 @@ class Board:
             self._matrix_digits[self._matrix_num(row, col)] -= bin
         self._board[row][col].set_num(num)
     
+    def set_note_at(self, row, col, note):
+        self._board[row][col].set_note(note)
+        
     def toggle_num_at_note(self, row, col, num):
-        self._board[row][col].edit_note(num)
-    
-    def load(self, hash):
-        for idx, sq_hash in enumerate(hash.split(";")):
-            self._board[idx // 9][idx % 9].load(sq_hash)
-    
-    def hash(self):
-        return ";".join([";".join([sq.hash() for sq in row]) for row in self._board]) 
+        self._board[row][col].edit_note(num) 
     
     def num_empty_squares(self):
         return sum([sum([1 for sq in row if sq.num == 0]) for row in self._board])
@@ -201,6 +262,10 @@ class Board:
 
     def get_solved_board(self):
         return BoardSolver.solver(self.__orig_board)
+
+    @staticmethod
+    def _digits_arr_hash(arr):
+        return ",".join(list(map(str, arr)))
 
 class NormalModeBoard(Board):
     def __init__(self):
@@ -217,4 +282,20 @@ class NormalModeBoard(Board):
 
     def is_safe(self, row, col, num):
         return self.__not_in_row(row, num) and self.__not_in_col(col, num) and self.__not_in_3x3_matrix(row, col, num)
+
+    def load(self, hash):
+        sq_hash, digits_hash = hash.split("/")
+        for idx, sq_hash in enumerate(sq_hash.split(";")):
+            self._board[idx // 9][idx % 9].load(sq_hash)
+        row_hash, col_hash, matrix_hash = digits_hash.split(";")
+        self._row_digits = list(map(int, row_hash.split(",")))
+        self._col_digits = list(map(int, col_hash.split(",")))
+        self._matrix_digits = list(map(int, matrix_hash.split(",")))
+    
+    def hash(self):
+        sq_hash = ";".join([";".join([sq.hash() for sq in row]) for row in self._board])
+        digits_hash = ";".join([self._digits_arr_hash(self._row_digits), 
+                                self._digits_arr_hash(self._col_digits), 
+                                self._digits_arr_hash(self._matrix_digits)])
+        return sq_hash + "/" + digits_hash
     
