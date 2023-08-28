@@ -57,7 +57,7 @@ class BoardSolver:
 
 class BoardGenerator:
 
-    NUM_GIVENS = {"Easy": 30, "Medium": 27, "Hard": 24, "Challenge": 22}
+    NUM_GIVENS = {"Easy": 38, "Medium": 31, "Hard": 25, "Challenge": 22}
 
     @staticmethod
     def __fill_matrix_randomly(board, start, end):

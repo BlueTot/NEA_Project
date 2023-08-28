@@ -1,9 +1,10 @@
 from board import *
 from stack import Stack
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 from copy import deepcopy
+from math import floor
 
 class GameError(Exception):
     pass
@@ -25,11 +26,15 @@ class Game:
         self.__file = None
         self.__creation_date = str(datetime.now().date())
         self.__creation_time = str(datetime.now().time())
+        self.__timed = None
+        self.__time_elapsed = None
     
-    def generate(self, difficulty):
+    def generate(self, difficulty, timed):
         self.__difficulty = difficulty
         self.__board = BoardGenerator.new_board(self.__difficulty)
         self.__orig_board = deepcopy(self.__board)
+        self.__timed = timed
+        self.__time_elapsed = 0 if self.__timed else None
     
     @staticmethod
     def get_stats_from(file):
@@ -44,13 +49,16 @@ class Game:
         self.__orig_board.load(data["orig board"])
         self.__creation_date = data["creation date"]
         self.__creation_time = data["creation time"]
+        self.__timed = data["timed"]
+        self.__time_elapsed = data["time elapsed"]
     
     def save_game(self):
         file_name = f"singleplayer_{datetime.now().strftime('%d-%m-%y_%H-%M-%S')}.json" if self.__file is None else self.__file
         with open(f"{self.DEFAULT_DIRECTORY}/{file_name}", "w") as f:
             f.write(json.dumps({"creation date": self.__creation_date, "creation time": self.__creation_time, 
                                 "mode": self.__mode, "difficulty": self.__difficulty, "board": self.__board.hash(), 
-                                "orig board": self.__orig_board.hash()}, indent=4))
+                                "orig board": self.__orig_board.hash(), "timed": self.__timed,
+                                "time elapsed": self.__time_elapsed}, indent=4))
     
     def remove_game_file(self):
         if self.__file is not None:
@@ -64,6 +72,17 @@ class Game:
     @property
     def mode(self):
         return self.__mode
+
+    @property
+    def timed(self):
+        return self.__timed
+    
+    @property
+    def time_elapsed(self):
+        return str(timedelta(seconds=floor(self.__time_elapsed)))
+    
+    def inc_time_elapsed(self):
+        self.__time_elapsed += 0.01
     
     @property
     def curr_board(self):

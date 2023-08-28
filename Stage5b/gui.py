@@ -5,7 +5,7 @@ from game import GameError
 from game import Game
 from ui import UI
 
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget, QTextEdit
 
@@ -261,7 +261,7 @@ class OpenGameScreen(Screen):
 class ConfigGameScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
-    play_game_signal = pyqtSignal(str)
+    play_game_signal = pyqtSignal(list)
 
     def __init__(self, appearance_config):
 
@@ -277,7 +277,7 @@ class ConfigGameScreen(Screen):
         self.__mode = Label(self, "MODE: ", 50, 150, 300, 100, QFont(self._appearance_config.regular_font, 24))
         self.__difficulty = Label(self, "DIFFICULTY: ", 50, 225, 300, 100, QFont(self._appearance_config.regular_font, 24))
         self.__timed = Label(self, "TIMED: ", 50, 300, 300, 100, QFont(self._appearance_config.regular_font, 24))
-        self.__time_control = Label(self, "TIME CONTROL: ", 50, 375, 300, 100, QFont(self._appearance_config.regular_font, 24))
+        self.__board_size = Label(self, "BOARD SIZE: ", 50, 375, 300, 100, QFont(self._appearance_config.regular_font, 24))
 
         self.__mode_menu = ComboBox(self, 330, 175, 200, 50, QFont(self._appearance_config.regular_font, 20), ["Normal"])
         self.__mode_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
@@ -285,12 +285,12 @@ class ConfigGameScreen(Screen):
         self.__difficulty_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__timed_menu = ComboBox(self, 330, 325, 200, 50, QFont(self._appearance_config.regular_font, 20), ["Yes", "No"])
         self.__timed_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
-        self.__time_control_menu = ComboBox(self, 330, 400, 200, 50, QFont(self._appearance_config.regular_font, 20), ["5 mins", "10 mins", "15 mins", "30 mins", "1 hour"])
-        self.__time_control_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
+        self.__board_size_menu = ComboBox(self, 330, 400, 200, 50, QFont(self._appearance_config.regular_font, 20), ["4x4", "6x6", "9x9", "16x16"])
+        self.__board_size_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
 
     def __play_game(self):
-        if difficulty := self.__difficulty_menu.currentText():
-            self.play_game_signal.emit(difficulty)
+        if (difficulty := self.__difficulty_menu.currentText()) and (timed := self.__timed_menu.currentText()):
+            self.play_game_signal.emit([difficulty, True if timed == "Yes" else False])
         else:
             self.statusBar().showMessage("*To continue, please fill all boxes")
 
@@ -312,13 +312,13 @@ class GameScreen(Screen):
         self.__notes_mode = False
         self.__running = True
 
-        self.__timer = Button(self, "00:00", 610, 20, 130, 65, QFont(self._appearance_config.regular_font, 26), self.__pause_game)
+        self.__timer = Button(self, "", 610, 20, 130, 65, QFont(self._appearance_config.regular_font, 21), self.__pause_game)
         self.__timer.setStyleSheet("border: 2px solid black;")
         self.__progress = ProgressBar(self, 610, 110, 330, 20)
         self.__progress.setStyleSheet("QProgressBar::chunk{background-color: #99d9ea;}")
 
         self.__back = BackButton(self, self.__return_to_home_screen)
-        self.__info_label = Label(self, "", 595, 15, 310, 90, QFont(self._appearance_config.regular_font, 15))
+        self.__info_label = Label(self, "", 595, 15, 310, 90, QFont(self._appearance_config.regular_font, 14))
         self.__info_label.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black; border-radius: 30px;")
         self.__info_label.hide()
         self.__info_button = CircularButton(self, 845, 15, 60, 60, QIcon("resources/info.svg"), self.__toggle_info_screen)
@@ -357,7 +357,7 @@ class GameScreen(Screen):
     def set_game(self, game : Game):
 
         self.__game = game
-        self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nTime Control: ---")
+        self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nBoard Size: 9x9 \nTimed: {self.__game.timed}")
         self.__create_curr_grid()
         self.__progress.setValue(int(self.__game.percent_complete()))
 
@@ -367,6 +367,13 @@ class GameScreen(Screen):
         self.__paused_label = Label(self.__board_cover, "GAME PAUSED", 0, 0, width, height, QFont(self._appearance_config.regular_font, 24))
         self.__paused_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.__board_cover.hide()
+
+        if self.__game.timed:
+            self.__timer_event = QTimer()
+            self.__timer_event.timeout.connect(self.__update_time_elapsed)
+            self.__timer_event.start(10)
+        else:
+            self.__timer.setText("---")
 
     def __create_number_grid(self, curr_board, orig_board):
         self.__sqrs = [[0 for _ in range(9)] for _ in range(9)]
@@ -528,6 +535,13 @@ class GameScreen(Screen):
         self.__running = not self.__running
         self.__timer.setStyleSheet(f"background: {'white' if self.__running else self._appearance_config.colour2}; border: 2px solid black;")
         self.__board_cover.setHidden(not self.__board_cover.isHidden())
+        if self.__game.timed:
+            if self.__running: self.__timer_event.start(10)
+            else: self.__timer_event.stop()
+    
+    def __update_time_elapsed(self):
+        self.__game.inc_time_elapsed()
+        self.__timer.setText(str(self.__game.time_elapsed))
 
     def __return_to_home_screen(self):
         if self.__running: # game quit from the "back" button
@@ -673,9 +687,10 @@ class GUI(UI):
         self.__screens[screen_name] = screen_func()
         self.__push_screen(screen_name)
     
-    def __show_game_screen(self, difficulty):
+    def __show_game_screen(self, options):
+        difficulty, timed = options
         self.__game = Game()
-        self.__game.generate(difficulty)
+        self.__game.generate(difficulty, timed)
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")

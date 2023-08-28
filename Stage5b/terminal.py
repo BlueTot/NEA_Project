@@ -67,7 +67,7 @@ class Terminal(UI):
     def __create_new_game(self):
         difficulty_num = int(self.__get_input("Press (1) for Easy, (2) for Medium, (3) for Hard, (4) for Challenge: ", [str(i) for i in range(1, 5)]))
         self.__game = Game()
-        self.__game.generate(Game.DIFFICULTY_NUMS[difficulty_num])
+        self.__game.generate(difficulty=Game.DIFFICULTY_NUMS[difficulty_num], timed=False)
         self._push_ui_to_stack("game")
 
     def __play_game(self):
