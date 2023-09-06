@@ -12,6 +12,7 @@ class GameError(Exception):
 class Game:
 
     DIFFICULTY_NUMS = {1: "Easy", 2: "Medium", 3: "Hard", 4:"Challenge"}
+    NUM_HINTS = {"Easy": 80, "Medium": 65, "Hard": 50, "Challenge": 35}
     DEFAULT_DIRECTORY = "games"
     DEFAULT_DIFFICULTY = "Easy"
     DEFAULT_MODE = "Normal"
@@ -19,6 +20,7 @@ class Game:
     
     def __init__(self):
         self.__difficulty = None
+        self.__num_of_hints = None
         self.__mode = self.DEFAULT_MODE
         self.__board = NormalModeBoard()
         self.__orig_board = deepcopy(self.__board)
@@ -28,9 +30,10 @@ class Game:
         self.__creation_time = str(datetime.now().time())
         self.__timed = None
         self.__time_elapsed = None
-    
+        
     def generate(self, difficulty, timed):
         self.__difficulty = difficulty
+        self.__num_of_hints = self.NUM_HINTS[self.__difficulty]
         self.__board = BoardGenerator.new_board(self.__difficulty)
         self.__orig_board = deepcopy(self.__board)
         self.__timed = timed
@@ -45,6 +48,7 @@ class Game:
         data = self.get_stats_from(file)
         self.__file = file
         self.__difficulty = data["difficulty"]
+        self.__num_of_hints = data["num of hints"]
         self.__board.load(data["board"])
         self.__orig_board.load(data["orig board"])
         self.__creation_date = data["creation date"]
@@ -56,9 +60,9 @@ class Game:
         file_name = f"singleplayer_{datetime.now().strftime('%d-%m-%y_%H-%M-%S')}.json" if self.__file is None else self.__file
         with open(f"{self.DEFAULT_DIRECTORY}/{file_name}", "w") as f:
             f.write(json.dumps({"creation date": self.__creation_date, "creation time": self.__creation_time, 
-                                "mode": self.__mode, "difficulty": self.__difficulty, "board": self.__board.hash(), 
-                                "orig board": self.__orig_board.hash(), "timed": self.__timed,
-                                "time elapsed": self.__time_elapsed}, indent=4))
+                                "mode": self.__mode, "difficulty": self.__difficulty, "num of hints": self.__num_of_hints, 
+                                "board": self.__board.hash(), "orig board": self.__orig_board.hash(), 
+                                "timed": self.__timed, "time elapsed": self.__time_elapsed}, indent=4))
     
     def remove_game_file(self):
         if self.__file is not None:
@@ -68,6 +72,10 @@ class Game:
     @property
     def difficulty(self):
         return self.__difficulty
+
+    @property
+    def num_hints_left(self):
+        return self.__num_of_hints
     
     @property
     def mode(self):
@@ -157,6 +165,9 @@ class Game:
     def __get_hint_at(self, row, col):
         if self.__board.get_num_at(row, col) != 0:
             raise GameError(f"ERROR: Hint is unavailable for this square as it is not empty")
+        if self.__num_of_hints == 0:
+            raise GameError(f"Not enough hints")
+        self.__num_of_hints -= 1
         return [self.__board.is_safe(row, col, num) for num in range(1, 10)]
     
     def add_hint_to_notes(self, row, col):

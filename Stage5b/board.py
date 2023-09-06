@@ -86,6 +86,7 @@ class BoardGenerator:
             orig_num = board.get_num_at(row, col)
             board.set_num_at(row, col, 0)
             if not BoardSolver.is_unique(deepcopy(board)):
+                # print(BoardSolver.solver(deepcopy(board)), "ee")
                 board.set_num_at(row, col, orig_num)
             else:
                 num_remaining -= 1
@@ -298,4 +299,6 @@ class NormalModeBoard(Board):
                                 self._digits_arr_hash(self._col_digits), 
                                 self._digits_arr_hash(self._matrix_digits)])
         return sq_hash + "/" + digits_hash
-    
+
+# board = BoardGenerator.new_board("Challenge")
+# print(BoardSolver.num_solutions(deepcopy(board)))

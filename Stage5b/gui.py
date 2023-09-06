@@ -335,6 +335,7 @@ class GameScreen(Screen):
         self.__delete_button.setIconSize(QSize(53, 53))
         self.__delete_button.setStyleSheet("border-radius: 29px; border: 5px solid black;")
         self.__hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), self.__show_hint)
+        self.__num_hints_label = Label(self, "", 792, 500, 50, 50, QFont(self._appearance_config.regular_font, 15))
         self.__notes_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/notes_off.svg"), self.__toggle_notes_mode)
         self.__notes_button.setIconSize(QSize(53, 53))
         self.__notes_button.setStyleSheet("border-radius: 29px; border: 5px solid black;")
@@ -358,6 +359,8 @@ class GameScreen(Screen):
 
         self.__game = game
         self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nBoard Size: 9x9 \nTimed: {self.__game.timed}")
+        self.__num_hints_label.setText(str(self.__game.num_hints_left))
+
         self.__create_curr_grid()
         self.__progress.setValue(int(self.__game.percent_complete()))
 
@@ -440,10 +443,17 @@ class GameScreen(Screen):
         title.setStyleSheet("background: transparent;")
         title.show()
 
-        rating = Label(self, "500", 0, 200, 1000, 100, QFont(self._appearance_config.regular_font, 60))
-        rating.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        rating.setStyleSheet("background: transparent;")
-        rating.show()
+        if self.__game.timed:
+
+            time_label_top = Label(self, "Time Elapsed: ", 0, 160, 1000, 100, QFont(self._appearance_config.regular_font, 20))
+            time_label_top.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            time_label_top.setStyleSheet("background: transparent;")
+            time_label_top.show()
+
+            time = Label(self, self.__game.time_elapsed, 0, 200, 1000, 100, QFont(self._appearance_config.regular_font, 60))
+            time.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            time.setStyleSheet("background: transparent;")
+            time.show()
 
         home_screen_button = Button(self, "RETURN TO HOME", 350, 450, 300, 50, QFont(self._appearance_config.regular_font, 20), self.__return_to_home_screen)
         home_screen_button.show()
@@ -507,6 +517,7 @@ class GameScreen(Screen):
         if self.__running:
             try:
                 self.__game.add_hint_to_notes(self.__selected_square[0], self.__selected_square[1])
+                self.__num_hints_label.setText(str(self.__game.num_hints_left))
             except GameError as err:
                 self.__show_error(err)
             self.__selected_square = (None, None)
