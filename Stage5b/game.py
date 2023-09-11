@@ -16,25 +16,20 @@ class Game:
     DEFAULT_DIRECTORY = "games"
     DEFAULT_DIFFICULTY = "Easy"
     DEFAULT_MODE = "Normal"
-    VALID_NUMS = [i for i in range(1, 10)]
     
     def __init__(self):
-        self.__difficulty = None
-        self.__num_of_hints = None
         self.__mode = self.DEFAULT_MODE
-        self.__board = NormalModeBoard()
-        self.__orig_board = deepcopy(self.__board)
         self.__action_stack = Stack()
         self.__file = None
         self.__creation_date = str(datetime.now().date())
         self.__creation_time = str(datetime.now().time())
-        self.__timed = None
-        self.__time_elapsed = None
         
-    def generate(self, difficulty, timed):
+    def generate(self, difficulty, board_size, timed):
         self.__difficulty = difficulty
         self.__num_of_hints = self.NUM_HINTS[self.__difficulty]
-        self.__board = BoardGenerator.new_board(self.__difficulty)
+        self.__board_size = board_size
+        self.__VALID_NUMS = [i for i in range(1, self.__board_size + 1)]
+        self.__board = BoardGenerator.new_board(self.__difficulty, self.__board_size)
         self.__orig_board = deepcopy(self.__board)
         self.__timed = timed
         self.__time_elapsed = 0 if self.__timed else None
@@ -45,10 +40,17 @@ class Game:
             return json.load(f)
 
     def load_game(self, file):
+
         data = self.get_stats_from(file)
         self.__file = file
         self.__difficulty = data["difficulty"]
         self.__num_of_hints = data["num of hints"]
+        self.__board_size = data["board size"]
+        self.__VALID_NUMS = [i for i in range(1, self.__board_size + 1)]
+
+        self.__board = NormalModeBoard(self.__board_size)
+        self.__orig_board = deepcopy(self.__board)
+        
         self.__board.load(data["board"])
         self.__orig_board.load(data["orig board"])
         self.__creation_date = data["creation date"]
@@ -61,8 +63,9 @@ class Game:
         with open(f"{self.DEFAULT_DIRECTORY}/{file_name}", "w") as f:
             f.write(json.dumps({"creation date": self.__creation_date, "creation time": self.__creation_time, 
                                 "mode": self.__mode, "difficulty": self.__difficulty, "num of hints": self.__num_of_hints, 
-                                "board": self.__board.hash(), "orig board": self.__orig_board.hash(), 
-                                "timed": self.__timed, "time elapsed": self.__time_elapsed}, indent=4))
+                                "board size": self.__board_size, "board": self.__board.hash(), 
+                                "orig board": self.__orig_board.hash(), "timed": self.__timed, 
+                                "time elapsed": self.__time_elapsed}, indent=4))
     
     def remove_game_file(self):
         if self.__file is not None:
@@ -91,6 +94,14 @@ class Game:
     
     def inc_time_elapsed(self):
         self.__time_elapsed += 0.01
+    
+    @property
+    def board_size(self):
+        return self.__board_size
+    
+    @property
+    def matrix_size(self):
+        return self.__board.matrix_size
     
     @property
     def curr_board(self):
@@ -127,7 +138,7 @@ class Game:
     
     def __validate(self, n):
         try:
-            if (n := int(n)) not in self.VALID_NUMS:
+            if (n := int(n)) not in self.__VALID_NUMS:
                 raise GameError("Number inputted is not between 1 and 9")
             return n
         except TypeError:
@@ -136,7 +147,7 @@ class Game:
             raise GameError("Number inputted is not an integer")
 
     def put_down_number(self, row, col, num):
-        row, col, num = self.__validate(row) - 1, self.__validate(col) - 1, self.__validate(num)
+        row, col, num = self.__validate(row) - 1, self.__validate(col) - 1, self.__validate(to_num(num))
         if (orig_num := self.__board.get_num_at(row, col)) == 0:
             if self.__board.is_safe(row, col, num):
                 self.__board.set_num_at(row, col, num)
@@ -158,7 +169,7 @@ class Game:
         self.push_action(SetNumAction(row, col, orig_num, 0))
     
     def edit_note(self, row, col, num):
-        row, col, num = self.__validate(row)-1, self.__validate(col)-1, self.__validate(num)
+        row, col, num = self.__validate(row)-1, self.__validate(col)-1, self.__validate(to_num(num))
         self.__board.toggle_num_at_note(row, col, num)
         self.push_action(EditNoteAction(row, col, num))
     
@@ -168,7 +179,7 @@ class Game:
         if self.__num_of_hints == 0:
             raise GameError(f"Not enough hints")
         self.__num_of_hints -= 1
-        return [self.__board.is_safe(row, col, num) for num in range(1, 10)]
+        return [self.__board.is_safe(row, col, num) for num in self.__VALID_NUMS]
     
     def add_hint_to_notes(self, row, col):
         row, col = self.__validate(row)-1, self.__validate(col)-1
