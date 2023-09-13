@@ -4,7 +4,6 @@ from functools import partial
 import typing
 import json
 
-from PyQt6 import QtCore, QtGui
 from game import GameError
 from game import Game
 from ui import UI
@@ -186,9 +185,21 @@ class ComboBox(QComboBox): # Screen ComboBox to input data
 class ProgressBar(QProgressBar): # Progress bar to display game progress
     def __init__(self, window, x, y, width, height):
         super().__init__(window)
+
+        self._orig_x = x
+        self._orig_y = y
+        self._orig_width = width
+        self._orig_height = height
+
         self.setGeometry(x, y, width, height)
         self.setTextVisible(True)
         self.setValue(0)
+    
+    def maximise(self, factor):
+        self.setGeometry(int(self._orig_x*factor), int(self._orig_y*factor), int(self._orig_width*factor), int(self._orig_height*factor))
+    
+    def minimise(self):
+        self.setGeometry(self._orig_x, self._orig_y, self._orig_width, self._orig_height)
 
 class CircularButton(Button): # Screen button that is circular and has a border
     def __init__(self, window, x, y, width, height, image, command):
@@ -533,7 +544,8 @@ class GameScreen(Screen):
         self.__resign_button = CircularButton(self, 878, 470, 58, 58, QIcon("resources/resign.svg"), partial(self.__show_end_screen, False))
 
         self._widgets += [self.__timer, self.__back, self.__info_label, self.__info_button, self.__undo_button, 
-                          self.__delete_button, self.__hint_button, self.__num_hints_label, self.__notes_button, self.__resign_button]
+                          self.__delete_button, self.__hint_button, self.__num_hints_label, self.__notes_button, 
+                          self.__resign_button, self.__progress]
 
     def __show_border(self, board_size, matrix_size):
 
