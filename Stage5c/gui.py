@@ -1,6 +1,10 @@
 from sys import argv, exit
 import os
 from functools import partial
+import typing
+import json
+
+from PyQt6 import QtCore, QtGui
 from game import GameError
 from game import Game
 from ui import UI
@@ -8,7 +12,7 @@ from board import to_letter
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget, QTextEdit
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget, QTextEdit, QWidgetAction
 
 class AppearanceConfiguration:
     def __init__(self):
@@ -55,18 +59,55 @@ class AppearanceConfiguration:
         return self.__regular_font
 
 class Button(QPushButton): # Screen Button
-    def __init__(self, window, text, x, y, width, height, font, command):
+    def __init__(self, window, text, x, y, width, height, font_family, font_size, command):
         super().__init__(text, window)
+
+        self._orig_x = x
+        self._orig_y = y
+        self._orig_width = width
+        self._orig_height = height
+        self._font_family = font_family
+        self._orig_font_size = font_size
+
         self.setGeometry(x, y, width, height)
-        self.setFont(QFont(font))
+        if font_family is not None and font_size is not None:
+            self.setFont(QFont(font_family, font_size))
+    
         if command is not None:
             self.clicked.connect(command)
+    
+    def maximise(self, factor):
+        self.setGeometry(int(self._orig_x*factor), int(self._orig_y*factor), int(self._orig_width*factor), int(self._orig_height*factor))
+        if self._font_family is not None and self._orig_font_size is not None:
+            self.setFont(QFont(self._font_family, int(self._orig_font_size*factor)))
+    
+    def minimise(self):
+        self.setGeometry(self._orig_x, self._orig_y, self._orig_width, self._orig_height)
+        if self._font_family is not None and self._orig_font_size is not None:
+            self.setFont(QFont(self._font_family, self._orig_font_size))
+
 
 class Border(QPushButton): # Border for number grid
     def __init__(self, window, x, y, width, height, border_width):
         super().__init__(window)
+
+        self._orig_x = x
+        self._orig_y = y
+        self._orig_width = width
+        self._orig_height = height
+        self._orig_border_width = border_width
+
         self.setGeometry(x, y, width, height)
         self.setStyleSheet(f"border: {border_width}px solid black;")
+    
+    def maximise(self, factor):
+        self.setGeometry(int(self._orig_x*factor), int(self._orig_y*factor), int(self._orig_width*factor), int(self._orig_height*factor))
+        self.setStyleSheet(f"border: {int(self._orig_border_width*factor)}px solid black;")
+    
+    def minimise(self):
+        self.setGeometry(self._orig_x, self._orig_y, self._orig_width, self._orig_height)
+        self.setStyleSheet(f"border: {self._orig_border_width}px solid black;")
+
 
 class Action(QAction): # Action for toolbar
     def __init__(self, window, image, text, command, checkable):
@@ -83,28 +124,64 @@ class MenuButton(QPushButton): # Menu in a button for toolbar
         super().__init__(window)
         self.setIcon(icon)
         self.setIconSize(size) 
-        menu = QMenu()
+        self.menu = QMenu()
         if font is not None:
-            menu.setFont(font)
+            self.menu.setFont(font)
         for action, command in actions:
-            menu.addAction(Action(self, None, action, command, False))
-        self.setMenu(menu)
+            self.menu.addAction(Action(self, None, action, command, False))
+        self.setMenu(self.menu)
         self.setStyleSheet("QPushButton::menu-indicator {width:0px;}")
 
 class Label(QLabel): # Screen label
-    def __init__(self, window, text, x, y, width, height, font):
+    def __init__(self, window, text, x, y, width, height, font_family, font_size):
         super().__init__(window)
+
+        self._orig_x = x
+        self._orig_y = y
+        self._orig_width = width
+        self._orig_height = height
+        self._font_family = font_family
+        self._orig_font_size = font_size
+
         self.setText(text)
         self.setGeometry(x, y, width, height)
-        self.setFont(font)
+        self.setFont(QFont(font_family, font_size))
+    
+    def maximise(self, factor):
+        self.setGeometry(int(self._orig_x*factor), int(self._orig_y*factor), int(self._orig_width*factor), int(self._orig_height*factor))
+        if self._font_family is not None and self._orig_font_size is not None:
+            self.setFont(QFont(self._font_family, int(self._orig_font_size*factor)))
+    
+    def minimise(self):
+        self.setGeometry(self._orig_x, self._orig_y, self._orig_width, self._orig_height)
+        if self._font_family is not None and self._orig_font_size is not None:
+            self.setFont(QFont(self._font_family, self._orig_font_size))
 
 class ComboBox(QComboBox): # Screen ComboBox to input data
-    def __init__(self, window, x, y, width, height, font, options):
+    def __init__(self, window, x, y, width, height, font_family, font_size, options):
         super().__init__(window)
+
+        self._orig_x = x
+        self._orig_y = y
+        self._orig_width = width
+        self._orig_height = height
+        self._font_family = font_family
+        self._orig_font_size = font_size
+
         self.setGeometry(x, y, width, height)
-        self.setFont(font)
+        self.setFont(QFont(font_family, font_size))
         self.addItem("")
         self.addItems(options)
+    
+    def maximise(self, factor):
+        self.setGeometry(int(self._orig_x*factor), int(self._orig_y*factor), int(self._orig_width*factor), int(self._orig_height*factor))
+        if self._font_family is not None and self._orig_font_size is not None:
+            self.setFont(QFont(self._font_family, int(self._orig_font_size*factor)))
+    
+    def minimise(self):
+        self.setGeometry(self._orig_x, self._orig_y, self._orig_width, self._orig_height)
+        if self._font_family is not None and self._orig_font_size is not None:
+            self.setFont(QFont(self._font_family, self._orig_font_size))
 
 class ProgressBar(QProgressBar): # Progress bar to display game progress
     def __init__(self, window, x, y, width, height):
@@ -115,25 +192,147 @@ class ProgressBar(QProgressBar): # Progress bar to display game progress
 
 class CircularButton(Button): # Screen button that is circular and has a border
     def __init__(self, window, x, y, width, height, image, command):
-        super().__init__(window, "", x, y, width, height, None, command)
+        super().__init__(window, "", x, y, width, height, None, None, command)
         self.setIcon(image)
         self.setIconSize(QSize(width, height))
         self.setStyleSheet("border-radius:" + str(width//2) + "px;")
+    
+    def maximise(self, factor):
+        super().maximise(factor)
+        self.setIconSize(QSize(int(self._orig_width*factor), int(self._orig_height*factor)))
+        self.setStyleSheet("border-radius:" + str(self._orig_width*factor//2) + "px;")
+    
+    def minimise(self):
+        super().minimise()
+        self.setIconSize(QSize(self._orig_width, self._orig_height))
+        self.setStyleSheet("border-radius:" + str(self._orig_width//2) + "px;")
     
 class BackButton(CircularButton): # Back button to return to previous page
     def __init__(self, window, command):
         super().__init__(window, 925, 15, 60, 60, QIcon("resources/back.svg"), command)
 
+class TextEdit(QTextEdit):
+    def __init__(self, window, x, y, width, height, background_colour, border_width, font_family, font_size):
+        super().__init__(window)
+
+        self._orig_x = x
+        self._orig_y = y
+        self._orig_width = width
+        self._orig_height = height
+        self._font_family = font_family
+        self._orig_font_size = font_size
+
+        self.setGeometry(x, y, width, height)
+        self.setStyleSheet(f"background: {background_colour}; border: {border_width}px solid black;")
+        self.setFont(QFont(font_family, font_size))
+        self.setReadOnly(True)
+    
+    def maximise(self, factor):
+        self.setGeometry(int(self._orig_x*factor), int(self._orig_y*factor), int(self._orig_width*factor), int(self._orig_height*factor))
+        if self._font_family is not None and self._orig_font_size is not None:
+            self.setFont(QFont(self._font_family, int(self._orig_font_size*factor)))
+    
+    def minimise(self):
+        self.setGeometry(self._orig_x, self._orig_y, self._orig_width, self._orig_height)
+        if self._font_family is not None and self._orig_font_size is not None:
+            self.setFont(QFont(self._font_family, self._orig_font_size))
+
+class Rect(QWidget):
+    def __init__(self, window, x, y, width, height, background_colour, border_width):
+        super().__init__(window)
+
+        self._orig_x = x
+        self._orig_y = y
+        self._orig_width = width
+        self._orig_height = height
+        self._background_colour = background_colour
+        self._orig_border_width = border_width
+        
+
+        self.setGeometry(x, y, width, height)
+        self.setStyleSheet(f"background: {background_colour}; border: {border_width}px solid black;")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setAutoFillBackground(True)
+    
+    def maximise(self, factor):
+        self.setGeometry(int(self._orig_x*factor), int(self._orig_y*factor), int(self._orig_width*factor), int(self._orig_height*factor))
+        self.setStyleSheet(f"background: {self._background_colour}; border: {int(self._orig_border_width * factor)}px solid black;")
+    
+    def minimise(self):
+        self.setGeometry(self._orig_x, self._orig_y, self._orig_width, self._orig_height)
+        self.setStyleSheet(f"background: {self._background_colour}; border: {self._orig_border_width}px solid black;")
+
+class ToolBar(QToolBar):
+    def __init__(self, window, icon_size, background_colour, font_family, font_size):
+
+        super().__init__(window)
+
+        self._orig_icon_size = icon_size
+        self._font_family = font_family
+        self._orig_font_size = font_size
+
+        self.setIconSize(icon_size)
+        self.setStyleSheet(f"background : {background_colour}")
+    
+    def maximise(self, factor):
+        self.setIconSize(icon_size := QSize(int(self._orig_icon_size.width() * factor), int(self._orig_icon_size.height() * factor)))
+        for widget in self.children():
+            if isinstance(widget, MenuButton):
+                widget.menu.setFont(QFont(self._font_family, int(self._orig_font_size * factor)))
+                widget.setIconSize(icon_size)
+    
+    def minimise(self):
+        self.setIconSize(self._orig_icon_size)
+        for widget in self.children():
+            if isinstance(widget, MenuButton):
+                widget.menu.setFont(QFont(self._font_family, self._orig_font_size))
+                widget.setIconSize(self._orig_icon_size)
+
+
+        # for widget in widgets:
+        #     if isinstance(widget, Action):
+        #         self.addAction(widget)
+        #     elif isinstance(widget, MenuButton):
+        #         self.addWidget(widget)
+        # self.addAction(Action(self, QIcon("resources/exit.svg"), "Quit", self.__quit_game, False))
+        # self.addWidget(MenuButton(self, QIcon("resources/account.svg"), icon_size, QFont(font_family, font_size), 
+        #                              [("Create Account", self.__create_new_account), ("Sign In", None), ("Sign Out", None), ("Show Stats", None),]))
+        # self.addWidget(MenuButton(self, QIcon("resources/settings.svg"), icon_size, QFont(font_family, font_size), 
+        #                              [("Customise GUI", self.__customise_gui), ("Manage Account", None)]))
+        # self.addAction(Action(self, QIcon("resources/help.svg"), "Help", self.__help_screen, False))
+
 class Screen(QMainWindow): # Screen
-    def __init__(self, appearance_config : AppearanceConfiguration):
+    def __init__(self, appearance_config : AppearanceConfiguration, max_size : QSize):
         super().__init__()
+        self._widgets = []
         self._appearance_config = appearance_config
+        self._max_size = max_size
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
         if (bg := appearance_config.background_colour) != "default":
             self.setStyleSheet(f"background: {bg};")
         self.statusBar().setFont(QFont(self._appearance_config.regular_font, 14))
         self.statusBar().setStyleSheet("color : red;")
+        self._resize_factor = self._max_size.width() / self.minimumSize().width()
+    
+    def resizeEvent(self, event):
+        factor = event.size().width() / self.minimumSize().width()
+        if not self.isMaximized():
+            for widget in self._widgets:
+                widget.maximise(factor)
+        elif factor == 1:
+            for widget in self._widgets:
+                widget.minimise()
+    
+    def initShowMaximised(self):
+        self.showMaximized()
+        for widget in self._widgets:
+            widget.maximise(self._resize_factor)
+    
+    def manualMaximise(self):
+        if self.isMaximized():
+            for widget in self._widgets:
+                widget.maximise(self._resize_factor)
         
 class HomeScreen(Screen):
 
@@ -142,31 +341,33 @@ class HomeScreen(Screen):
     customise_gui_signal = pyqtSignal()
     help_signal = pyqtSignal()
 
-    def __init__(self, appearance_config):
+    def __init__(self, appearance_config, max_size):
 
-        super().__init__(appearance_config)
-        
-        self.__title = Label(self, "S U D O K U", 0, 75, 1000, 100, QFont(self._appearance_config.title_font, 70))
+        super().__init__(appearance_config, max_size)
+
+        self.__title = Label(self, "S U D O K U", 0, 75, 1000, 100, self._appearance_config.title_font, 70)
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.__title.setStyleSheet("background: transparent;")
 
-        self.__play_singleplayer_button = Button(self, "PLAY SINGLEPLAYER", 300, 250, 400, 50, QFont(self._appearance_config.regular_font, 25), self.__play_singleplayer)
+        self.__play_singleplayer_button = Button(self, "PLAY SINGLEPLAYER", 300, 250, 400, 50, self._appearance_config.regular_font, 25, self.__play_singleplayer)
         self.__play_singleplayer_button.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
-        self.__play_multiplayer_button = Button(self, "PLAY MULTIPLAYER", 300, 320, 400, 50, QFont(self._appearance_config.regular_font, 25), None)
+
+        self.__play_multiplayer_button = Button(self, "PLAY MULTIPLAYER", 300, 320, 400, 50, self._appearance_config.regular_font, 25, None)
         self.__play_multiplayer_button.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
-        self.__leaderboard_button = Button(self, "LEADERBOARD", 300, 390, 400, 50, QFont(self._appearance_config.regular_font, 25), None)
+
+        self.__leaderboard_button = Button(self, "LEADERBOARD", 300, 390, 400, 50, self._appearance_config.regular_font, 25, None)
         self.__leaderboard_button.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
 
-        toolbar = QToolBar(self)
-        self.addToolBar(Qt.ToolBarArea.RightToolBarArea, toolbar)
-        toolbar.setIconSize(QSize(60, 60))
-        toolbar.setStyleSheet(f"background : {self._appearance_config.colour3}")
-        toolbar.addAction(Action(self, QIcon("resources/exit.svg"), "Quit", self.__quit_game, False))
-        toolbar.addWidget(MenuButton(self, QIcon("resources/account.svg"), QSize(60, 60), QFont(self._appearance_config.regular_font, 15), 
+        self.__toolbar = ToolBar(self, size := QSize(60, 60), self._appearance_config.colour3, font_family := self._appearance_config.regular_font, font_size := 15)
+        self.addToolBar(Qt.ToolBarArea.RightToolBarArea, self.__toolbar)
+        self.__toolbar.addAction(Action(self, QIcon("resources/exit.svg"), "Quit", self.__quit_game, False))
+        self.__toolbar.addWidget(MenuButton(self, QIcon("resources/account.svg"), size, QFont(font_family, font_size), 
                                      [("Create Account", self.__create_new_account), ("Sign In", None), ("Sign Out", None), ("Show Stats", None),]))
-        toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), QSize(60, 60), QFont(self._appearance_config.regular_font, 15), 
+        self.__toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), size, QFont(font_family, font_size), 
                                      [("Customise GUI", self.__customise_gui), ("Manage Account", None)]))
-        toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", self.__help_screen, False))
+        self.__toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", self.__help_screen, False))
+
+        self._widgets += [self.__title, self.__play_singleplayer_button, self.__play_multiplayer_button, self.__leaderboard_button, self.__toolbar]
 
     def __play_singleplayer(self):
         self.play_singleplayer_signal.emit()
@@ -189,16 +390,18 @@ class OpenOrCreateNewGameScreen(Screen):
     create_new_game_signal = pyqtSignal()
     open_game_signal = pyqtSignal()
 
-    def __init__(self, appearance_config):
+    def __init__(self, appearance_config, max_size):
 
-        super().__init__(appearance_config)
+        super().__init__(appearance_config, max_size)
 
-        self.__open_game_button = Button(self, "OPEN EXISTING GAME", 70, 80, 400, 400, QFont(self._appearance_config.regular_font, 25), self.__open_game)
+        self.__open_game_button = Button(self, "OPEN EXISTING GAME", 70, 80, 400, 400, self._appearance_config.regular_font, 25, self.__open_game)
         self.__open_game_button.setStyleSheet(f"background: {self._appearance_config.colour4}; border: 5px solid black;")
-        self.__create_new_game_button = Button(self, "CREATE NEW GAME", 530, 80, 400, 400, QFont(self._appearance_config.regular_font, 25), self.__create_new_game)
+        self.__create_new_game_button = Button(self, "CREATE NEW GAME", 530, 80, 400, 400, self._appearance_config.regular_font, 25, self.__create_new_game)
         self.__create_new_game_button.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 5px solid black;")
 
         self.__back_button = BackButton(self, self.__return_to_home_screen)
+
+        self._widgets += [self.__open_game_button, self.__create_new_game_button, self.__back_button]
     
     def __open_game(self):
         if os.listdir("games"):
@@ -217,30 +420,28 @@ class OpenGameScreen(Screen):
     return_to_home_screen_signal = pyqtSignal()
     play_game_signal = pyqtSignal(str)
 
-    def __init__(self, appearance_config):
+    def __init__(self, appearance_config, max_size):
 
-        super().__init__(appearance_config)
+        super().__init__(appearance_config, max_size)
 
-        self.__title = Label(self, "OPEN EXISTING GAME", 0, 25, 1000, 100, QFont(self._appearance_config.title_font, 50))
+        self.__title = Label(self, "OPEN EXISTING GAME", 0, 25, 1000, 100, self._appearance_config.title_font, 50)
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont(self._appearance_config.regular_font, 20), self.__play_game)
+        self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, self._appearance_config.regular_font, 20, self.__play_game)
         self.__play.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__back = BackButton(self, self.__return_to_home_screen)
 
-        self.__choose_game = Label(self, "CHOOSE A GAME: ", 50, 150, 300, 100, QFont(self._appearance_config.regular_font, 20))
-        self.__choose_game_menu = ComboBox(self, 50, 230, 400, 50, QFont(self._appearance_config.regular_font, 15), os.listdir(Game.DEFAULT_DIRECTORY))
+        self.__choose_game = Label(self, "CHOOSE A GAME: ", 50, 150, 300, 100, self._appearance_config.regular_font, 20)
+        self.__choose_game_menu = ComboBox(self, 50, 230, 400, 50,self._appearance_config.regular_font, 15, os.listdir(Game.DEFAULT_DIRECTORY))
         self.__choose_game_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__choose_game_menu.activated.connect(self.__show_game_info)
 
         self.statusBar().setFont(QFont(self._appearance_config.regular_font, 14))
         self.statusBar().setStyleSheet("QStatusBar{color:red;}")
 
-        self.__game_info = QTextEdit(self)
-        self.__game_info.setGeometry(50, 300, 400, 235)
-        self.__game_info.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
-        self.__game_info.setFont(QFont(self._appearance_config.regular_font, 18))
-        self.__game_info.setReadOnly(True)
+        self.__game_info = TextEdit(self, 50, 300, 400, 235, self._appearance_config.colour2,  2, self._appearance_config.regular_font, 18)
+
+        self._widgets += [self.__title, self.__play, self.__back, self.__choose_game, self.__choose_game_menu, self.__game_info]
     
     def __show_game_info(self):
         if file := self.__choose_game_menu.currentText():
@@ -264,30 +465,33 @@ class ConfigGameScreen(Screen):
     return_to_home_screen_signal = pyqtSignal()
     play_game_signal = pyqtSignal(list)
 
-    def __init__(self, appearance_config):
+    def __init__(self, appearance_config, max_size):
 
-        super().__init__(appearance_config)
+        super().__init__(appearance_config, max_size)
 
-        self.__title = Label(self, "CREATE NEW GAME", 0, 25, 1000, 100, QFont(self._appearance_config.title_font, 50))
+        self.__title = Label(self, "CREATE NEW GAME", 0, 25, 1000, 100, self._appearance_config.title_font, 50)
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, QFont(self._appearance_config.regular_font, 20), self.__play_game)
+        self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, self._appearance_config.regular_font, 20, self.__play_game)
         self.__play.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__back = BackButton(self, self.__return_to_home_screen)
 
-        self.__mode = Label(self, "MODE: ", 50, 150, 300, 100, QFont(self._appearance_config.regular_font, 24))
-        self.__difficulty = Label(self, "DIFFICULTY: ", 50, 225, 300, 100, QFont(self._appearance_config.regular_font, 24))
-        self.__timed = Label(self, "TIMED: ", 50, 300, 300, 100, QFont(self._appearance_config.regular_font, 24))
-        self.__board_size = Label(self, "BOARD SIZE: ", 50, 375, 300, 100, QFont(self._appearance_config.regular_font, 24))
+        self.__mode = Label(self, "MODE: ", 50, 150, 300, 100, self._appearance_config.regular_font, 24)
+        self.__difficulty = Label(self, "DIFFICULTY: ", 50, 225, 300, 100, self._appearance_config.regular_font, 24)
+        self.__timed = Label(self, "TIMED: ", 50, 300, 300, 100, self._appearance_config.regular_font, 24)
+        self.__board_size = Label(self, "BOARD SIZE: ", 50, 375, 300, 100, self._appearance_config.regular_font, 24)
 
-        self.__mode_menu = ComboBox(self, 330, 175, 200, 50, QFont(self._appearance_config.regular_font, 20), ["Normal"])
+        self.__mode_menu = ComboBox(self, 330, 175, 200, 50, self._appearance_config.regular_font, 20, ["Normal"])
         self.__mode_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
-        self.__difficulty_menu = ComboBox(self, 330, 250, 200, 50, QFont(self._appearance_config.regular_font, 20), ["Easy", "Medium", "Hard", "Challenge"])
+        self.__difficulty_menu = ComboBox(self, 330, 250, 200, 50, self._appearance_config.regular_font, 20, ["Easy", "Medium", "Hard", "Challenge"])
         self.__difficulty_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
-        self.__timed_menu = ComboBox(self, 330, 325, 200, 50, QFont(self._appearance_config.regular_font, 20), ["Yes", "No"])
+        self.__timed_menu = ComboBox(self, 330, 325, 200, 50, self._appearance_config.regular_font, 20, ["Yes", "No"])
         self.__timed_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
-        self.__board_size_menu = ComboBox(self, 330, 400, 200, 50, QFont(self._appearance_config.regular_font, 20), ["4x4", "9x9", "16x16"])
+        self.__board_size_menu = ComboBox(self, 330, 400, 200, 50, self._appearance_config.regular_font, 20, ["4x4", "9x9", "16x16"])
         self.__board_size_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
+
+        self._widgets += [self.__title, self.__play, self.__back, self.__mode, self.__difficulty, self.__timed, self.__board_size,
+                          self.__mode_menu, self.__difficulty_menu, self.__timed_menu, self.__board_size_menu]
 
     def __play_game(self):
         if (difficulty := self.__difficulty_menu.currentText()) and (timed := self.__timed_menu.currentText()) and \
@@ -310,21 +514,21 @@ class GameScreen(Screen):
     NUM_FONT_SIZES = {4: 20*9 // 4, 9: 20, 16: 20*9 // 16}
     HINT_FONT_SIZES = {4: 13*9 // 4, 9: 13, 16: 5}
 
-    def __init__(self, appearance_config):
+    def __init__(self, appearance_config, max_size):
         
-        super().__init__(appearance_config)
+        super().__init__(appearance_config, max_size)
 
         self.__selected_square = (None, None)
         self.__notes_mode = False
         self.__running = True
 
-        self.__timer = Button(self, "", 610, 20, 130, 65, QFont(self._appearance_config.regular_font, 21), self.__pause_game)
+        self.__timer = Button(self, "", 610, 20, 130, 65, self._appearance_config.regular_font, 21, self.__pause_game)
         self.__timer.setStyleSheet("border: 2px solid black;")
         self.__progress = ProgressBar(self, 610, 110, 330, 20)
         self.__progress.setStyleSheet("QProgressBar::chunk{background-color: #99d9ea;}")
 
         self.__back = BackButton(self, self.__return_to_home_screen)
-        self.__info_label = Label(self, "", 595, 15, 310, 90, QFont(self._appearance_config.regular_font, 14))
+        self.__info_label = Label(self, "", 595, 15, 310, 90, self._appearance_config.regular_font, 14)
         self.__info_label.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black; border-radius: 30px;")
         self.__info_label.hide()
         self.__info_button = CircularButton(self, 845, 15, 60, 60, QIcon("resources/info.svg"), self.__toggle_info_screen)
@@ -334,24 +538,29 @@ class GameScreen(Screen):
         self.__delete_button.setIconSize(QSize(53, 53))
         self.__delete_button.setStyleSheet("border-radius: 29px; border: 5px solid black;")
         self.__hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), self.__show_hint)
-        self.__num_hints_label = Label(self, "", 748, 535, 58, 58, QFont(self._appearance_config.regular_font, 15))
+        self.__num_hints_label = Label(self, "", 748, 535, 58, 58, self._appearance_config.regular_font, 15)
         self.__num_hints_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.__notes_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/notes_off.svg"), self.__toggle_notes_mode)
         self.__notes_button.setIconSize(QSize(53, 53))
         self.__notes_button.setStyleSheet("border-radius: 29px; border: 5px solid black;")
         self.__resign_button = CircularButton(self, 878, 470, 58, 58, QIcon("resources/resign.svg"), partial(self.__show_end_screen, False))
 
+        self._widgets += [self.__timer, self.__back, self.__info_label, self.__info_button, self.__undo_button, 
+                          self.__delete_button, self.__hint_button, self.__num_hints_label, self.__notes_button, self.__resign_button]
+
     def __show_border(self, board_size, matrix_size):
 
         big_border = Border(self, self.STARTX+self.PADDING-3, self.PADDING-3, 
                             self.GRIDSIZE*board_size+6+6, self.GRIDSIZE*board_size+6+6, 3)
         big_border.show()
+        self._widgets.append(big_border)
         for row in range(matrix_size):
             for col in range(matrix_size):
                 border = Border(self, self.STARTX + self.PADDING + self.GRIDSIZE*matrix_size*col + 3*col, 
                                 self.PADDING + self.GRIDSIZE*matrix_size*row + 3*row, 
                                 self.GRIDSIZE*matrix_size+3, self.GRIDSIZE*matrix_size+3, 3)
                 border.show()
+                self._widgets.append(border)
 
     def set_game(self, game : Game):
 
@@ -362,12 +571,14 @@ class GameScreen(Screen):
         self.__create_curr_grid()
         self.__progress.setValue(int(self.__game.percent_complete()))
 
-        self.__board_cover = QWidget(self)
-        self.__board_cover.setGeometry(self.STARTX+self.PADDING-3, self.PADDING-3, width:= self.GRIDSIZE*9+12, height := self.GRIDSIZE*9+12)
-        self.__board_cover.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 5px solid black;")
-        self.__paused_label = Label(self.__board_cover, "GAME PAUSED", 0, 0, width, height, QFont(self._appearance_config.regular_font, 24))
+        self.__board_cover = Rect(self, self.STARTX+self.PADDING-3, self.PADDING-3, width:= self.GRIDSIZE*self.__game.board_size+12, height := self.GRIDSIZE*self.__game.board_size+12,
+                                  self._appearance_config.colour2, 5)
+
+        self.__paused_label = Label(self.__board_cover, "GAME PAUSED", 0, 0, width, height, self._appearance_config.regular_font, 24)
         self.__paused_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.__board_cover.hide()
+
+        self._widgets += [self.__paused_label, self.__board_cover]
 
         if self.__game.timed:
             self.__timer_event = QTimer()
@@ -388,8 +599,9 @@ class GameScreen(Screen):
         for ridx in range(MATRIX_SIZE):
             for cidx in range(MATRIX_SIZE):
                 num_input = Button(self, num := to_letter(ridx*MATRIX_SIZE+cidx+1), STARTX+NUM_INP_SIZE*cidx, STARTY+NUM_INP_SIZE*ridx, NUM_INP_SIZE, NUM_INP_SIZE, 
-                                   QFont(self._appearance_config.regular_font, 20), partial(self.__place_num, num))
+                                   self._appearance_config.regular_font, 20, partial(self.__place_num, num))
                 num_input.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
+                self._widgets.append(num_input)
 
         self.__sqrs = [[0 for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
 
@@ -403,7 +615,8 @@ class GameScreen(Screen):
                                 y = self.PADDING + self.GRIDSIZE*row + MATRIX_SIZE*(row//MATRIX_SIZE), 
                                 width = self.GRIDSIZE, 
                                 height = self.GRIDSIZE, 
-                                font = QFont(self._appearance_config.regular_font, self.__num_font_size if sq.num != 0 else self.__hint_font_size), 
+                                font_family = self._appearance_config.regular_font,
+                                font_size = self.__num_font_size if sq.num != 0 else self.__hint_font_size, 
                                 command = partial(self.__select_square, row+1, col+1))
                 square.setFont(QFont(self._appearance_config.regular_font, self.__num_font_size if sq.num != 0 else self.__hint_font_size))
                 square.setStyleSheet("border: 2px solid black; background-color:" + 
@@ -413,13 +626,15 @@ class GameScreen(Screen):
                                      ";")
                 
                 self.__sqrs[row][col] = square
-                square.show()
+                self._widgets.append(square)
+                square.show()  
 
     def __update_number_grid(self, curr_board, orig_board):
+        mult = self._resize_factor if self.isMaximized() else 1
         for row, row_lst in enumerate(self.__sqrs):
             for col, sq in enumerate(row_lst):
                 sq.setText(str(num) if (num := to_letter(curr_board[row][col].num)) != "0" else self.__game.note_at(row, col))
-                sq.setFont(QFont(self._appearance_config.regular_font, self.__num_font_size if num != "0" else self.__hint_font_size))
+                sq.setFont(QFont(self._appearance_config.regular_font, int(mult * (self.__num_font_size if num != "0" else self.__hint_font_size))))
                 sq.setStyleSheet("border: 2px solid black; background-color:" + 
                                      ("#99d9ea" if (row+1, col+1) == self.__selected_square else "white") + 
                                      ";color:" + ("black" if orig_board[row][col].num != 0 else ("blue" if num != "0" else "red")) + 
@@ -441,53 +656,56 @@ class GameScreen(Screen):
         self.__running = False
         self.__selected_square = (None, None)
         self.__game.remove_game_file()
+        self.__timer_event.stop()
 
-        bg = QWidget(self)
-        bg.setGeometry(0, 0, 1000, 560)
-        bg.setStyleSheet(f"background: {self._appearance_config.colour2_translucent};")
+        bg = Rect(self, 0, 0, 1000, 560, self._appearance_config.colour2_translucent, 0)
         bg.show()
 
-        window = QWidget(self)
-        window.setGeometry(200, 30, 600, 500)
-        window.setStyleSheet("background:white; border: 5px solid black;")
+        window = Rect(self, 200, 30, 600, 500, "white", 5)
         window.show()
     
-        title = Label(self, "You Won!" if win else "Game Over!", 0, 50, 1000, 100, QFont(self._appearance_config.title_font, 40))
+        title = Label(self, "You Won!" if win else "Game Over!", 0, 50, 1000, 100, self._appearance_config.title_font, 40)
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         title.setStyleSheet("background: transparent;")
         title.show()
 
         if self.__game.timed:
 
-            time_label_top = Label(self, "Time Elapsed: ", 0, 160, 1000, 100, QFont(self._appearance_config.regular_font, 20))
+            time_label_top = Label(self, "Time Elapsed: ", 0, 160, 1000, 100, self._appearance_config.regular_font, 20)
             time_label_top.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             time_label_top.setStyleSheet("background: transparent;")
             time_label_top.show()
 
-            time = Label(self, self.__game.time_elapsed, 0, 200, 1000, 100, QFont(self._appearance_config.regular_font, 60))
+            time = Label(self, self.__game.time_elapsed, 0, 200, 1000, 100, self._appearance_config.regular_font, 60)
             time.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             time.setStyleSheet("background: transparent;")
             time.show()
 
-        home_screen_button = Button(self, "RETURN TO HOME", 350, 450, 300, 50, QFont(self._appearance_config.regular_font, 20), self.__return_to_home_screen)
+        home_screen_button = Button(self, "RETURN TO HOME", 350, 450, 300, 50, self._appearance_config.regular_font, 20, self.__return_to_home_screen)
         home_screen_button.show()
 
-        solution_button = Button(self, "SEE SOLUTION", 350, 390, 300, 50, QFont(self._appearance_config.regular_font, 20),self.__show_solution_screen)
+        solution_button = Button(self, "SEE SOLUTION", 350, 390, 300, 50, self._appearance_config.regular_font, 20,self.__show_solution_screen)
         if not win:
             solution_button.show()
+        
+        self._widgets += [bg, window, title, time_label_top, time, home_screen_button, solution_button]
+
+        self.manualMaximise()
     
     def __show_solution_screen(self):
 
-        bg = QWidget(self)
-        bg.setGeometry(0, 0, 1000, 560)
-        bg.setStyleSheet("background: white;")
+        bg = Rect(self, 0, 0, 1000, 560, "white", 0)
         bg.show()
         
         self.__show_border(self.__game.board_size, self.__game.matrix_size)
         self.__create_solution_grid()
 
-        home_screen_button = Button(self, "RETURN TO HOME", 625, 250, 300, 50, QFont(self._appearance_config.regular_font, 20), self.__return_to_home_screen)
+        home_screen_button = Button(self, "RETURN TO HOME", 625, 250, 300, 50, self._appearance_config.regular_font, 20, self.__return_to_home_screen)
         home_screen_button.show()
+        
+        self._widgets += [bg, home_screen_button]
+
+        self.manualMaximise()
 
     def __show_error(self, err):
         self.statusBar().showMessage(str(err.args[0]))
@@ -574,11 +792,13 @@ class CreateNewAccountScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
     
-    def __init__(self, appearance_config):
+    def __init__(self, appearance_config, max_size):
 
-        super().__init__(appearance_config)
+        super().__init__(appearance_config, max_size)
 
         self.__back = BackButton(self, self.__return_to_home_screen)
+
+        self._widgets += [self.__back]
     
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
@@ -587,14 +807,16 @@ class CustomiseGUIScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
 
-    def __init__(self, appearance_config):
+    def __init__(self, appearance_config, max_size):
 
-        super().__init__(appearance_config)
+        super().__init__(appearance_config, max_size)
         
-        self.__title = Label(self, "CUSTOMISE GUI", 0, 25, 1000, 100, QFont(self._appearance_config.title_font, 50))
+        self.__title = Label(self, "CUSTOMISE GUI", 0, 25, 1000, 100, self._appearance_config.title_font, 50)
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.__back = BackButton(self, self.__return_to_home_screen)
+
+        self._widgets += [self.__title, self.__back]
 
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
@@ -603,21 +825,19 @@ class HelpScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
 
-    def __init__(self, appearance_config):
+    def __init__(self, appearance_config, max_size):
 
-        super().__init__(appearance_config)
+        super().__init__(appearance_config, max_size)
 
-        self.back = BackButton(self, self.__return_to_home_screen)
+        self.__back = BackButton(self, self.__return_to_home_screen)
         self.setStyleSheet(f"background: {self._appearance_config.colour3};")
 
-        self.txt_window = QTextEdit(self)
-        self.txt_window.setGeometry(100, 20, 800, 520)
-        self.txt_window.setStyleSheet("background: white; border: 5px solid black;")
-        self.txt_window.setFont(QFont(self._appearance_config.regular_font, 20))
-        self.txt_window.setReadOnly(True)
-        self.txt_window.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.__txt_window = TextEdit(self, 100, 20, 800, 520, "white", 5, self._appearance_config.regular_font, 20)
+        self.__txt_window.setAlignment(Qt.AlignmentFlag.AlignCenter)
         with open("resources/help.txt", "r") as f:
-            self.txt_window.insertPlainText(f.read())
+            self.__txt_window.insertPlainText(f.read())
+
+        self._widgets += [self.__back, self.__txt_window]
         
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
@@ -629,6 +849,10 @@ class GUI(UI):
         super().__init__()
 
         self.__app = QApplication(argv)
+        self.__max_size = self.__app.primaryScreen().size()
+
+        with open("options.json") as f:
+            self.__options = json.load(f)
 
         QFontDatabase.addApplicationFont("resources/library-3-am.3amsoft.otf")
         QFontDatabase.addApplicationFont("resources/Metropolis-Regular.otf")
@@ -640,10 +864,16 @@ class GUI(UI):
                            "game": self.__game_screen(), "create new account": self.__create_new_account_screen(), 
                            "customise gui": self.__customise_gui_screen(), "help": self.__help_screen()}
 
-        self.__screens["home"].show()
+        self.__screen_partials = {"home": self.__home_screen, "open or create new game": self.__open_or_create_new_game_screen,
+                           "config game": self.__config_game_screen, "open game": self.__open_game_screen,
+                           "game": self.__game_screen, "create new account": self.__create_new_account_screen, 
+                           "customise gui": self.__customise_gui_screen, "help": self.__help_screen}
+
+
+        self.__show_curr_screen()
     
     def __home_screen(self):
-        home_screen = HomeScreen(self.__appearance_config)
+        home_screen = HomeScreen(self.__appearance_config, self.__max_size)
         home_screen.play_singleplayer_signal.connect(partial(self.__show_screen, "open or create new game", self.__open_or_create_new_game_screen))
         home_screen.create_new_account_signal.connect(partial(self.__show_screen, "create new account", self.__create_new_account_screen))
         home_screen.customise_gui_signal.connect(partial(self.__show_screen, "customise gui", self.__customise_gui_screen))
@@ -651,41 +881,41 @@ class GUI(UI):
         return home_screen
     
     def __open_or_create_new_game_screen(self):
-        open_or_create_new_game_screen = OpenOrCreateNewGameScreen(self.__appearance_config)
+        open_or_create_new_game_screen = OpenOrCreateNewGameScreen(self.__appearance_config, self.__max_size)
         open_or_create_new_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         open_or_create_new_game_screen.open_game_signal.connect(partial(self.__show_screen, "open game", self.__open_game_screen))
         open_or_create_new_game_screen.create_new_game_signal.connect(partial(self.__show_screen, "config game", self.__config_game_screen))  
         return open_or_create_new_game_screen
     
     def __open_game_screen(self):
-        open_game_screen = OpenGameScreen(self.__appearance_config)
+        open_game_screen = OpenGameScreen(self.__appearance_config, self.__max_size)
         open_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         open_game_screen.play_game_signal.connect(self.__load_game_screen)
         return open_game_screen
 
     def __config_game_screen(self):
-        config_game_screen = ConfigGameScreen(self.__appearance_config)
+        config_game_screen = ConfigGameScreen(self.__appearance_config, self.__max_size)
         config_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         config_game_screen.play_game_signal.connect(self.__show_game_screen)
         return config_game_screen
 
     def __game_screen(self):
-        game_screen = GameScreen(self.__appearance_config)
+        game_screen = GameScreen(self.__appearance_config, self.__max_size)
         game_screen.return_to_home_screen_signal.connect(self.__quit_game)
         return game_screen
 
     def __create_new_account_screen(self):
-        create_new_account_screen = CreateNewAccountScreen(self.__appearance_config)
+        create_new_account_screen = CreateNewAccountScreen(self.__appearance_config, self.__max_size)
         create_new_account_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         return create_new_account_screen
     
     def __customise_gui_screen(self):
-        customise_gui_screen = CustomiseGUIScreen(self.__appearance_config)
+        customise_gui_screen = CustomiseGUIScreen(self.__appearance_config, self.__max_size)
         customise_gui_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         return customise_gui_screen
 
     def __help_screen(self):
-        help_screen = HelpScreen(self.__appearance_config)
+        help_screen = HelpScreen(self.__appearance_config, self.__max_size)
         help_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         return help_screen
 
@@ -693,7 +923,10 @@ class GUI(UI):
         self.__screens[self._get_curr_ui()].close()
     
     def __show_curr_screen(self):
-        self.__screens[self._get_curr_ui()].show()
+        if self.__options["full screen"]:
+            self.__screens[self._get_curr_ui()].initShowMaximised()
+        else:
+            self.__screens[self._get_curr_ui()].show()
    
     def __push_screen(self, screen):
         self.__close_curr_screen()
@@ -703,6 +936,7 @@ class GUI(UI):
     def __pop_screen(self):
         self.__close_curr_screen()
         self._pop_ui_from_stack()
+        self.__screens[ui] = self.__screen_partials[ui := self._get_curr_ui()]()
         self.__show_curr_screen()
     
     def __show_screen(self, screen_name, screen_func):
