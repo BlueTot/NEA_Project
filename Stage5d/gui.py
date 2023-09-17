@@ -85,7 +85,6 @@ class Button(QPushButton): # Screen Button
         if self._font_family is not None and self._orig_font_size is not None:
             self.setFont(QFont(self._font_family, self._orig_font_size))
 
-
 class Border(QPushButton): # Border for number grid
     def __init__(self, window, x, y, width, height, border_width):
         super().__init__(window)
@@ -485,7 +484,7 @@ class ConfigGameScreen(Screen):
         self.__difficulty_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__timed_menu = ComboBox(self, 330, 325, 200, 50, self._appearance_config.regular_font, 20, ["Yes", "No"])
         self.__timed_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
-        self.__board_size_menu = ComboBox(self, 330, 400, 200, 50, self._appearance_config.regular_font, 20, ["4x4", "9x9", "16x16"])
+        self.__board_size_menu = ComboBox(self, 330, 400, 200, 50, self._appearance_config.regular_font, 20, ["4x4", "6x6", "9x9", "12x12", "16x16"])
         self.__board_size_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
 
         self._widgets += [self.__title, self.__play, self.__back, self.__mode, self.__difficulty, self.__timed, self.__board_size,
@@ -509,8 +508,8 @@ class GameScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
     PADDING, STARTX = 25, 10
-    NUM_FONT_SIZES = {4: 20*9 // 4, 9: 20, 16: 20*9 // 16}
-    HINT_FONT_SIZES = {4: 13*9 // 4, 9: 13, 16: 5}
+    NUM_FONT_SIZES = {4: 20*9 // 4, 6: 20*9 // 6, 9: 20, 12: 20 * 9 // 12, 16: 20*9 // 16}
+    HINT_FONT_SIZES = {4: 13*9 // 4, 6: 13*9 // 6, 9: 13, 12: 13 * 9 // 12, 16: 5}
 
     def __init__(self, appearance_config, max_size):
         
@@ -553,18 +552,18 @@ class GameScreen(Screen):
                             self.GRIDSIZE*board_size+6+6, self.GRIDSIZE*board_size+6+6, 3)
         big_border.show()
         self._widgets.append(big_border)
-        for row in range(matrix_size):
-            for col in range(matrix_size):
-                border = Border(self, self.STARTX + self.PADDING + self.GRIDSIZE*matrix_size*col + 3*col, 
-                                self.PADDING + self.GRIDSIZE*matrix_size*row + 3*row, 
-                                self.GRIDSIZE*matrix_size+3, self.GRIDSIZE*matrix_size+3, 3)
+        for row in range(matrix_size[1]):
+            for col in range(matrix_size[0]):
+                border = Border(self, self.STARTX + self.PADDING + self.GRIDSIZE*matrix_size[1]*col + 3*col, 
+                                self.PADDING + self.GRIDSIZE*matrix_size[0]*row + 3*row, 
+                                self.GRIDSIZE*matrix_size[1]+3, self.GRIDSIZE*matrix_size[0]+3, 3)
                 border.show()
                 self._widgets.append(border)
 
     def set_game(self, game : Game):
 
         self.__game = game
-        self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nBoard Size: 9x9 \nTimed: {self.__game.timed}")
+        self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nBoard Size: {self.__game.board_size}x{self.__game.board_size} \nTimed: {self.__game.timed}")
         self.__num_hints_label.setText(str(self.__game.num_hints_left))
 
         self.__create_curr_grid()
@@ -593,11 +592,11 @@ class GameScreen(Screen):
 
         self.__show_border(BOARD_SIZE, MATRIX_SIZE)
 
-        NUM_INP_SIZE = 330 // MATRIX_SIZE
+        NUM_INP_SIZE = (330 // MATRIX_SIZE[1], 330 // MATRIX_SIZE[0])
         STARTX, STARTY = 610, 130
-        for ridx in range(MATRIX_SIZE):
-            for cidx in range(MATRIX_SIZE):
-                num_input = Button(self, num := to_letter(ridx*MATRIX_SIZE+cidx+1), STARTX+NUM_INP_SIZE*cidx, STARTY+NUM_INP_SIZE*ridx, NUM_INP_SIZE, NUM_INP_SIZE, 
+        for ridx in range(MATRIX_SIZE[1]):
+            for cidx in range(MATRIX_SIZE[0]):
+                num_input = Button(self, num := to_letter(ridx*MATRIX_SIZE[0]+cidx+1), STARTX+NUM_INP_SIZE[1]*cidx, STARTY+NUM_INP_SIZE[0]*ridx, NUM_INP_SIZE[1], NUM_INP_SIZE[0], 
                                    self._appearance_config.regular_font, 20, partial(self.__place_num, num))
                 num_input.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
                 self._widgets.append(num_input)
@@ -610,8 +609,8 @@ class GameScreen(Screen):
             for col, sq in enumerate(row_lst):
                 square = Button(window = self, 
                                 text = num if (num := to_letter(sq.num)) != "0" else self.__game.note_at(row, col),
-                                x = self.STARTX + self.PADDING + self.GRIDSIZE*col + MATRIX_SIZE*(col//MATRIX_SIZE),
-                                y = self.PADDING + self.GRIDSIZE*row + MATRIX_SIZE*(row//MATRIX_SIZE), 
+                                x = self.STARTX + self.PADDING + self.GRIDSIZE*col + MATRIX_SIZE[1]*(col//MATRIX_SIZE[1]),
+                                y = self.PADDING + self.GRIDSIZE*row + MATRIX_SIZE[0]*(row//MATRIX_SIZE[0]), 
                                 width = self.GRIDSIZE, 
                                 height = self.GRIDSIZE, 
                                 font_family = self._appearance_config.regular_font,
@@ -655,7 +654,8 @@ class GameScreen(Screen):
         self.__running = False
         self.__selected_square = (None, None)
         self.__game.remove_game_file()
-        self.__timer_event.stop()
+        if self.__game.timed:
+            self.__timer_event.stop()
 
         bg = Rect(self, 0, 0, 1000, 560, self._appearance_config.colour2_translucent, 0)
         bg.show()

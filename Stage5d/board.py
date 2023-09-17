@@ -1,5 +1,5 @@
 from copy import deepcopy
-from random import randint
+from random import randint, shuffle
 from abc import ABC
 
 class BoardUnsolvableError(Exception):
@@ -10,6 +10,11 @@ def to_letter(num):
 
 def to_num(letter):
     return int(letter) if letter.isdigit() else ord(letter) - 65 + 10
+
+def to_matrix_size(board_size):
+    for factor in range(int(board_size ** 0.5) + 1, 0, -1):
+        if board_size % factor == 0:
+            return tuple(sorted((factor, board_size // factor)))
 
 class BoardSolver:
 
@@ -25,7 +30,11 @@ class BoardSolver:
         
         if board.get_num_at(row, col) > 0:
             return BoardSolver.solvable(board, row, col+1)
-        for num in range(1, board.board_size + 1):
+        
+        nums_to_try = list(range(1, board.board_size + 1))
+        shuffle(nums_to_try)
+
+        for num in nums_to_try:
             if board.is_safe(row, col, num):
                 board.set_num_at(row, col, num)
                 if BoardSolver.solvable(board, row, col+1):
@@ -69,7 +78,9 @@ class BoardSolver:
 class BoardGenerator:
 
     NUM_GIVENS = {4: {"Easy": 8, "Medium": 6, "Hard": 5, "Challenge": 4},
+                  6: {"Easy": 17, "Medium": 14, "Hard": 11, "Challenge": 10},
                   9: {"Easy": 38, "Medium": 31, "Hard": 25, "Challenge": 22},
+                  12: {"Easy": 68, "Medium": 55, "Hard": 44, "Challenge": 39},
                   16: {"Easy": 120, "Medium": 98, "Hard": 79, "Challenge": 70}
     }
 
@@ -85,9 +96,13 @@ class BoardGenerator:
     @staticmethod
     def __get_random_filled_board(board_size):
         board = NormalModeBoard(board_size)
-        for start in range(board.matrix_size):
-            board = BoardGenerator.__fill_matrix_randomly(board, start*board.matrix_size, (start+1)*board.matrix_size-1)
+        # for start in range(board.matrix_size[0]):
+        #     board = BoardGenerator.__fill_matrix_randomly(board, start*board.matrix_size[0], (start+1)*board.matrix_size[0]-1)
         return BoardSolver.solver(board)
+
+    @staticmethod
+    def random_filled_board(board_size):
+        return BoardGenerator.__get_random_filled_board(board_size)
 
     @staticmethod
     def new_board(difficulty, board_size):
@@ -95,6 +110,7 @@ class BoardGenerator:
             try:
                 board = BoardGenerator.__get_random_filled_board(board_size)
                 num_remaining = board_size ** 2
+                tries = set()
                 while num_remaining > BoardGenerator.NUM_GIVENS[board_size][difficulty]:
                     while board.get_num_at(row := randint(0, board_size - 1), col := randint(0, board_size - 1)) == 0:
                         pass
@@ -102,16 +118,22 @@ class BoardGenerator:
                     board.set_num_at(row, col, 0)
                     if not BoardSolver.is_unique(deepcopy(board)):
                         board.set_num_at(row, col, orig_num)
+                        tries.add((row, col))
+                        if len(tries) == num_remaining:
+                            print("fail exit at", num_remaining, "remaining")
+                            return board
                     else:
                         num_remaining -= 1
+                        tries = set()
+                    #print(num_remaining, len(tries))
                 return board
             except BoardUnsolvableError:
                 pass
 
 class Square:
-    def __init__(self, board_size):
+    def __init__(self, board_size, matrix_size):
         self.__BOARD_SIZE = board_size
-        self.__MATRIX_SIZE = int(self.__BOARD_SIZE ** 0.5)
+        self.__MATRIX_SIZE = matrix_size
         self.__num = 0
         self.__note = [False for _ in range(self.__BOARD_SIZE)]
     
@@ -141,10 +163,10 @@ class Square:
         self.__note = [str(num+1) in note for num in range(self.__BOARD_SIZE)]
 
     def note_str(self):
-        return "\n".join([" " + " ".join([to_letter(j+1) if self.__note[j] else " " for j in range(i*self.__MATRIX_SIZE, (i+1)*self.__MATRIX_SIZE)]) for i in range(self.__MATRIX_SIZE)])
+        return "\n".join([" " + " ".join([to_letter(j+1) if self.__note[j] else " " for j in range(i*self.__MATRIX_SIZE[1], (i+1)*self.__MATRIX_SIZE[1])]) for i in range(self.__MATRIX_SIZE[0])])
 
     def pieced_note_str(self, piece):
-        return "".join([to_letter(i+1) if self.__note[i] else " " for i in range((piece-1)*self.__MATRIX_SIZE, piece*self.__MATRIX_SIZE)])
+        return "".join([to_letter(i+1) if self.__note[i] else " " for i in range((piece-1)*self.__MATRIX_SIZE[0], piece*self.__MATRIX_SIZE[0])])
     
     def __repr__(self):
         return str(self.__num)
@@ -215,8 +237,8 @@ class Board:
 
     def __init__(self, board_size):
         self._board_size = board_size
-        self._matrix_size = int(self._board_size ** 0.5)
-        self._board = [[Square(self._board_size) for _ in range(self._board_size)] for _ in range(self._board_size)]
+        self._matrix_size = to_matrix_size(board_size)
+        self._board = [[Square(self._board_size, self._matrix_size) for _ in range(self._board_size)] for _ in range(self._board_size)]
         self._row_digits = [0 for _ in range(self._board_size)]
         self._col_digits = [0 for _ in range(self._board_size)]
         self._matrix_digits = [0 for _ in range(self._board_size)]
@@ -241,7 +263,7 @@ class Board:
         return 2 ** (num - 1)
     
     def _matrix_num(self, row, col):
-        return self._matrix_size * (row // self._matrix_size) + col // self._matrix_size
+        return self._matrix_size[0] * (row // self._matrix_size[0]) + col // self._matrix_size[1]
     
     @property
     def board(self):
