@@ -1,6 +1,7 @@
 from copy import deepcopy
 from random import randint, shuffle
 from abc import ABC
+import dlx
 
 class BoardUnsolvableError(Exception):
     pass
@@ -45,9 +46,13 @@ class BoardSolver:
     
     @staticmethod
     def solver(board):
-        if not BoardSolver.solvable(new_board := deepcopy(board)):
-            raise BoardUnsolvableError
-        return new_board
+        # if not BoardSolver.solvable(new_board := deepcopy(board)):
+        #     raise BoardUnsolvableError
+        # return new_board
+        for sol in dlx.solve_sudoku(board.matrix_size, board.board_as_2darr):
+            board.load_from_2darr(sol)
+            return board
+        raise BoardUnsolvableError
 
     @staticmethod
     def num_solutions(board, row=0, col=0, num_sols=0):
@@ -64,16 +69,15 @@ class BoardSolver:
         for num in range(1, board.board_size + 1):
             if board.is_safe(row, col, num):
                 board.set_num_at(row, col, num)
-                num_sols = BoardSolver.num_solutions(board, row, col+1, num_sols)
-            if num_sols > 1:
-                break
-
-        board.set_num_at(row, col, 0)
-                
+                if (num_sols := BoardSolver.num_solutions(board, row, col+1, num_sols)) > 1:
+                    break 
+            board.set_num_at(row, col, 0)
+              
         return num_sols
     
     def is_unique(board):
-        return BoardSolver.num_solutions(board) == 1
+        return len([sol for sol in dlx.solve_sudoku(board.matrix_size, board.board_as_2darr)]) == 1
+        # return BoardSolver.num_solutions(board) == 1
 
 class BoardGenerator:
 
@@ -83,26 +87,11 @@ class BoardGenerator:
                   12: {"Easy": 68, "Medium": 55, "Hard": 44, "Challenge": 39},
                   16: {"Easy": 120, "Medium": 98, "Hard": 79, "Challenge": 70}
     }
-
-    @staticmethod
-    def __fill_matrix_randomly(board, start, end):
-        for row in range(start, end+1):
-            for col in range(start, end+1):
-                while not board.is_safe(row, col, num := randint(1, board.board_size)):
-                    pass
-                board.set_num_at(row, col, num)
-        return board
     
     @staticmethod
     def __get_random_filled_board(board_size):
         board = NormalModeBoard(board_size)
-        # for start in range(board.matrix_size[0]):
-        #     board = BoardGenerator.__fill_matrix_randomly(board, start*board.matrix_size[0], (start+1)*board.matrix_size[0]-1)
         return BoardSolver.solver(board)
-
-    @staticmethod
-    def random_filled_board(board_size):
-        return BoardGenerator.__get_random_filled_board(board_size)
 
     @staticmethod
     def new_board(difficulty, board_size):
@@ -125,7 +114,7 @@ class BoardGenerator:
                     else:
                         num_remaining -= 1
                         tries = set()
-                    #print(num_remaining, len(tries))
+                    print(num_remaining, len(tries))
                 return board
             except BoardUnsolvableError:
                 pass
@@ -270,6 +259,10 @@ class Board:
         return self._board
     
     @property
+    def board_as_2darr(self):
+        return [[sq.num for sq in row] for row in self._board]
+    
+    @property
     def board_size(self):
         return self._board_size
 
@@ -309,9 +302,6 @@ class Board:
     def pieced_note_str(self, row, col, piece):
         return self._board[row][col].pieced_note_str(piece)
 
-    def get_solved_board(self):
-        return BoardSolver.solver(self.__orig_board)
-
     @staticmethod
     def _digits_arr_hash(arr):
         return ",".join(list(map(str, arr)))
@@ -341,10 +331,16 @@ class NormalModeBoard(Board):
         self._col_digits = list(map(int, col_hash.split(",")))
         self._matrix_digits = list(map(int, matrix_hash.split(",")))
     
+    def load_from_2darr(self, arr):
+        for row in range(len(arr)):
+            for col in range(len(arr[0])):
+                self._board[row][col].set_num(arr[row][col])
+    
     def hash(self):
         sq_hash = ";".join([";".join([sq.hash() for sq in row]) for row in self._board])
         digits_hash = ";".join([self._digits_arr_hash(self._row_digits), 
                                 self._digits_arr_hash(self._col_digits), 
                                 self._digits_arr_hash(self._matrix_digits)])
         return sq_hash + "/" + digits_hash
-    
+
+#"3,;8,;9,;4,;7,;2,;5,;6,;1,;6,;5,;1,;3,;9,;8,;2,;4,;7,;4,;2,;7,;6,;1,;5,;8,;3,;9,;1,;3,;5,;9,;8,;4,;6,;7,;2,;7,;6,;2,;1,;5,;3,;4,;9,;8,;9,;4,;8,;7,;2,;6,;3,;1,;5,;8,;7,;4,;2,;6,;1,;9,;5,;3,;5,;9,;3,;8,;4,;7,;1,;2,;6,;2,;1,;6,;5,;3,;9,;7,;8,;4,/511,511,511,511,511,511,511,511,511;511,511,511,511,511,511,511,511,511;511,511,511,511,511,511,511,511,511"

@@ -113,7 +113,7 @@ class Game:
     
     @property
     def solved_board(self):
-        return BoardSolver.solver(self.__orig_board).board
+        return BoardSolver.solver(deepcopy(self.__orig_board)).board
 
     def note_at(self, row, col):
         return self.__board.note_str(row, col)
