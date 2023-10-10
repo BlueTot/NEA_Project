@@ -3,6 +3,7 @@ from random import randint, shuffle, choice
 from itertools import product
 from abc import ABC
 import dlx
+from ast import literal_eval
 
 class BoardUnsolvableError(Exception):
     pass
@@ -309,7 +310,6 @@ class Board:
     def load_from_2darr(self, arr):
         for row in range(len(arr)):
             for col in range(len(arr[0])):
-                #self._board[row][col].set_num(arr[row][col])
                 self.set_num_at(row, col, arr[row][col])
     
     @property
@@ -364,20 +364,12 @@ class NormalModeBoard(Board):
         return self._not_in_row(row, num) and self._not_in_col(col, num) and self._not_in_3x3_matrix(row, col, num)
 
     def load(self, hash):
-        sq_hash, digits_hash = hash.split("/")
-        for idx, sq_hash in enumerate(sq_hash.split(";")):
-            self._board[idx // self._board_size][idx % self._board_size].load(sq_hash)
-        row_hash, col_hash, matrix_hash = digits_hash.split(";")
-        self._row_digits = list(map(int, row_hash.split(",")))
-        self._col_digits = list(map(int, col_hash.split(",")))
-        self._matrix_digits = list(map(int, matrix_hash.split(",")))
+        for idx, sq_hash in enumerate(hash.split(";")):
+            self._board[row := idx // self._board_size][col := idx % self._board_size].load(sq_hash)
+            self.set_num_at(row, col, self._board[row][col].num)
     
     def hash(self):
-        sq_hash = ";".join([";".join([sq.hash() for sq in row]) for row in self._board])
-        digits_hash = ";".join([self._digits_arr_hash(self._row_digits), 
-                                self._digits_arr_hash(self._col_digits), 
-                                self._digits_arr_hash(self._matrix_digits)])
-        return sq_hash + "/" + digits_hash
+        return ";".join([";".join([sq.hash() for sq in row]) for row in self._board])
 
 class KillerModeBoard(Board):
     def __init__(self, board_size):
@@ -431,7 +423,6 @@ class KillerModeBoard(Board):
         while len(colours) != (self._board_size ** 2):
             row, col = randint(0, self._board_size-1), randint(0, self._board_size-1)
             if (row, col) not in colours:
-
                 for group, _ in self._groups.values():
                     if (row, col) in group:
                         break   
@@ -447,4 +438,19 @@ class KillerModeBoard(Board):
                     for sq in group:
                         colours[sq] = colour
         return colours
+
+    def load(self, hash):
+        sqrs_hash, gp_hash = hash.split("/")
+        for idx, sq_hash in enumerate(sqrs_hash.split(";")):
+            self._board[row := idx // self._board_size][col := idx % self._board_size].load(sq_hash)
+            self.set_num_at(row, col, self._board[row][col].num)
+        for pair in gp_hash.split(";"):
+            k, v = pair.split(":")
+            k, v = literal_eval(k), literal_eval(v)
+            self._groups[k] = v
+    
+    def hash(self):
+        sqrs_hash = ";".join([";".join([sq.hash() for sq in row]) for row in self._board])
+        gp_hash = ";".join([f"{k}:{str(v)}" for k, v in self._groups.items()])
+        return sqrs_hash + "/" + gp_hash
                             
