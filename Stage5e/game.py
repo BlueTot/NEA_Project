@@ -24,12 +24,13 @@ class Game:
         self.__creation_date = str(datetime.now().date())
         self.__creation_time = str(datetime.now().time())
         
-    def generate(self, difficulty, board_size, timed):
+    def generate(self, mode, difficulty, board_size, timed):
+        self.__mode = mode
         self.__difficulty = difficulty
         self.__num_of_hints = int(self.NUM_HINTS[self.__difficulty] / 81 * (board_size ** 2))
         self.__board_size = board_size
         self.__VALID_NUMS = [i for i in range(1, self.__board_size + 1)]
-        self.__board = BoardGenerator.new_board(self.__difficulty, self.__board_size)
+        self.__board = BoardGenerator.new_board(self.__mode, self.__difficulty, self.__board_size)
         self.__orig_board = deepcopy(self.__board)
         self.__timed = timed
         self.__time_elapsed = 0 if self.__timed else None
@@ -43,12 +44,13 @@ class Game:
 
         data = self.get_stats_from(file)
         self.__file = file
+        self.__mode = data["mode"]
         self.__difficulty = data["difficulty"]
         self.__num_of_hints = data["num of hints"]
         self.__board_size = data["board size"]
         self.__VALID_NUMS = [i for i in range(1, self.__board_size + 1)]
 
-        self.__board = NormalModeBoard(self.__board_size)
+        self.__board = NormalModeBoard(self.__board_size) if self.__mode == "Normal" else KillerModeBoard(self.__board_size)
         self.__orig_board = deepcopy(self.__board)
         
         self.__board.load(data["board"])
@@ -114,6 +116,16 @@ class Game:
     @property
     def solved_board(self):
         return BoardSolver.solver(deepcopy(self.__orig_board)).board
+    
+    @property
+    def groups(self):
+        if isinstance(self.__board, KillerModeBoard):
+            return self.__board.groups
+    
+    @property
+    def group_colours(self):
+        if isinstance(self.__board, KillerModeBoard):
+            return self.__board.group_colours()
 
     def note_at(self, row, col):
         return self.__board.note_str(row, col)

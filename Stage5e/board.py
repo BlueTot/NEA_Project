@@ -1,5 +1,6 @@
 from copy import deepcopy
-from random import randint, shuffle
+from random import randint, shuffle, choice
+from itertools import product
 from abc import ABC
 import dlx
 
@@ -76,8 +77,10 @@ class BoardSolver:
         return num_sols
     
     def is_unique(board):
-        return len([sol for sol in dlx.solve_sudoku(board.matrix_size, board.board_as_2darr)]) == 1
-        # return BoardSolver.num_solutions(board) == 1
+        if isinstance(board, NormalModeBoard):
+            return len([sol for sol in dlx.solve_sudoku(board.matrix_size, board.board_as_2darr)]) == 1
+        return BoardSolver.num_solutions(board) == 1
+        
 
 class BoardGenerator:
 
@@ -94,10 +97,42 @@ class BoardGenerator:
         return BoardSolver.solver(board)
 
     @staticmethod
-    def new_board(difficulty, board_size):
+    def __set_groups(board):
+
+        available_squares = list(product(range(0, board.board_size), repeat=2))
+
+        while available_squares:
+
+            base = choice(available_squares)
+            available_squares.remove(base)
+            board.create_group(base, board.get_num_at(base[0], base[1]))
+            num_squares = 0
+            curr_sq = base
+
+            while randint(0, num_squares) == 0:
+                adjacent_squares = board.adjacent_non_grouped_cells(curr_sq[0], curr_sq[1])
+                if not adjacent_squares:
+                    break
+                adj_sq = choice(adjacent_squares)
+                available_squares.remove(adj_sq)
+                board.add_to_group(base, adj_sq, board.get_num_at(adj_sq[0], adj_sq[1]))
+                curr_sq = adj_sq
+                num_squares += 1
+        
+        return board
+    
+    @staticmethod
+    def get_random_filled_killer_board(board_size):
+        board = KillerModeBoard(board_size)
+        board = BoardSolver.solver(board)
+        board = BoardGenerator.__set_groups(board)
+        return board
+
+    @staticmethod
+    def new_board(mode, difficulty, board_size):
         while True:
             try:
-                board = BoardGenerator.__get_random_filled_board(board_size)
+                board = BoardGenerator.__get_random_filled_board(board_size) if mode == "Normal" else BoardGenerator.get_random_filled_killer_board(board_size)
                 num_remaining = board_size ** 2
                 tries = set()
                 while num_remaining > BoardGenerator.NUM_GIVENS[board_size][difficulty]:
@@ -254,6 +289,15 @@ class Board:
     def _matrix_num(self, row, col):
         return self._matrix_size[0] * (row // self._matrix_size[0]) + col // self._matrix_size[1]
     
+    def _not_in_row(self, row, num):
+        return self._bwn(self._row_digits[row]) & self._bin(num)
+
+    def _not_in_col(self, col, num):
+        return self._bwn(self._col_digits[col]) & self._bin(num)
+
+    def _not_in_3x3_matrix(self, row, col, num):
+        return self._bwn(self._matrix_digits[self._matrix_num(row, col)]) & self._bin(num)
+    
     @property
     def board(self):
         return self._board
@@ -261,6 +305,12 @@ class Board:
     @property
     def board_as_2darr(self):
         return [[sq.num for sq in row] for row in self._board]
+    
+    def load_from_2darr(self, arr):
+        for row in range(len(arr)):
+            for col in range(len(arr[0])):
+                #self._board[row][col].set_num(arr[row][col])
+                self.set_num_at(row, col, arr[row][col])
     
     @property
     def board_size(self):
@@ -310,17 +360,8 @@ class NormalModeBoard(Board):
     def __init__(self, board_size):
         super().__init__(board_size)
 
-    def __not_in_row(self, row, num):
-        return self._bwn(self._row_digits[row]) & self._bin(num)
-
-    def __not_in_col(self, col, num):
-        return self._bwn(self._col_digits[col]) & self._bin(num)
-
-    def __not_in_3x3_matrix(self, row, col, num):
-        return self._bwn(self._matrix_digits[self._matrix_num(row, col)]) & self._bin(num)
-
     def is_safe(self, row, col, num):
-        return self.__not_in_row(row, num) and self.__not_in_col(col, num) and self.__not_in_3x3_matrix(row, col, num)
+        return self._not_in_row(row, num) and self._not_in_col(col, num) and self._not_in_3x3_matrix(row, col, num)
 
     def load(self, hash):
         sq_hash, digits_hash = hash.split("/")
@@ -331,11 +372,6 @@ class NormalModeBoard(Board):
         self._col_digits = list(map(int, col_hash.split(",")))
         self._matrix_digits = list(map(int, matrix_hash.split(",")))
     
-    def load_from_2darr(self, arr):
-        for row in range(len(arr)):
-            for col in range(len(arr[0])):
-                self._board[row][col].set_num(arr[row][col])
-    
     def hash(self):
         sq_hash = ";".join([";".join([sq.hash() for sq in row]) for row in self._board])
         digits_hash = ";".join([self._digits_arr_hash(self._row_digits), 
@@ -343,4 +379,72 @@ class NormalModeBoard(Board):
                                 self._digits_arr_hash(self._matrix_digits)])
         return sq_hash + "/" + digits_hash
 
-#"3,;8,;9,;4,;7,;2,;5,;6,;1,;6,;5,;1,;3,;9,;8,;2,;4,;7,;4,;2,;7,;6,;1,;5,;8,;3,;9,;1,;3,;5,;9,;8,;4,;6,;7,;2,;7,;6,;2,;1,;5,;3,;4,;9,;8,;9,;4,;8,;7,;2,;6,;3,;1,;5,;8,;7,;4,;2,;6,;1,;9,;5,;3,;5,;9,;3,;8,;4,;7,;1,;2,;6,;2,;1,;6,;5,;3,;9,;7,;8,;4,/511,511,511,511,511,511,511,511,511;511,511,511,511,511,511,511,511,511;511,511,511,511,511,511,511,511,511"
+class KillerModeBoard(Board):
+    def __init__(self, board_size):
+        super().__init__(board_size)
+        self._groups = {}
+    
+    @property
+    def groups(self):
+        return self._groups
+    
+    def is_grouped(self, row, col):
+        for group, _ in self._groups.values():
+            if (row, col) in group:
+                return True
+        return False
+    
+    def create_group(self, identifier, num):
+        self._groups[identifier] = ([identifier], num)
+    
+    def add_to_group(self, identifier, square, num):
+       squares, total = self._groups[identifier]
+       self._groups[identifier] = (squares + [square], total + num)
+    
+    def adjacent_cells(self, row, col):
+        cells = []
+        for dr, dc in ((-1, 0), (1, 0), (0, 1), (0, -1)):
+            nr, nc = row + dr, col + dc
+            if 0 <= nr < self._board_size and 0 <= nc < self._board_size:
+                cells.append((nr, nc))
+        return cells
+    
+    def adjacent_non_grouped_cells(self, row, col):
+        return [cell for cell in self.adjacent_cells(row, col) if not self.is_grouped(cell[0], cell[1])]
+
+    def is_group_valid(self, row, col, num):
+        for squares, total in self._groups.values():
+            if (row, col) in squares:
+                num_filled = len([numat for sq in squares if (numat := self.get_num_at(sq[0], sq[1])) != 0]) 
+                if num_filled == len(squares) - 1:
+                    if sum([num if sq == (row, col) else self.get_num_at(sq[0], sq[1]) for sq in squares]) != total:
+                        return False
+                elif not sum([num if sq == (row, col) else self.get_num_at(sq[0], sq[1]) for sq in squares]) <= total:
+                    return False
+        return True     
+    
+    def is_safe(self, row, col, num):
+        return self._not_in_row(row, num) and self._not_in_col(col, num) and self._not_in_3x3_matrix(row, col, num) and self.is_group_valid(row, col, num)
+
+    def group_colours(self):
+        colours = {}
+        while len(colours) != (self._board_size ** 2):
+            row, col = randint(0, self._board_size-1), randint(0, self._board_size-1)
+            if (row, col) not in colours:
+
+                for group, _ in self._groups.values():
+                    if (row, col) in group:
+                        break   
+                possible_colours = [0, 1, 2, 3, 4]
+                has_coloured_adjacent = False
+                for sq in group:
+                    for cell in self.adjacent_cells(sq[0], sq[1]):
+                        if cell in colours and colours[cell] in possible_colours:
+                            has_coloured_adjacent = True
+                            possible_colours.remove(colours[cell])
+                if (has_coloured_adjacent and len(colours) != 0) or len(colours) == 0:
+                    colour = possible_colours[0]
+                    for sq in group:
+                        colours[sq] = colour
+        return colours
+                            

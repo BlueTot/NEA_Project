@@ -24,6 +24,7 @@ class AppearanceConfiguration:
         self.__colour4 = "#ffcccb"
         self.__title_font = "LIBRARY 3 AM soft"
         self.__regular_font = "Metropolis"
+        self.__killer_colours = ["#FF7276", "#FFFFE0", "#ADD8E6", "#90EE90", "#C5B4E3"]
     
     @property
     def background_colour(self):
@@ -56,6 +57,10 @@ class AppearanceConfiguration:
     @property
     def regular_font(self):
         return self.__regular_font
+    
+    @property
+    def killer_colours(self):
+        return self.__killer_colours
 
 class Button(QPushButton): # Screen Button
     def __init__(self, window, text, x, y, width, height, font_family, font_size, command):
@@ -478,7 +483,7 @@ class ConfigGameScreen(Screen):
         self.__timed = Label(self, "TIMED: ", 50, 300, 300, 100, self._appearance_config.regular_font, 24)
         self.__board_size = Label(self, "BOARD SIZE: ", 50, 375, 300, 100, self._appearance_config.regular_font, 24)
 
-        self.__mode_menu = ComboBox(self, 330, 175, 200, 50, self._appearance_config.regular_font, 20, ["Normal"])
+        self.__mode_menu = ComboBox(self, 330, 175, 200, 50, self._appearance_config.regular_font, 20, ["Normal", "Killer"])
         self.__mode_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__difficulty_menu = ComboBox(self, 330, 250, 200, 50, self._appearance_config.regular_font, 20, ["Easy", "Medium", "Hard", "Challenge"])
         self.__difficulty_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
@@ -492,12 +497,12 @@ class ConfigGameScreen(Screen):
 
     def __play_game(self):
         if (difficulty := self.__difficulty_menu.currentText()) and (timed := self.__timed_menu.currentText()) and \
-            (board_size := self.__board_size_menu.currentText()):
+            (board_size := self.__board_size_menu.currentText()) and (mode := self.__mode_menu.currentText()):
             if board_size == "16x16" and difficulty == "Challenge":
                 self.statusBar().showMessage("*16x16 Challenge is not available")
             else:
                 self.setWindowTitle("Board Generation in Progress")
-                self.play_game_signal.emit([difficulty, int(board_size.split("x")[0]), True if timed == "Yes" else False])
+                self.play_game_signal.emit([mode, difficulty, int(board_size.split("x")[0]), True if timed == "Yes" else False])
         else:
             self.statusBar().showMessage("*To continue, please fill all boxes")
 
@@ -510,6 +515,7 @@ class GameScreen(Screen):
     PADDING, STARTX = 25, 10
     NUM_FONT_SIZES = {4: 20*9 // 4, 6: 20*9 // 6, 9: 20, 12: 20 * 9 // 12, 16: 20*9 // 16}
     HINT_FONT_SIZES = {4: 13*9 // 4, 6: 13*9 // 6, 9: 13, 12: 13 * 9 // 12, 16: 5}
+    TOTAL_FONT_SIZES = {4: 10*9 // 4, 6: 10*9 // 6, 9: 10, 12: 10 * 9 // 12, 16: 10 * 9 // 16}
 
     def __init__(self, appearance_config, max_size):
         
@@ -566,6 +572,9 @@ class GameScreen(Screen):
         self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nBoard Size: {self.__game.board_size}x{self.__game.board_size} \nTimed: {self.__game.timed}")
         self.__num_hints_label.setText(str(self.__game.num_hints_left))
 
+        if self.__game.mode == "Killer":
+            self.__colours = self.__game.group_colours
+
         self.__create_curr_grid()
         self.__progress.setValue(int(self.__game.percent_complete()))
 
@@ -603,7 +612,7 @@ class GameScreen(Screen):
 
         self.__sqrs = [[0 for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
 
-        self.__num_font_size, self.__hint_font_size = self.NUM_FONT_SIZES[BOARD_SIZE], self.HINT_FONT_SIZES[BOARD_SIZE]
+        self.__num_font_size, self.__hint_font_size, self.__total_font_size = self.NUM_FONT_SIZES[BOARD_SIZE], self.HINT_FONT_SIZES[BOARD_SIZE], self.TOTAL_FONT_SIZES[BOARD_SIZE]
     
         for row, row_lst in enumerate(curr_board):
             for col, sq in enumerate(row_lst):
@@ -617,15 +626,19 @@ class GameScreen(Screen):
                                 font_size = self.__num_font_size if sq.num != 0 else self.__hint_font_size, 
                                 command = partial(self.__select_square, row+1, col+1))
                 square.setFont(QFont(self._appearance_config.regular_font, self.__num_font_size if sq.num != 0 else self.__hint_font_size))
-                square.setStyleSheet("border: 2px solid black; background-color:" + 
-                                     ("#99d9ea" if (row+1, col+1) == self.__selected_square else "white") + 
+                square.setStyleSheet(f"border: {5 if (row+1, col+1) == self.__selected_square else 2}px solid black; background-color:" + 
+                                     (("#99d9ea" if self.__game.mode == "Normal" else "#C8C8C8") if (row+1, col+1) == self.__selected_square else ("white" if self.__game.mode == 'Normal' else self._appearance_config.killer_colours[self.__colours[(row, col)]])) + 
                                      ";color:" + ("black" if orig_board[row][col].num != 0 else ("blue" if sq.num != 0 else "red")) + 
                                      (";text-align: left" if sq.num == 0 else "") + 
                                      ";")
-                
                 self.__sqrs[row][col] = square
                 self._widgets.append(square)
                 square.show()  
+
+                if self.__game.mode == "Killer" and (row, col) in self.__game.groups:
+                    total_label = Label(self, str(self.__game.groups[(row, col)][1]), square.x(), square.y(), square.width()//3, square.height()//3, self._appearance_config.regular_font, self.__total_font_size)
+                    total_label.show()
+                    self._widgets.append(total_label)
 
     def __update_number_grid(self, curr_board, orig_board):
         mult = self._resize_factor if self.isMaximized() else 1
@@ -633,8 +646,8 @@ class GameScreen(Screen):
             for col, sq in enumerate(row_lst):
                 sq.setText(str(num) if (num := to_letter(curr_board[row][col].num)) != "0" else self.__game.note_at(row, col))
                 sq.setFont(QFont(self._appearance_config.regular_font, int(mult * (self.__num_font_size if num != "0" else self.__hint_font_size))))
-                sq.setStyleSheet("border: 2px solid black; background-color:" + 
-                                     ("#99d9ea" if (row+1, col+1) == self.__selected_square else "white") + 
+                sq.setStyleSheet(f"border: {3 if (row+1, col+1) == self.__selected_square else 2}px solid black; background-color:" + 
+                                     (("#99d9ea" if self.__game.mode == "Normal" else "#C8C8C8") if (row+1, col+1) == self.__selected_square else ("white" if self.__game.mode == 'Normal' else self._appearance_config.killer_colours[self.__colours[(row, col)]])) + 
                                      ";color:" + ("black" if orig_board[row][col].num != 0 else ("blue" if num != "0" else "red")) + 
                                      (";text-align: left" if num == "0" else "") + 
                                      ";")
@@ -943,9 +956,9 @@ class GUI(UI):
         self.__push_screen(screen_name)
     
     def __show_game_screen(self, options):
-        difficulty, board_size, timed = options
+        mode, difficulty, board_size, timed = options
         self.__game = Game()
-        self.__game.generate(difficulty, board_size, timed)
+        self.__game.generate(mode, difficulty, board_size, timed)
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")
