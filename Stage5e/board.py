@@ -48,13 +48,15 @@ class BoardSolver:
     
     @staticmethod
     def solver(board):
-        # if not BoardSolver.solvable(new_board := deepcopy(board)):
-        #     raise BoardUnsolvableError
-        # return new_board
-        for sol in dlx.solve_sudoku(board.matrix_size, board.board_as_2darr):
-            board.load_from_2darr(sol)
-            return board
-        raise BoardUnsolvableError
+        if isinstance(board, NormalModeBoard):
+            for sol in dlx.solve_sudoku(board.matrix_size, board.board_as_2darr):
+                board.load_from_2darr(sol)
+                return board
+            raise BoardUnsolvableError
+        else:
+            if not BoardSolver.solvable(new_board := deepcopy(board)):
+                raise BoardUnsolvableError
+            return new_board
 
     @staticmethod
     def num_solutions(board, row=0, col=0, num_sols=0):
@@ -79,18 +81,30 @@ class BoardSolver:
     
     def is_unique(board):
         if isinstance(board, NormalModeBoard):
-            return len([sol for sol in dlx.solve_sudoku(board.matrix_size, board.board_as_2darr)]) == 1
+            for num_sols, _ in enumerate(dlx.solve_sudoku(board.matrix_size, board.board_as_2darr)):
+                if (num_sols+1) > 1:
+                    return False
+            return True
         return BoardSolver.num_solutions(board) == 1
-        
+
+def conv_num_given_to(board_size, value):
+    return int(value / (9**2) * (board_size**2))
 
 class BoardGenerator:
 
-    NUM_GIVENS = {4: {"Easy": 8, "Medium": 6, "Hard": 5, "Challenge": 4},
-                  6: {"Easy": 17, "Medium": 14, "Hard": 11, "Challenge": 10},
-                  9: {"Easy": 38, "Medium": 31, "Hard": 25, "Challenge": 22},
-                  12: {"Easy": 68, "Medium": 55, "Hard": 44, "Challenge": 39},
-                  16: {"Easy": 120, "Medium": 98, "Hard": 79, "Challenge": 70}
-    }
+    NORMAL_NUM_GIVENS = {9: {"Easy": 38, "Medium": 31, "Hard": 25, "Challenge": 22}}
+    for board_size in [4, 6, 12, 16]:
+        NORMAL_NUM_GIVENS[board_size] = {"Easy": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Easy"]),
+                                "Medium": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Medium"]),
+                                "Hard": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Hard"]),
+                                "Challenge": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Challenge"])}
+    
+    KILLER_NUM_GIVENS = {9: {"Easy": 32, "Medium": 22, "Hard": 14, "Challenge": 8}}
+    for board_size in [4, 6, 12, 16]:
+        KILLER_NUM_GIVENS[board_size] = {"Easy": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Easy"]),
+                                "Medium": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Medium"]),
+                                "Hard": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Hard"]),
+                                "Challenge": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Challenge"])}
     
     @staticmethod
     def __get_random_filled_board(board_size):
@@ -136,7 +150,7 @@ class BoardGenerator:
                 board = BoardGenerator.__get_random_filled_board(board_size) if mode == "Normal" else BoardGenerator.get_random_filled_killer_board(board_size)
                 num_remaining = board_size ** 2
                 tries = set()
-                while num_remaining > BoardGenerator.NUM_GIVENS[board_size][difficulty]:
+                while num_remaining > (BoardGenerator.NORMAL_NUM_GIVENS if mode == "Normal" else BoardGenerator.KILLER_NUM_GIVENS)[board_size][difficulty]:
                     while board.get_num_at(row := randint(0, board_size - 1), col := randint(0, board_size - 1)) == 0:
                         pass
                     orig_num = board.get_num_at(row, col)
@@ -153,6 +167,7 @@ class BoardGenerator:
                     print(num_remaining, len(tries))
                 return board
             except BoardUnsolvableError:
+                print("x")
                 pass
 
 class Square:
@@ -405,15 +420,17 @@ class KillerModeBoard(Board):
         return [cell for cell in self.adjacent_cells(row, col) if not self.is_grouped(cell[0], cell[1])]
 
     def is_group_valid(self, row, col, num):
+        if not self._groups:
+            return True
         for squares, total in self._groups.values():
             if (row, col) in squares:
-                num_filled = len([numat for sq in squares if (numat := self.get_num_at(sq[0], sq[1])) != 0]) 
-                if num_filled == len(squares) - 1:
-                    if sum([num if sq == (row, col) else self.get_num_at(sq[0], sq[1]) for sq in squares]) != total:
-                        return False
-                elif not sum([num if sq == (row, col) else self.get_num_at(sq[0], sq[1]) for sq in squares]) <= total:
-                    return False
-        return True     
+                num_blank = [self.get_num_at(sq[0], sq[1]) for sq in squares].count(0) 
+                if num_blank == 0:
+                    return sum([self.get_num_at(sq[0], sq[1]) for sq in squares]) == total
+                elif num_blank == 1:
+                    return sum([num if sq == (row, col) else self.get_num_at(sq[0], sq[1]) for sq in squares]) == total
+                else:
+                    return sum([num if sq == (row, col) else self.get_num_at(sq[0], sq[1]) for sq in squares]) < total  
     
     def is_safe(self, row, col, num):
         return self._not_in_row(row, num) and self._not_in_col(col, num) and self._not_in_3x3_matrix(row, col, num) and self.is_group_valid(row, col, num)
@@ -453,4 +470,3 @@ class KillerModeBoard(Board):
         sqrs_hash = ";".join([";".join([sq.hash() for sq in row]) for row in self._board])
         gp_hash = ";".join([f"{k}:{str(v)}" for k, v in self._groups.items()])
         return sqrs_hash + "/" + gp_hash
-                            
