@@ -92,7 +92,7 @@ def conv_num_given_to(board_size, value):
 
 class BoardGenerator:
 
-    NORMAL_NUM_GIVENS = {9: {"Easy": 38, "Medium": 31, "Hard": 25, "Challenge": 22}}
+    NORMAL_NUM_GIVENS = {9: {"Easy": 43, "Medium": 35, "Hard": 29, "Challenge": 25}}
     for board_size in [4, 6, 12, 16]:
         NORMAL_NUM_GIVENS[board_size] = {"Easy": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Easy"]),
                                 "Medium": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Medium"]),
