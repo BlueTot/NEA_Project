@@ -1,7 +1,6 @@
 from sys import argv, exit
 import os
 from functools import partial
-import typing
 import json
 
 from game import GameError
