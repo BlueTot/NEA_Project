@@ -1,4 +1,5 @@
 from board import *
+from board_actions import *
 from stack import Stack
 from datetime import datetime, timedelta
 import json
@@ -134,10 +135,10 @@ class Game:
         return self.__board.pieced_note_str(row, col, piece)
     
     def is_complete(self):
-        return self.__board.num_empty_squares() == 0
+        return self.__board.num_empty_squares == 0
 
     def percent_complete(self):
-        return round(((num_orig_empty := self.__orig_board.num_empty_squares()) - self.__board.num_empty_squares())/num_orig_empty * 100, 2)
+        return round(((num_orig_empty := self.__orig_board.num_empty_squares) - self.__board.num_empty_squares)/num_orig_empty * 100, 2)
 
     def push_action(self, action):
         self.__action_stack.push(action)
