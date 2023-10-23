@@ -1,91 +1,92 @@
+'''
+WARNING: This code is not completely written by myself, most of the algorithmic structure is
+based off https://www.cs.mcgill.ca/~aassaf9/python/algorithm_x.html by Ali Assaf <ali.assaf.mail@gmail.com>
+'''
+
 from itertools import product
+from copy import deepcopy
 
-def solve_sudoku(size, grid):
-    """ An efficient Sudoku solver using Algorithm X.
+class DLXSolver:
+    
+    @staticmethod
+    def solve_sudoku(board): # Main solver function (takes NormalModeBoard object)
 
-    >>> grid = [
-    ...     [5, 3, 0, 0, 7, 0, 0, 0, 0],
-    ...     [6, 0, 0, 1, 9, 5, 0, 0, 0],
-    ...     [0, 9, 8, 0, 0, 0, 0, 6, 0],
-    ...     [8, 0, 0, 0, 6, 0, 0, 0, 3],
-    ...     [4, 0, 0, 8, 0, 3, 0, 0, 1],
-    ...     [7, 0, 0, 0, 2, 0, 0, 0, 6],
-    ...     [0, 6, 0, 0, 0, 0, 2, 8, 0],
-    ...     [0, 0, 0, 4, 1, 9, 0, 0, 5],
-    ...     [0, 0, 0, 0, 8, 0, 0, 7, 9]]
-    >>> for solution in solve_sudoku((3, 3), grid):
-    ...     print(*solution, sep='\\n')
-    [5, 3, 4, 6, 7, 8, 9, 1, 2]
-    [6, 7, 2, 1, 9, 5, 3, 4, 8]
-    [1, 9, 8, 3, 4, 2, 5, 6, 7]
-    [8, 5, 9, 7, 6, 1, 4, 2, 3]
-    [4, 2, 6, 8, 5, 3, 7, 9, 1]
-    [7, 1, 3, 9, 2, 4, 8, 5, 6]
-    [9, 6, 1, 5, 3, 7, 2, 8, 4]
-    [2, 8, 7, 4, 1, 9, 6, 3, 5]
-    [3, 4, 5, 2, 8, 6, 1, 7, 9]
-    """
-    R, C = size
-    N = R * C
-    X = ([("rc", rc) for rc in product(range(N), range(N))] +
-         [("rn", rn) for rn in product(range(N), range(1, N + 1))] +
-         [("cn", cn) for cn in product(range(N), range(1, N + 1))] +
-         [("bn", bn) for bn in product(range(N), range(1, N + 1))])
-    Y = dict()
-    for r, c, n in product(range(N), range(N), range(1, N + 1)):
-        b = (r // R) * R + (c // C) # Box number
-        Y[(r, c, n)] = [
-            ("rc", (r, c)),
-            ("rn", (r, n)),
-            ("cn", (c, n)),
-            ("bn", (b, n))]
-    X, Y = exact_cover(X, Y)
-    for i, row in enumerate(grid):
-        for j, n in enumerate(row):
-            if n:
-                select(X, Y, (i, j, n))
-    for solution in solve(X, Y, []):
-        for (r, c, n) in solution:
-            grid[r][c] = n
-        yield grid
+        n = board.board_size # board size
+        cols = ([("row col", rc) for rc in product(range(n), repeat=2)] + # Constraint 1: each cell must have a number in it
+                [("row num", rn) for rn in product(range(n), range(1, n+1))] + # Constraint 2: each different number must appear in every row
+                [("col num", cn) for cn in product(range(n), range(1, n+1))] + # Contraint 3: each different number must appear in every column
+                [("matrix num", mn) for mn in product(range(n), range(1, n+1))]) # Constraint 4: each different number must appear in every matrix/box
+        
+        rows = {}
+        for row, col, num in product(range(n), range(n), range(1, n+1)):
+            rows[(row, col, num)] = [("row col", (row, col)), ("row num", (row, num)), 
+                                  ("col num", (col, num)), ("matrix num", (board.matrix_num(row, col), num))] # Populate rows dictionary with the columns that they match
+            
+        cols, rows = DLXSolver.convert_to_sets(cols, rows) # Convert cols into dictionary of sets for easy access from cols to rows
 
-def exact_cover(X, Y):
-    X = {j: set() for j in X}
-    for i, row in Y.items():
-        for j in row:
-            X[j].add(i)
-    return X, Y
+        for rowidx, row in enumerate(board.board): # Iterate through all squares of the given board
+            for colidx, sq in enumerate(row):
+                if sq.num: # If the number at the square is not 0
+                    '''
+                    Uses the COVER function to eliminate all other possibilites for that square as any other possibilities 
+                    with one or more identical constraints would be eliminated
+                    E.g. if the number 1 is in the (0, 0) square, COVER would remove any possibilities with:
+                    1. a number in the square (0, 0)
+                    2. the number 1 in the first row
+                    3. the number 1 in the first column
+                    4. the number 1 in the first matrix/box
+                    '''
+                    DLXSolver.cover(cols, rows, (rowidx, colidx, sq.num))
 
-def solve(X, Y, solution):
-    if not X:
-        yield list(solution)
-    else:
-        c = min(X, key=lambda c: len(X[c]))
-        for r in list(X[c]):
-            solution.append(r)
-            cols = select(X, Y, r)
-            for s in solve(X, Y, solution):
-                yield s
-            deselect(X, Y, r, cols)
-            solution.pop()
+        for solution_set in DLXSolver.dlx_solve(cols, rows): # Iterate through all solutions of the board using DLX Solver
+            for row, col, num in solution_set: # Iterate through all squares
+                board.set_num_at(row, col, num) # Set num at square
+            yield deepcopy(board) # Return a copy of the board
 
-def select(X, Y, r):
-    cols = []
-    for j in Y[r]:
-        for i in X[j]:
-            for k in Y[i]:
-                if k != j:
-                    X[k].remove(i)
-        cols.append(X.pop(j))
-    return cols
-
-def deselect(X, Y, r, cols):
-    for j in reversed(Y[r]):
-        X[j] = cols.pop()
-        for i in X[j]:
-            for k in Y[i]:
-                if k != j:
-                    X[k].add(i)
-
-if __name__ == "__main__":
-    pass
+    # Convert representation of cols from a set to a dict to give fast access from the columns to the rows
+    @staticmethod
+    def convert_to_sets(cols, rows): 
+        cols = {col : set() for col in cols}
+        for row_id, row_contents in rows.items():
+            for col in row_contents:
+                cols[col].add(row_id)
+        return cols, rows
+    
+    @staticmethod
+    def dlx_solve(cols, rows, solution_set=[]):
+        if not cols: # no remaining columns (constraints)
+            yield solution_set # return solution set
+        else:
+            chosen_col = min(cols, key=lambda col : len(cols[col])) # Select column with least 1s (S-heuristic)
+            for chosen_row in cols[chosen_col]: # Iterate through all rows that intersect with the chosen column
+                solution_set.append(chosen_row) # add this row to the solution set
+                # cover columns (rows remain intact so uncovering is easier, only the connections from the cols to the rows are removed)
+                covered_cols = DLXSolver.cover(cols, rows, chosen_row) 
+                for sol in DLXSolver.dlx_solve(cols, rows, solution_set): # recursively solve the reduced matrix
+                    yield sol
+                # uncover columns (the chosen row is used to obtain the cols that have been covered from the intact rows dictionary)
+                DLXSolver.uncover(cols, rows, chosen_row, covered_cols)
+                solution_set.pop() # remove this row from the solution set
+    
+    @staticmethod
+    def cover(cols, rows, chosen_row): # cover columns function
+        covered_cols = []
+        for col in rows[chosen_row]: # iterate through columns to be covered
+            for row in cols[col]: # iterate through intersecting rows of the columns to be covered
+                for selected_col in rows[row]: # iterate through intersecting cols of that row
+                    '''check if original constraint col is different to the col we are selecting 
+                    (this is used to only remove row connections in other columns not our own column 
+                    so we can remove it at the end and add to covered cols)'''
+                    if col != selected_col: 
+                        cols[selected_col].remove(row) # remove row connection from other cols (not the base col)
+            covered_cols.append(cols.pop(col)) # finally now we remove the base row from cols and add to covered cols
+        return covered_cols
+    
+    @staticmethod
+    def uncover(cols, rows, chosen_row, covered_cols): # uncover columns function
+        for col in reversed(rows[chosen_row]): # iterate through columns to be uncovered in reverse order
+            cols[col] = covered_cols.pop() # add the row set stored back into cols
+            for row in cols[col]: # iterate through intersecting rows of that col
+                for selected_col in rows[row]: # iterate through intersecting cols of that row
+                    if col != selected_col: # check if col is different to selected col, reasoning explained above in the multiline comment
+                        cols[selected_col].add(row) # finally we populate the newly added row set with remaining rows

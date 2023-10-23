@@ -1,7 +1,7 @@
 from copy import deepcopy # importing deepcopy function
 from random import randint, shuffle, choice # importing random functions for board generation
 from itertools import product # product function
-import dlx # dancing links solver (test mode)
+from dlx import DLXSolver # dancing links solver
 from ast import literal_eval # importing function to convert string into list/tuple objects
 
 class BoardUnsolvableError(Exception): # Board unsolvable error
@@ -51,9 +51,8 @@ class BoardSolver: # Board Solver Class
     @staticmethod
     def solver(board): # backtracking solver interface
         if isinstance(board, NormalModeBoard): # if board mode is Normal
-            for sol in dlx.solve_sudoku(board.matrix_size, board.board_as_2darr): # solve board using DLX
-                board.load_from_2darr(sol) # load into board object using 2D array
-                return board # return board once solution is found
+            for sol in DLXSolver.solve_sudoku(board): # solve board using DLX
+                return sol # return board once solution is found
             raise BoardUnsolvableError # board is not solvable
         else:
             if not BoardSolver.solvable(new_board := deepcopy(board)): # check if solvable on copy of board
@@ -84,7 +83,7 @@ class BoardSolver: # Board Solver Class
     
     def is_unique(board): # unique solution interface
         if isinstance(board, NormalModeBoard): # if board mode is Normal
-            for num_sols, _ in enumerate(dlx.solve_sudoku(board.matrix_size, board.board_as_2darr)): # check solutions using DLX
+            for num_sols, _ in enumerate(DLXSolver.solve_sudoku(board)): # check solutions using DLX
                 if (num_sols+1) > 1: # check if number of solutions exceeds 1
                     return False
             return True
@@ -256,7 +255,7 @@ class Board: # Board Base Class
     def _bin(num): # convert index of number in binary number to decimal
         return 2 ** (num - 1)
     
-    def _matrix_num(self, row, col): # get matrix num of cell
+    def matrix_num(self, row, col): # get matrix num of cell
         return self._matrix_size[0] * (row // self._matrix_size[0]) + col // self._matrix_size[1]
     
     def _not_in_row(self, row, num): # check if num isn't in row
@@ -266,7 +265,7 @@ class Board: # Board Base Class
         return self._bwn(self._col_digits[col]) & self._bin(num)
 
     def _not_in_3x3_matrix(self, row, col, num): # check if num isn't in matrix
-        return self._bwn(self._matrix_digits[self._matrix_num(row, col)]) & self._bin(num)
+        return self._bwn(self._matrix_digits[self.matrix_num(row, col)]) & self._bin(num)
     
     '''Getters'''
 
@@ -309,11 +308,11 @@ class Board: # Board Base Class
         if num > 0:
             self._row_digits[row] += (bin := self._bin(num)) # add binary number to row
             self._col_digits[col] += bin
-            self._matrix_digits[self._matrix_num(row, col)] += bin
+            self._matrix_digits[self.matrix_num(row, col)] += bin
         elif (orig_num := self.get_num_at(row, col)) != 0:
             self._row_digits[row] -= (bin := self._bin(orig_num))
             self._col_digits[col] -= bin
-            self._matrix_digits[self._matrix_num(row, col)] -= bin
+            self._matrix_digits[self.matrix_num(row, col)] -= bin
         self._board[row][col].set_num(num)
     
     def set_note_at(self, row, col, note): # sets note at (row, col)

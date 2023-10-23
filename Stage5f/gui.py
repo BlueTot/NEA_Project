@@ -1,19 +1,21 @@
-from sys import argv, exit
-import os
-from functools import partial
-import json
+from sys import argv, exit # Import argv and edit from sys
+import os # Import os module
+from functools import partial # Import partial from functools module
+import json # Import json module
 
-from game import GameError
-from game import Game
-from ui import UI
-from board import to_letter
+from game import Game, GameError # Import Game class and GameError exception class
+from ui import UI # Import UI
+from board import to_letter # Import to_letter function
+
+'''PyQt6 GUI Imports'''
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget, QTextEdit, QWidgetAction
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget, QTextEdit
 
-class AppearanceConfiguration:
-    def __init__(self):
+class AppearanceConfiguration: # Appearance Configuration class
+
+    def __init__(self): # Constructor
         # rgb(240, 240, 240)
         self.__background_colour = "default"
         self.__colour1 = "rgb(255, 255, 255)"
@@ -25,46 +27,50 @@ class AppearanceConfiguration:
         self.__regular_font = "Metropolis"
         self.__killer_colours = ["#FF7276", "#FFFFE0", "#ADD8E6", "#90EE90", "#C5B4E3"]
     
+    '''Getters'''
+
     @property
-    def background_colour(self):
+    def background_colour(self): # Gets background colour
         return self.__background_colour
     
     @property
-    def colour1(self):
+    def colour1(self): # Gets colour 1
         return self.__colour1
     
     @property
-    def colour2(self):
+    def colour2(self): # Gets colour 2
         return self.__colour2
     
     @property
-    def colour2_translucent(self):
+    def colour2_translucent(self): # Gets translucent version of colour 2
         return self.__colour2_translucent
     
     @property
-    def colour3(self):
+    def colour3(self): # Gets colour 3
         return self.__colour3
     
     @property
-    def colour4(self):
+    def colour4(self): # Gets colour 4
         return self.__colour4
     
     @property
-    def title_font(self):
+    def title_font(self): # Gets title font family
         return self.__title_font
     
     @property
-    def regular_font(self):
+    def regular_font(self): # Gets regular font family
         return self.__regular_font
     
     @property
-    def killer_colours(self):
+    def killer_colours(self): # Gets killer sudoku board colours
         return self.__killer_colours
 
 class Button(QPushButton): # Screen Button
-    def __init__(self, window, text, x, y, width, height, font_family, font_size, command):
+
+    def __init__(self, window, text, x, y, width, height, font_family, font_size, command): # Constructor
         super().__init__(text, window)
 
+        # Stores original dimensions and font sizes
         self._orig_x = x
         self._orig_y = y
         self._orig_width = width
@@ -72,25 +78,30 @@ class Button(QPushButton): # Screen Button
         self._font_family = font_family
         self._orig_font_size = font_size
 
+        # Configures button with dimensions and font sizes
         self.setGeometry(x, y, width, height)
         if font_family is not None and font_size is not None:
             self.setFont(QFont(font_family, font_size))
-    
+
+        # Adds command to button
         if command is not None:
             self.clicked.connect(command)
     
+    # Scale up button by scale factor
     def maximise(self, factor):
         self.setGeometry(int(self._orig_x*factor), int(self._orig_y*factor), int(self._orig_width*factor), int(self._orig_height*factor))
         if self._font_family is not None and self._orig_font_size is not None:
             self.setFont(QFont(self._font_family, int(self._orig_font_size*factor)))
     
+    # Returns button to its original size
     def minimise(self):
         self.setGeometry(self._orig_x, self._orig_y, self._orig_width, self._orig_height)
         if self._font_family is not None and self._orig_font_size is not None:
             self.setFont(QFont(self._font_family, self._orig_font_size))
 
 class Border(QPushButton): # Border for number grid
-    def __init__(self, window, x, y, width, height, border_width):
+
+    def __init__(self, window, x, y, width, height, border_width): # Constructor
         super().__init__(window)
 
         self._orig_x = x
