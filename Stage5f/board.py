@@ -1,11 +1,5 @@
-from copy import deepcopy # importing deepcopy function
-from random import randint, shuffle, choice # importing random functions for board generation
-from itertools import product # product function
-from dlx import DLXSolver # dancing links solver
+from random import randint # import randint
 from ast import literal_eval # importing function to convert string into list/tuple objects
-
-class BoardUnsolvableError(Exception): # Board unsolvable error
-    pass
 
 def to_letter(num): # convert letter to number (A = 10 ...)
     return str(num) if 0 <= num <= 9 else chr(num-10+65)
@@ -17,177 +11,6 @@ def to_matrix_size(board_size): # get matrix size from board size
     for factor in range(int(board_size ** 0.5) + 1, 0, -1):
         if board_size % factor == 0:
             return tuple(sorted((factor, board_size // factor)))
-
-def conv_num_given_to(board_size, value): # scale number of given numbers based on number of squares
-    return int(value / (9**2) * (board_size**2))
-
-class BoardSolver: # Board Solver Class
-
-    @staticmethod
-    def solvable(board, row=0, col=0): # backtracking solver method, checks if board is solvable
-
-        if col == board.board_size and row == board.board_size - 1: # if board is filled
-            return True # return True if solvable
-        
-        if col == board.board_size: # if reach end of row
-            col = 0
-            row += 1
-        
-        if board.get_num_at(row, col) > 0: # if number is not 0
-            return BoardSolver.solvable(board, row, col+1) # recursively solve starting from next square
-        
-        nums_to_try = list(range(1, board.board_size + 1)) # list of numbers to try
-        shuffle(nums_to_try) # shuffle numbers so board generated doesn't follow pattern
-
-        for num in nums_to_try: # try all numbers
-            if board.is_safe(row, col, num): # if number is safe
-                board.set_num_at(row, col, num) # set number at (row, col)
-                if BoardSolver.solvable(board, row, col+1): # recursively solve starting from next square
-                    return True
-            board.set_num_at(row, col, 0) # undo (set back to 0)
-
-        return False # return False if not solvable
-    
-    @staticmethod
-    def solver(board): # backtracking solver interface
-        if isinstance(board, NormalModeBoard): # if board mode is Normal
-            for sol in DLXSolver.solve_sudoku(board): # solve board using DLX
-                return sol # return board once solution is found
-            raise BoardUnsolvableError # board is not solvable
-        else:
-            if not BoardSolver.solvable(new_board := deepcopy(board)): # check if solvable on copy of board
-                raise BoardUnsolvableError # board is not solvable
-            return new_board # return copy if solvable
-
-    @staticmethod
-    def num_solutions(board, row=0, col=0, num_sols=0): # count number of solutions using backtracking
-
-        if col == board.board_size and row == board.board_size - 1: # if board is filled
-            return num_sols + 1 # increment solution count
-        
-        if col == board.board_size: # if reach end of row
-            col = 0
-            row += 1
-        
-        if board.get_num_at(row, col) > 0: # if number is not 0
-            return BoardSolver.num_solutions(board, row, col+1, num_sols) # recursively solve starting from next square
-        
-        for num in range(1, board.board_size + 1): # try all numbers
-            if board.is_safe(row, col, num): # if number can be placed (is safe)
-                board.set_num_at(row, col, num) # set number at (row, col)
-                if (num_sols := BoardSolver.num_solutions(board, row, col+1, num_sols)) > 1: # check if board is still unique
-                    break 
-            board.set_num_at(row, col, 0) # undo (set back to 0)
-              
-        return num_sols
-    
-    def is_unique(board): # unique solution interface
-        if isinstance(board, NormalModeBoard): # if board mode is Normal
-            for num_sols, _ in enumerate(DLXSolver.solve_sudoku(board)): # check solutions using DLX
-                if (num_sols+1) > 1: # check if number of solutions exceeds 1
-                    return False
-            return True
-        return BoardSolver.num_solutions(board) == 1 # otherwise check using backtracking solution checker
-
-class BoardGenerator: # Board Generator Class
-
-    NORMAL_NUM_GIVENS = {9: {"Easy": 43, "Medium": 35, "Hard": 29, "Challenge": 25}} # num givens for 9x9
-    for board_size in [4, 6, 12, 16]: # scale to 4x4, 6x6, 12x12, 16x16
-        NORMAL_NUM_GIVENS[board_size] = {"Easy": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Easy"]),
-                                "Medium": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Medium"]),
-                                "Hard": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Hard"]),
-                                "Challenge": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Challenge"])}
-    
-    KILLER_NUM_GIVENS = {9: {"Easy": 32, "Medium": 22, "Hard": 14, "Challenge": 8}} # num givens for 9x9 killer
-    for board_size in [4, 6, 12, 16]: # scale to 4x4, 6x6, 12x12, 16x16 killer
-        KILLER_NUM_GIVENS[board_size] = {"Easy": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Easy"]),
-                                "Medium": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Medium"]),
-                                "Hard": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Hard"]),
-                                "Challenge": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Challenge"])}
-    
-    @staticmethod
-    def __get_random_filled_board(board_size): # generate a randomly filled valid board
-        board = NormalModeBoard(board_size)
-        return BoardSolver.solver(board)
-
-    @staticmethod
-    def __set_groups(board): # set groups for killer sudoku board
-
-        available_squares = list(product(range(0, board.board_size), repeat=2)) # list of squares
-
-        while available_squares: # while there are still squares to assign a group
-
-            base = choice(available_squares) # choose an unassigned square
-            available_squares.remove(base) # remove it from the list
-            board.create_group(base, board.get_num_at(base[0], base[1])) # create group at the base square
-            num_squares = 0 # set number of squares in the group to 0 (n)
-            curr_sq = base # set current square to the base
-
-            while randint(0, num_squares) == 0: # each successive square in the group has a 1/n chance of generating
-                adjacent_squares = board.adjacent_non_grouped_cells(curr_sq[0], curr_sq[1]) # get adjacent non grouped cells of current cell
-                if not adjacent_squares: # no adjacent squares
-                    break
-                adj_sq = choice(adjacent_squares) # choose an adjacent cell randomly
-                available_squares.remove(adj_sq) # remove it from the list
-                board.add_to_group(base, adj_sq, board.get_num_at(adj_sq[0], adj_sq[1])) #add it to the group
-                curr_sq = adj_sq # set current square to the new square just added
-                num_squares += 1 # increment n
-        
-        return board
-    
-    @staticmethod
-    def get_random_filled_killer_board(board_size): # generate random filled killer board (with groups)
-        board = KillerModeBoard(board_size) # create new killer board
-        board = BoardSolver.solver(board) # randomly fill using solver
-        board = BoardGenerator.__set_groups(board) # set the groups
-        return board
-
-    @staticmethod
-    def new_board(mode, difficulty, board_size): # generate a new board
-
-        while True:
-            try:
-                
-                # generate a random filled board (depending on mode)
-                board = BoardGenerator.__get_random_filled_board(board_size) if mode == "Normal" else BoardGenerator.get_random_filled_killer_board(board_size)
-                num_remaining = board_size ** 2 # number of remaining numbers in the board
-                tries = set() # set of already tried numbers
-
-                #dict for number of given numbers
-                num_givens_dict = BoardGenerator.NORMAL_NUM_GIVENS if mode == "Normal" else BoardGenerator.KILLER_NUM_GIVENS
-
-                # while there are still numbers to remove to reach the given difficulty
-                while num_remaining > num_givens_dict[board_size][difficulty]:
-                    
-                    # iteratively find a random filled cell
-                    while board.get_num_at(row := randint(0, board_size - 1), col := randint(0, board_size - 1)) == 0:
-                        pass
-                    
-                    # store num at (row, col) and set it to 0
-                    orig_num = board.get_num_at(row, col)
-                    board.set_num_at(row, col, 0)
-
-                    # check if board only has 1 solution
-                    if not BoardSolver.is_unique(deepcopy(board)):
-                        
-                        # undo and add cell to set of tried cells
-                        board.set_num_at(row, col, orig_num) 
-                        tries.add((row, col))
-
-                        # if all possible non-empty cells have been tried
-                        if len(tries) == num_remaining:
-                            print("fail exit at", num_remaining, "remaining") # fail exit as board cannot be reduced further
-                            return board
-                    else:
-                        num_remaining -= 1 # decrement number of remaining numbers
-                        tries = set() # reset set of tried cells
-                    
-                    print(num_remaining, len(tries)) # DEBUG line of code
-
-                return board
-            
-            except BoardUnsolvableError: # random filled board generated isn't solvable
-                pass
 
 class Square: # Square class
     def __init__(self, board_size, matrix_size): # constructor (takes board size : int,  matrix size : tuple)
@@ -274,10 +97,6 @@ class Board: # Board Base Class
         return self._board
     
     @property
-    def board_as_2darr(self): # get board (as 2D array of integers)
-        return [[sq.num for sq in row] for row in self._board]
-    
-    @property
     def board_size(self): # get board size (returns int)
         return self._board_size
 
@@ -294,13 +113,6 @@ class Board: # Board Base Class
 
     def get_note_at(self, row, col): # gets note at (row, col) -> returns list
         return self._board[row][col].note
-    
-    '''Loading'''
-    
-    def load_from_2darr(self, arr): # loads board from a 2D array of integers
-        for row in range(len(arr)):
-            for col in range(len(arr[0])):
-                self.set_num_at(row, col, arr[row][col])
     
     '''Setters'''
     
@@ -328,11 +140,24 @@ class Board: # Board Base Class
     
     def pieced_note_str(self, row, col, piece): # String representation of note (for rendering in terminal)
         return self._board[row][col].pieced_note_str(piece)
+    
+    @property
+    def board_as_2darr(self):
+        return [[sq.num for sq in row] for row in self._board]
+    
+    def load_from_2darr(self, arr):
+        for row in range(len(arr)):
+            for col in range(len(arr[0])):
+                self.set_num_at(row, col, arr[row][col])
 
 class NormalModeBoard(Board): # Normal Mode Board Class
 
     def __init__(self, board_size): # Constructor (inherits from Board)
         super().__init__(board_size)
+    
+    @property
+    def mode(self):
+        return "Normal"
 
     def is_safe(self, row, col, num): # Is safe method to check if a number can be placed in a certain square
         return self._not_in_row(row, num) and self._not_in_col(col, num) and self._not_in_3x3_matrix(row, col, num) # safe only if num isn't in row, col, and matrix
@@ -350,6 +175,10 @@ class KillerModeBoard(Board): # Killer Mode Board Class
     def __init__(self, board_size): # Constructor (inherits from Board)
         super().__init__(board_size)
         self._groups = {} # Create groups attribute (dictionary)
+    
+    @property
+    def mode(self):
+        return "Killer"
     
     @property
     def groups(self): # Getter for groups (returns dictionary)
