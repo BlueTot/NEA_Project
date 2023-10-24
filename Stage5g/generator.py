@@ -4,26 +4,12 @@ from random import randint, choice
 from itertools import product
 from copy import deepcopy
 from solver import BoardUnsolvableError
-
-def conv_num_given_to(board_size, value): # scale number of given numbers based on number of squares
-    return int(value / (9**2) * (board_size**2))
+from difficulty_settings import get_num_givens
 
 class BoardGenerator: # Board Generator Class
 
-    NORMAL_NUM_GIVENS = {9: {"Easy": 43, "Medium": 35, "Hard": 29, "Challenge": 25}} # num givens for 9x9
-    for board_size in [4, 6, 12, 16]: # scale to 4x4, 6x6, 12x12, 16x16
-        NORMAL_NUM_GIVENS[board_size] = {"Easy": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Easy"]),
-                                "Medium": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Medium"]),
-                                "Hard": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Hard"]),
-                                "Challenge": conv_num_given_to(board_size, NORMAL_NUM_GIVENS[9]["Challenge"])}
-    
-    KILLER_NUM_GIVENS = {9: {"Easy": 32, "Medium": 22, "Hard": 14, "Challenge": 8}} # num givens for 9x9 killer
-    for board_size in [4, 6, 12, 16]: # scale to 4x4, 6x6, 12x12, 16x16 killer
-        KILLER_NUM_GIVENS[board_size] = {"Easy": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Easy"]),
-                                "Medium": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Medium"]),
-                                "Hard": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Hard"]),
-                                "Challenge": conv_num_given_to(board_size, KILLER_NUM_GIVENS[9]["Challenge"])}
-    
+    NORMAL_NUM_GIVENS, KILLER_NUM_GIVENS = get_num_givens()
+
     @staticmethod
     def __get_random_filled_board(board_size): # generate a randomly filled valid board
         board = NormalModeBoard(board_size)

@@ -14,8 +14,8 @@ class GameError(Exception): # GameError exception class
 
 class Game: # Game class
 
-    DIFFICULTY_NUMS = {1: "Easy", 2: "Medium", 3: "Hard", 4:"Challenge"} # Difficulty-number pair for TERMINAL only
-    NUM_HINTS = {"Easy": 80, "Medium": 65, "Hard": 50, "Challenge": 35} # Number of hints for each difficulty
+    DIFFICULTY_NUMS = {1: "Easy", 2: "Medium", 3: "Hard", 4:"Expert"} # Difficulty-number pair for TERMINAL only
+    NUM_HINTS = {"Easy": 80, "Medium": 65, "Hard": 50, "Expert": 35} # Number of hints for each difficulty
     DEFAULT_DIRECTORY = "games" # Default directory to save game files
     
     def __init__(self): # Constructor

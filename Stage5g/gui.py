@@ -495,7 +495,7 @@ class ConfigGameScreen(Screen):
 
         self.__mode_menu = ComboBox(self, 330, 175, 200, 50, self._appearance_config.regular_font, 20, ["Normal", "Killer"])
         self.__mode_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
-        self.__difficulty_menu = ComboBox(self, 330, 250, 200, 50, self._appearance_config.regular_font, 20, ["Easy", "Medium", "Hard", "Challenge"])
+        self.__difficulty_menu = ComboBox(self, 330, 250, 200, 50, self._appearance_config.regular_font, 20, ["Easy", "Medium", "Hard", "Expert"])
         self.__difficulty_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         self.__timed_menu = ComboBox(self, 330, 325, 200, 50, self._appearance_config.regular_font, 20, ["Yes", "No"])
         self.__timed_menu.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
@@ -508,8 +508,8 @@ class ConfigGameScreen(Screen):
     def __play_game(self):
         if (difficulty := self.__difficulty_menu.currentText()) and (timed := self.__timed_menu.currentText()) and \
             (board_size := self.__board_size_menu.currentText()) and (mode := self.__mode_menu.currentText()):
-            if board_size == "16x16" and difficulty == "Challenge":
-                self.statusBar().showMessage("*16x16 Challenge is not available")
+            if board_size == "16x16" and difficulty == "Expert":
+                self.statusBar().showMessage("*16x16 Expert is not available")
             else:
                 self.setWindowTitle("Board Generation in Progress")
                 self.play_game_signal.emit([mode, difficulty, int(board_size.split("x")[0]), True if timed == "Yes" else False])
