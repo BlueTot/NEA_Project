@@ -61,12 +61,12 @@ class Game: # Game class
         self.__timed = data["timed"] # Set timed
         self.__time_elapsed = data["time elapsed"] # Set time elapsed
     
-    def save_game(self): # Save game to file method
+    def save_game(self, account): # Save game to file method
 
         # Create file name based on local time if board is not loaded from a file
         file_name = f"singleplayer_{datetime.now().strftime('%d-%m-%y_%H-%M-%S')}.json" if self.__file is None else self.__file
 
-        with open(f"{self.DEFAULT_DIRECTORY}/{file_name}", "w") as f: # Open json file
+        with open(f"{self.DEFAULT_DIRECTORY}/{account}/{file_name}", "w") as f: # Open json file
             f.write(json.dumps({"creation date": self.__creation_date, "creation time": self.__creation_time, 
                                 "mode": self.__mode, "difficulty": self.__difficulty, "num of hints": self.__num_of_hints, 
                                 "board size": self.__board_size, "board": self.__board.hash(), 
@@ -77,6 +77,8 @@ class Game: # Game class
         if self.__file is not None:
             if os.path.exists(path := f"{self.DEFAULT_DIRECTORY}/{self.__file}"):
                 os.remove(path) # Remove file if the file exists
+            else:
+                print("x")
     
     '''Getters'''
 

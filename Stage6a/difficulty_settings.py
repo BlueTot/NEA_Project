@@ -1,4 +1,4 @@
-from math import exp
+from math import exp # import e^x exponential function
 
 NORMAL_NUM_GIVENS = {9: {"Easy": 43, "Medium": 35, "Hard": 29, "Expert": 25}} # num givens for 9x9
 KILLER_NUM_GIVENS = {9: {"Easy": 32, "Medium": 22, "Hard": 14, "Expert": 8}} # num givens for 9x9 killer
@@ -14,8 +14,8 @@ def __num_givens(mode, board_size, difficulty):
         A = NORMAL_NUM_GIVENS[9][difficulty] - C
     else:
         A, B, C = KILLER_NUM_GIVENS[9][difficulty], 0.45 * GROWTH_FACTORS[mode][board_size], 0
-    givens = A*exp(-B*DIFFICULTY_NUMS[difficulty])+C
-    return int(givens / (9**2) * (board_size**2))
+    givens = A*exp(-B*DIFFICULTY_NUMS[difficulty])+C # use exponential function to calculate number of given numbers
+    return int(givens / (9**2) * (board_size**2)) # scale by number of squares on the board
 
 def get_num_givens(): # Get num givens for normal and killer modes
 
