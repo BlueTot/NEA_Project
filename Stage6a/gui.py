@@ -523,7 +523,7 @@ class OpenGameScreen(Screen):
     
     def __show_game_info(self):
         if file := self.__choose_game_menu.currentText():
-            stats = Game.get_stats_from(os.path.join(self.__account, file))
+            stats = Game.get_stats_from(self.__account, file)
             labels = ["Creation Date", "Creation Time", "Mode", "Difficulty", "Board Size"]
             self.__game_info.setText("\n".join([f"{label}: {stats[label.lower()]}" for label in labels]))
         else:
@@ -743,7 +743,7 @@ class GameScreen(Screen):
 
         self.__running = False
         self.__selected_square = (None, None)
-        self.__game.remove_game_file()
+        self.__game.remove_game_file(self.__account)
         if self.__game.timed:
             self.__timer_event.stop()
 
@@ -1135,7 +1135,7 @@ class GUI(UI):
     
     def __load_game_screen(self, file):
         self.__game = Game()
-        self.__game.load_game(os.path.join(self.__account, file))
+        self.__game.load_game(self.__account, file)
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")

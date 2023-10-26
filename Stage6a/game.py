@@ -36,13 +36,13 @@ class Game: # Game class
         self.__time_elapsed = 0 if self.__timed else None # Set time elapsed
     
     @staticmethod
-    def get_stats_from(file): # Method to get stats of a given file (returns dictionary)
-        with open(f"{Game.DEFAULT_DIRECTORY}/{file}") as f:
+    def get_stats_from(account, file): # Method to get stats of a given file (returns dictionary)
+        with open(f"{Game.DEFAULT_DIRECTORY}/{account}/{file}") as f:
             return json.load(f)
 
-    def load_game(self, file): # Method to load game from file (takes file : str)
+    def load_game(self, account, file): # Method to load game from file (takes file : str)
 
-        data = self.get_stats_from(file) # Stores as dictionary
+        data = self.get_stats_from(account, file) # Stores as dictionary
         self.__file = file # Set file attribute to file name
         self.__mode = data["mode"] # Set mode
         self.__difficulty = data["difficulty"] # Set difficulty
@@ -73,9 +73,9 @@ class Game: # Game class
                                 "orig board": self.__orig_board.hash(), "timed": self.__timed, 
                                 "time elapsed": self.__time_elapsed}, indent=4)) # Write data to json file
     
-    def remove_game_file(self): # Remove game file when game is resigned or won
+    def remove_game_file(self, account): # Remove game file when game is resigned or won
         if self.__file is not None:
-            if os.path.exists(path := f"{self.DEFAULT_DIRECTORY}/{self.__file}"):
+            if os.path.exists(path := f"{self.DEFAULT_DIRECTORY}/{account}/{self.__file}"):
                 os.remove(path) # Remove file if the file exists
             else:
                 print("x")
