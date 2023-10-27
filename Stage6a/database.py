@@ -49,6 +49,21 @@ def __setup():
                     killer_colour4 VARCHAR(7),
                     killer_colour5 VARCHAR(7)
         );""")
+        __update_db("""CREATE TABLE Games(
+                    game_id INTEGER PRIMARY KEY,
+                    username VARCHAR(100),
+                    mode VARCHAR(20),
+                    difficulty VARCHAR(20),
+                    board_size INTEGER,
+                    orig_num_hints INTEGER,
+                    rem_num_hints INTEGER,
+                    timed BOOLEAN,
+                    completed BOOLEAN,
+                    time_to_complete FLOAT(24),
+                    creation_date DATE,
+                    creation_time TIME
+
+        );""")
 
 def encrypt_password(password):
     salt = "sudoku"
@@ -88,6 +103,26 @@ def update_appearance_config(username, options):
     __update_db(f"""INSERT INTO AppearanceConfig VALUES('{username}', {options_string});""")
     print(f"Appearance Config updated for {username}")
 
+def add_game(username, stats):
+    __setup()
+    if (id := __fetch_data("""SELECT MAX(game_id) FROM Games;""")[0][0]) is not None:
+        game_id = id + 1
+    else:
+        game_id = 0
+    __update_db(f"""INSERT INTO Games VALUES('{game_id}', '{username}', 
+                    '{stats[0]}', '{stats[1]}', {stats[2]}, {stats[3]}, {stats[4]},
+                    '{stats[5]}', '{stats[6]}', {stats[7]}, '{stats[8]}', '{stats[9]}'
+                );""")
+    print(f"Game stats successfully saved to {username}")
+
 if __name__ in "__main__":
+    #create_new_account("admin", "admin")
     print(password_at("admin"))
     print(appearance_config_at("admin"))
+
+    print(__fetch_data("""SELECT MAX(game_id) FROM Games""")[0][0])
+
+    for line in __fetch_data("""SELECT * FROM Games"""):
+        print(line)
+
+##C5B4E3

@@ -28,6 +28,7 @@ class Game: # Game class
         self.__mode = mode # Set mode
         self.__difficulty = difficulty # Set difficulty
         self.__num_of_hints = int(self.NUM_HINTS[self.__difficulty] / 81 * (board_size ** 2)) # Calculate number of hints based on number of squares
+        self.__orig_num_of_hints = self.__num_of_hints # Set original number of hints
         self.__board_size = board_size # Set board size
         self.__VALID_NUMS = [i for i in range(1, self.__board_size + 1)] # Set valid numbers depending on board size
         self.__board = BoardGenerator.new_board(self.__mode, self.__difficulty, self.__board_size) # Create the board object
@@ -47,6 +48,7 @@ class Game: # Game class
         self.__mode = data["mode"] # Set mode
         self.__difficulty = data["difficulty"] # Set difficulty
         self.__num_of_hints = data["num of hints"] # Set number of hints
+        self.__orig_num_of_hints = self.__num_of_hints # Set original number of hints
         self.__board_size = data["board size"] # Set board size
         self.__VALID_NUMS = [i for i in range(1, self.__board_size + 1)] # Set valid numbers depending on board size
 
@@ -77,14 +79,20 @@ class Game: # Game class
         if self.__file is not None:
             if os.path.exists(path := f"{self.DEFAULT_DIRECTORY}/{account}/{self.__file}"):
                 os.remove(path) # Remove file if the file exists
-            else:
-                print("x")
+
+    def get_stats(self, completed):
+        return [self.__mode, self.__difficulty, self.__board_size, self.__orig_num_of_hints, self.__num_of_hints, self.__timed, completed, 
+                self.__time_elapsed, self.__creation_date, self.__creation_time]
     
     '''Getters'''
 
     @property
     def difficulty(self): # Gets difficulty (returns str)
         return self.__difficulty
+    
+    @property
+    def orig_num_hints(self): # Gets original number of hints given (returns int)
+        return self.__orig_num_of_hints
 
     @property
     def num_hints_left(self): # Gets number of hints left (returns int)
