@@ -8,6 +8,7 @@ from ui import UI # Import UI
 from board import to_letter # Import to_letter function
 import database
 from database import DBError
+from hex_to_dec import to_translucent
 
 '''PyQt6 GUI Imports'''
 
@@ -17,18 +18,24 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToo
 
 class AppearanceConfiguration: # Appearance Configuration class
 
-    def __init__(self): # Constructor
-        # rgb(240, 240, 240)
-        self.__background_colour = "default"
-        self.__colour1 = "rgb(255, 255, 255)"
-        # self.__colour2 = "#C5B4E3"
-        self.__colour2 = "#aee8f5"
-        self.__colour2_translucent = "rgba(153, 217, 234, 150)"
-        self.__colour3 = "rgb(150, 150, 150)"
-        self.__colour4 = "#ffcccb"
-        self.__title_font = "LIBRARY 3 AM soft"
-        self.__regular_font = "Metropolis"
-        self.__killer_colours = ["#FF7276", "#FFFFE0", "#ADD8E6", "#90EE90", "#C5B4E3"]
+    DEFAULT_SETTINGS = ['#f0f0f0', '#ffffff', '#aee8f5', '#969696', '#ffcccb', 'LIBRARY 3 AM soft', 
+                        'Metropolis', '#ff7276', '#ffffe0', '#add8e6', '#90ee90', '#c5b4e3']
+
+    def __init__(self, settings): # Constructor
+        if settings is not None:
+            self.__background_colour, self.__colour1, self.__colour2, self.__colour3, self.__colour4, self.__title_font, self.__regular_font = settings[1:-5]
+            self.__colour2_translucent = f"rgba{to_translucent(self.__colour2)}"
+            self.__killer_colours = settings[-5:]
+        else:
+            self.__background_colour = self.DEFAULT_SETTINGS[0]
+            self.__colour1 = self.DEFAULT_SETTINGS[1]
+            self.__colour2 = self.DEFAULT_SETTINGS[2]
+            self.__colour2_translucent = f"rgba{to_translucent(self.__colour2)}"
+            self.__colour3 = self.DEFAULT_SETTINGS[3]
+            self.__colour4 = self.DEFAULT_SETTINGS[4]
+            self.__title_font = self.DEFAULT_SETTINGS[5]
+            self.__regular_font = self.DEFAULT_SETTINGS[6]
+            self.__killer_colours = self.DEFAULT_SETTINGS[7:] 
     
     '''Getters'''
 
@@ -330,6 +337,7 @@ class LineEdit(QLineEdit):
 
         self.setGeometry(x, y, width, height)
         self.setFont(QFont(font_family, font_size))
+        self.setStyleSheet("background: white; border: 2px solid black;")
         self.setPlaceholderText(text)
         if password:
             self.setEchoMode(QLineEdit.EchoMode.PasswordEchoOnEdit)
@@ -353,8 +361,7 @@ class Screen(QMainWindow): # Screen
         self._max_size = max_size
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
-        if (bg := appearance_config.background_colour) != "default":
-            self.setStyleSheet(f"background: {bg};")
+        self.setStyleSheet(f"background: {self._appearance_config.background_colour};")
         self.statusBar().setFont(QFont(self._appearance_config.regular_font, 14))
         self.statusBar().setStyleSheet("color : red;")
         self._resize_factor = self._max_size.width() / self.minimumSize().width()
@@ -446,7 +453,10 @@ class HomeScreen(Screen):
             self.view_stats_signal.emit()
     
     def __customise_gui(self):
-        self.customise_gui_signal.emit()
+        if self.__account is None:
+            self.statusBar().showMessage("Please sign in to customise GUI")
+        else:
+            self.customise_gui_signal.emit()
     
     def __help_screen(self):
         self.help_signal.emit()
@@ -605,7 +615,7 @@ class GameScreen(Screen):
         self.__timer = Button(self, "", 610, 20, 130, 65, self._appearance_config.regular_font, 21, self.__pause_game)
         self.__timer.setStyleSheet("border: 2px solid black;")
         self.__progress = ProgressBar(self, 610, 110, 330, 20)
-        self.__progress.setStyleSheet("QProgressBar::chunk{background-color: #99d9ea;}")
+        self.__progress.setStyleSheet("QProgressBar::chunk{background-color: " + self._appearance_config.colour2 + ";}")
 
         self.__back = BackButton(self, self.__return_to_home_screen)
         self.__info_label = Label(self, "", 595, 15, 310, 90, self._appearance_config.regular_font, 14)
@@ -704,7 +714,7 @@ class GameScreen(Screen):
                                 command = partial(self.__select_square, row+1, col+1))
                 square.setFont(QFont(self._appearance_config.regular_font, self.__num_font_size if sq.num != 0 else self.__hint_font_size))
                 square.setStyleSheet(f"border: {5 if (row+1, col+1) == self.__selected_square else 2}px solid black; background-color:" + 
-                                     (("#99d9ea" if self.__game.mode == "Normal" else "#C8C8C8") if (row+1, col+1) == self.__selected_square else ("white" if self.__game.mode == 'Normal' else self._appearance_config.killer_colours[self.__colours[(row, col)]])) + 
+                                     ((self._appearance_config.colour2 if self.__game.mode == "Normal" else "#C8C8C8") if (row+1, col+1) == self.__selected_square else ("white" if self.__game.mode == 'Normal' else self._appearance_config.killer_colours[self.__colours[(row, col)]])) + 
                                      ";color:" + ("black" if orig_board[row][col].num != 0 else ("blue" if sq.num != 0 else "red")) + 
                                      (";text-align: left" if sq.num == 0 else "") + 
                                      ";")
@@ -714,6 +724,7 @@ class GameScreen(Screen):
 
                 if self.__game.mode == "Killer" and (row, col) in self.__game.groups:
                     total_label = Label(self, str(self.__game.groups[(row, col)][1]), square.x(), square.y(), square.width()//3, square.height()//3, self._appearance_config.regular_font, self.__total_font_size)
+                    total_label.setStyleSheet("background: transparent;")
                     total_label.show()
                     self._widgets.append(total_label)
 
@@ -724,7 +735,7 @@ class GameScreen(Screen):
                 sq.setText(str(num) if (num := to_letter(curr_board[row][col].num)) != "0" else self.__game.note_at(row, col))
                 sq.setFont(QFont(self._appearance_config.regular_font, int(mult * (self.__num_font_size if num != "0" else self.__hint_font_size))))
                 sq.setStyleSheet(f"border: {3 if (row+1, col+1) == self.__selected_square else 2}px solid black; background-color:" + 
-                                     (("#99d9ea" if self.__game.mode == "Normal" else "#C8C8C8") if (row+1, col+1) == self.__selected_square else ("white" if self.__game.mode == 'Normal' else self._appearance_config.killer_colours[self.__colours[(row, col)]])) + 
+                                     ((self._appearance_config.colour2 if self.__game.mode == "Normal" else "#C8C8C8") if (row+1, col+1) == self.__selected_square else ("white" if self.__game.mode == 'Normal' else self._appearance_config.killer_colours[self.__colours[(row, col)]])) + 
                                      ";color:" + ("black" if orig_board[row][col].num != 0 else ("blue" if num != "0" else "red")) + 
                                      (";text-align: left" if num == "0" else "") + 
                                      ";")
@@ -769,15 +780,19 @@ class GameScreen(Screen):
             time.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             time.setStyleSheet("background: transparent;")
             time.show()
+            
+            self._widgets += [time, time_label_top]
 
         home_screen_button = Button(self, "RETURN TO HOME", 350, 450, 300, 50, self._appearance_config.regular_font, 20, self.__return_to_home_screen)
+        home_screen_button.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         home_screen_button.show()
 
         solution_button = Button(self, "SEE SOLUTION", 350, 390, 300, 50, self._appearance_config.regular_font, 20,self.__show_solution_screen)
+        solution_button.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         if not win:
             solution_button.show()
         
-        self._widgets += [bg, window, title, time_label_top, time, home_screen_button, solution_button]
+        self._widgets += [bg, window, title, home_screen_button, solution_button]
 
         self.manualMaximise()
     
@@ -790,6 +805,7 @@ class GameScreen(Screen):
         self.__create_solution_grid()
 
         home_screen_button = Button(self, "RETURN TO HOME", 625, 250, 300, 50, self._appearance_config.regular_font, 20, self.__return_to_home_screen)
+        home_screen_button.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
         home_screen_button.show()
         
         self._widgets += [bg, home_screen_button]
@@ -950,7 +966,6 @@ class SignInScreen(Screen):
         else:
             self.statusBar().showMessage("One or more input boxes are still empty")
 
-
 class ViewStatsScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
@@ -969,6 +984,8 @@ class ViewStatsScreen(Screen):
 class CustomiseGUIScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
+    save_signal = pyqtSignal(list)
+    reset_signal = pyqtSignal()
 
     def __init__(self, appearance_config, max_size):
 
@@ -979,7 +996,54 @@ class CustomiseGUIScreen(Screen):
 
         self.__back = BackButton(self, self.__return_to_home_screen)
 
-        self._widgets += [self.__title, self.__back]
+        for idx, label in enumerate(["Background Colour", "Colour 1", "Colour 2", "Colour 3", "Colour 4", "Title Font"]):
+            label_obj = Label(self, label, 50, 150+60*idx, 300, 40, self._appearance_config.regular_font, 18)
+            self._widgets.append(label_obj)
+        
+        for idx, label in enumerate(["Regular Font", "Killer Colour 1", "Killer Colour 2", "Killer Colour 3", "Killer Colour 4", "Killer Colour 5"]):
+            label_obj = Label(self, label, 575, 150+60*idx, 300, 40, self._appearance_config.regular_font, 18)
+            self._widgets.append(label_obj)
+
+        self.__bg_colour = LineEdit(self, 325, 150, 120, 50, self._appearance_config.regular_font, 14, self._appearance_config.background_colour, False)
+        self.__colour1 = LineEdit(self, 325, 210, 120, 50, self._appearance_config.regular_font, 14, self._appearance_config.colour1, False)
+        self.__colour2 = LineEdit(self, 325, 270, 120, 50, self._appearance_config.regular_font, 14, self._appearance_config.colour2, False)
+        self.__colour3 = LineEdit(self, 325, 330, 120, 50, self._appearance_config.regular_font, 14, self._appearance_config.colour3, False)
+        self.__colour4 = LineEdit(self, 325, 390, 120, 50, self._appearance_config.regular_font, 14, self._appearance_config.colour4, False)
+        self.__title_font = LineEdit(self, 325, 450, 200, 50, self._appearance_config.regular_font, 14, self._appearance_config.title_font, False)
+        self.__regular_font = LineEdit(self, 775, 150, 200, 50, self._appearance_config.regular_font, 14, self._appearance_config.regular_font, False)
+        self.__killer_colour1 = LineEdit(self, 775, 210, 120, 50, self._appearance_config.regular_font, 14, self._appearance_config.killer_colours[0], False)
+        self.__killer_colour2 = LineEdit(self, 775, 270, 120, 50, self._appearance_config.regular_font, 14, self._appearance_config.killer_colours[1], False)
+        self.__killer_colour3 = LineEdit(self, 775, 330, 120, 50, self._appearance_config.regular_font, 14, self._appearance_config.killer_colours[2], False)
+        self.__killer_colour4 = LineEdit(self, 775, 390, 120, 50, self._appearance_config.regular_font, 14, self._appearance_config.killer_colours[3], False)
+        self.__killer_colour5 = LineEdit(self, 775, 450, 120, 50, self._appearance_config.regular_font, 14, self._appearance_config.killer_colours[4], False)
+        self.__options = [self.__bg_colour, self.__colour1, self.__colour2, self.__colour3, self.__colour4, self.__title_font,
+                          self.__regular_font, self.__killer_colour1, self.__killer_colour2, self.__killer_colour3, self.__killer_colour4, self.__killer_colour5]
+
+        self.__save = Button(self, "Save Changes", 275, 525, 200, 50, self._appearance_config.regular_font, 18, self.__save)
+        self.__save.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
+
+        self.__reset = Button(self, "Reset Settings", 525, 525, 200, 50, self._appearance_config.regular_font, 18, self.__reset)
+        self.__reset.setStyleSheet(f"background: {self._appearance_config.colour2}; border: 2px solid black;")
+
+        self._widgets += [self.__title, self.__back, self.__bg_colour, self.__colour1, self.__colour2, self.__colour3, self.__colour4, self.__title_font, 
+                          self.__regular_font, self.__killer_colour1, self.__killer_colour2, self.__killer_colour3, self.__killer_colour4, self.__killer_colour5,
+                          self.__save, self.__reset]
+    
+    def __get_options(self):
+        return [text if (text := textbox.text()) else textbox.placeholderText() for textbox in self.__options]
+    
+    def __save(self):
+        options = self.__get_options()
+        if any([textbox.text() for textbox in self.__options]):
+            self.save_signal.emit(options)
+        else:
+            self.statusBar().showMessage("Please fill in at least one box to save")
+    
+    def __reset(self):
+        if self.__get_options() == AppearanceConfiguration.DEFAULT_SETTINGS:
+            self.statusBar().showMessage("Settings already set to default")
+        else:
+            self.reset_signal.emit()
 
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
@@ -1022,7 +1086,7 @@ class GUI(UI):
         QFontDatabase.addApplicationFont("resources/library-3-am.3amsoft.otf")
         QFontDatabase.addApplicationFont("resources/Metropolis-Regular.otf")
 
-        self.__appearance_config = AppearanceConfiguration()
+        self.__appearance_config = AppearanceConfiguration(None)
 
         self.__screens = {"home": self.__home_screen(), "open or create new game": self.__open_or_create_new_game_screen(),
                            "config game": self.__config_game_screen(), "open game": self.__open_game_screen(),
@@ -1094,6 +1158,8 @@ class GUI(UI):
     def __customise_gui_screen(self):
         customise_gui_screen = CustomiseGUIScreen(self.__appearance_config, self.__max_size)
         customise_gui_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        customise_gui_screen.save_signal.connect(self.__update_appearance_config)
+        customise_gui_screen.reset_signal.connect(self.__reset_appearance_config)
         return customise_gui_screen
 
     def __help_screen(self):
@@ -1139,13 +1205,20 @@ class GUI(UI):
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")
+
+    def __app_config(self, account):
+        return AppearanceConfiguration(list(database.appearance_config_at(account)[0]))
     
+    def __sign_in_to(self, account):
+        self.__account = account
+        self.__appearance_config = self.__app_config(account)
+
     def __create_account(self, options):
         try:
             username, password = options
             database.create_new_account(username, password)
             os.mkdir(os.path.join(Game.DEFAULT_DIRECTORY, f"{username}"))
-            self.__account = username
+            self.__sign_in_to(username)
             self.__pop_screen()
         except DBError as err:
             self.__screens["create new account"].show_error(err)
@@ -1156,7 +1229,7 @@ class GUI(UI):
             if not database.password_at(username):
                 raise DBError("Username doesn't exist")
             if database.password_at(username)[0][0] == database.encrypt_password(password):
-                self.__account = username
+                self.__sign_in_to(username)
                 print(f"Signed In as {username}")
             else:
                 raise DBError("Incorrect Password")
@@ -1169,6 +1242,16 @@ class GUI(UI):
         print("Signed Out")
         self.__close_curr_screen()
         self.__show_screen("home", self.__screen_partials["home"])
+    
+    def __update_appearance_config(self, options):
+        database.update_appearance_config(self.__account, options)
+        self.__appearance_config = self.__app_config(self.__account)
+        self.__pop_screen()
+
+    def __reset_appearance_config(self):
+        database.update_appearance_config(self.__account, AppearanceConfiguration.DEFAULT_SETTINGS)
+        self.__appearance_config = self.__app_config(self.__account)
+        self.__pop_screen()
             
     def __quit_game(self):
         self.__close_curr_screen()
