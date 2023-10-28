@@ -14,7 +14,7 @@ from hex_to_dec import to_translucent
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QAction, QIcon, QFontDatabase
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget, QTextEdit, QLineEdit
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget, QTextEdit, QLineEdit, QMessageBox
 
 class AppearanceConfiguration: # Appearance Configuration class
 
@@ -394,6 +394,7 @@ class HomeScreen(Screen):
     sign_in_singal = pyqtSignal()
     sign_out_signal = pyqtSignal()
     view_stats_signal = pyqtSignal()
+    manage_account_signal = pyqtSignal()
     customise_gui_signal = pyqtSignal()
     help_signal = pyqtSignal()
 
@@ -423,7 +424,7 @@ class HomeScreen(Screen):
             options = [("Create Account", self.__create_new_account), ("Sign Out", self.__sign_out), ("Show Stats", self.__view_stats),]
         self.__toolbar.addWidget(MenuButton(self, QIcon("resources/account.svg"), size, QFont(font_family, font_size), options))
         self.__toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), size, QFont(font_family, font_size), 
-                                     [("Customise GUI", self.__customise_gui), ("Manage Account", None)]))
+                                     [("Customise GUI", self.__customise_gui), ("Manage Account", self.__manage_account)]))
         self.__toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", self.__help_screen, False))
 
         self.__account_label = Label(self, "Not Signed In" if self._account.username is None else f"Signed in as {self._account.username}", 
@@ -448,6 +449,12 @@ class HomeScreen(Screen):
             self.statusBar().showMessage("Please sign in to view stats")
         else:
             self.view_stats_signal.emit()
+    
+    def __manage_account(self):
+        if self._account.username is None:
+            self.statusBar().showMessage("Please sign in to manage account")
+        else:
+            self.manage_account_signal.emit()
     
     def __customise_gui(self):
         if self._account.username is None:
@@ -991,11 +998,11 @@ class CustomiseGUIScreen(Screen):
 
         self.__back = BackButton(self, self.__return_to_home_screen)
 
-        for idx, label in enumerate(["Background Colour", "Colour 1", "Colour 2", "Colour 3", "Colour 4", "Title Font"]):
+        for idx, label in enumerate(("Background Colour", "Colour 1", "Colour 2", "Colour 3", "Colour 4", "Title Font")):
             label_obj = Label(self, label, 50, 150+60*idx, 300, 40, self._account.app_config.regular_font, 18)
             self._widgets.append(label_obj)
         
-        for idx, label in enumerate(["Regular Font", "Killer Colour 1", "Killer Colour 2", "Killer Colour 3", "Killer Colour 4", "Killer Colour 5"]):
+        for idx, label in enumerate(("Regular Font", "Killer Colour 1", "Killer Colour 2", "Killer Colour 3", "Killer Colour 4", "Killer Colour 5")):
             label_obj = Label(self, label, 575, 150+60*idx, 300, 40, self._account.app_config.regular_font, 18)
             self._widgets.append(label_obj)
 
@@ -1040,6 +1047,76 @@ class CustomiseGUIScreen(Screen):
         else:
             self.reset_signal.emit()
 
+    def __return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+
+class ManageAccountScreen(Screen):
+
+    return_to_home_screen_signal = pyqtSignal()
+    change_username_signal = pyqtSignal(str)
+    change_password_signal = pyqtSignal(str)
+    delete_account_signal = pyqtSignal()
+    
+    def __init__(self, account, max_size):
+
+        super().__init__(account, max_size)
+
+        self.__title = Label(self, "MANAGE ACCOUNT", 0, 25, 1000, 100, self._account.app_config.title_font, 50)
+        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.__back = BackButton(self, self.__return_to_home_screen)
+
+        for idx, label in enumerate(("Change Username", "Old Password", "New Password", "New Password Again")):
+            label_obj = Label(self, label, 100, 200+75*idx, 300, 50, self._account.app_config.regular_font, 18)
+            self._widgets.append(label_obj)
+
+        self.__username = LineEdit(self, 400, 200, 500, 50, self._account.app_config.regular_font, 15, f"Current username: {self._account.username}", False)
+        self.__old_password = LineEdit(self, 400, 275, 500, 50, self._account.app_config.regular_font, 15, "**************", True)
+        self.__new_password = LineEdit(self, 400, 350, 500, 50, self._account.app_config.regular_font, 15, "Type here: ", True)
+        self.__new_password2 = LineEdit(self, 400, 425, 500, 50, self._account.app_config.regular_font, 15, "Type here: ", True)
+        self.__textboxes = [self.__username, self.__old_password, self.__new_password, self.__new_password2]
+
+        self.__save = Button(self, "Save Changes", 275, 500, 200, 50, self._account.app_config.regular_font, 18, self.__save)
+        self.__save.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
+
+        self.__delete = Button(self, "Delete Account", 525, 500, 200, 50, self._account.app_config.regular_font, 18, self.__delete)
+        self.__delete.setStyleSheet(f"background: {self._account.app_config.colour4}; border: 2px solid black;")
+
+        self._widgets += [self.__back, self.__title, self.__username, self.__old_password, self.__new_password, 
+                          self.__new_password2, self.__save, self.__delete]
+    
+    def __save(self):
+        if any([textbox.text() for textbox in self.__textboxes]):
+            if (username := self.__username.text()):
+                self.change_username_signal.emit(username)
+            if all([textbox.text() for textbox in self.__textboxes[1:]]):
+                if database.encrypt_password(self.__old_password.text()) == database.password_at(self._account.username)[0][0]:
+                    if self.__new_password.text() == self.__new_password2.text():
+                        if self.__new_password.text() != self.__old_password.text():
+                            self.change_password_signal.emit(self.__new_password.text())
+                        else:
+                            self.statusBar().showMessage("Please choose a different password to your current one")
+                    else:
+                        self.statusBar().showMessage("New passwords inputted are not the same")
+                else:
+                    self.statusBar().showMessage("Incorrect original password")
+            else:
+                self.statusBar().showMessage("To change your password, please fill in the last 3 blanks")    
+        else:
+            self.statusBar().showMessage("Please either change your username or password to save")
+
+    def __delete(self):
+        self.__message_box = QMessageBox(self)
+        self.__message_box.setWindowTitle("Delete Account Menu")
+        self.__message_box.setText("Are you sure you want to delete your account?")
+        self.__message_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        self.__message_box.buttonClicked.connect(self.__delete_menu_button)
+        self.__message_box.show()
+    
+    def __delete_menu_button(self, button):
+        if button.text()[1:] == "Yes":
+            self.delete_account_signal.emit()
+    
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
@@ -1109,14 +1186,15 @@ class GUI(UI):
                            "config game": self.__config_game_screen(), "open game": self.__open_game_screen(),
                            "game": self.__game_screen(), "create new account": self.__create_new_account_screen(), 
                            "sign in": self.__sign_in_screen(), "view stats": self.__view_stats_screen(),
+                           "manage account": self.__manage_account_screen(),
                            "customise gui": self.__customise_gui_screen(), "help": self.__help_screen()}
 
         self.__screen_partials = {"home": self.__home_screen, "open or create new game": self.__open_or_create_new_game_screen,
                            "config game": self.__config_game_screen, "open game": self.__open_game_screen,
                            "game": self.__game_screen, "create new account": self.__create_new_account_screen, 
                            "sign in": self.__sign_in_screen, "view stats": self.__view_stats_screen,
+                           "manage account": self.__manage_account_screen,
                            "customise gui": self.__customise_gui_screen, "help": self.__help_screen}
-
 
         self.__show_curr_screen()
     
@@ -1127,6 +1205,7 @@ class GUI(UI):
         home_screen.sign_in_singal.connect(partial(self.__show_screen, "sign in", self.__sign_in_screen))
         home_screen.sign_out_signal.connect(self.__sign_out)
         home_screen.view_stats_signal.connect(partial(self.__show_screen, "view stats", self.__view_stats_screen))
+        home_screen.manage_account_signal.connect(partial(self.__show_screen, "manage account", self.__manage_account_screen))
         home_screen.customise_gui_signal.connect(partial(self.__show_screen, "customise gui", self.__customise_gui_screen))
         home_screen.help_signal.connect(partial(self.__show_screen, "help", self.__help_screen))
         return home_screen
@@ -1172,6 +1251,14 @@ class GUI(UI):
         view_stats_screen = ViewStatsScreen(self.__account, self.__max_size)
         view_stats_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         return view_stats_screen
+
+    def __manage_account_screen(self):
+        manage_account_screen = ManageAccountScreen(self.__account, self.__max_size)
+        manage_account_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        manage_account_screen.change_username_signal.connect(self.__change_username)
+        manage_account_screen.change_password_signal.connect(self.__change_password)
+        manage_account_screen.delete_account_signal.connect(self.__delete_account)
+        return manage_account_screen
     
     def __customise_gui_screen(self):
         customise_gui_screen = CustomiseGUIScreen(self.__account, self.__max_size)
@@ -1223,16 +1310,13 @@ class GUI(UI):
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")
-    
-    def __sign_in_to(self, account):
-        self.__account.set_account(account)
 
     def __create_account(self, options):
         try:
             username, password = options
             database.create_new_account(username, password)
             os.mkdir(os.path.join(Game.DEFAULT_DIRECTORY, f"{username}"))
-            self.__sign_in_to(username)
+            self.__account.set_account(username)
             self.__pop_screen()
         except DBError as err:
             self.__screens["create new account"].show_error(err)
@@ -1243,7 +1327,7 @@ class GUI(UI):
             if not database.password_at(username):
                 raise DBError("Username doesn't exist")
             if database.password_at(username)[0][0] == database.encrypt_password(password):
-                self.__sign_in_to(username)
+                self.__account.set_account(username)
                 print(f"Signed In as {username}")
             else:
                 raise DBError("Incorrect Password")
@@ -1269,6 +1353,20 @@ class GUI(UI):
     
     def __save_game_stats(self, data):
         database.add_game(self.__account.username, data)
+    
+    def __change_username(self, new_username):
+        database.change_username(self.__account.username, new_username)
+        self.__account.set_account(new_username)
+        self.__pop_screen()
+
+    def __change_password(self, password):
+        database.change_password(self.__account.username, password)
+        self.__pop_screen()
+    
+    def __delete_account(self):
+        database.delete_account(self.__account.username)
+        self.__account.set_account(None)
+        self.__pop_screen()
             
     def __quit_game(self):
         self.__close_curr_screen()

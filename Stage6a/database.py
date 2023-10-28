@@ -84,6 +84,7 @@ def delete_account(username):
     if password_at(username):
         __update_db(f"""DELETE FROM Passwords WHERE username='{username}';""")
         __update_db(f"""DELETE FROM AppearanceConfig WHERE username='{username}';""")
+        __update_db(f"""DELETE FROM Games WHERE username='{username}';""")
         print(f"Account {username} deleted")
     else:
         raise DBError("Username does not exist")
@@ -115,10 +116,23 @@ def add_game(username, stats):
                 );""")
     print(f"Game stats successfully saved to {username}")
 
+def change_username(orig_username, new_username):
+    __setup()
+    __update_db(f"""UPDATE Passwords SET username='{new_username}' WHERE username='{orig_username}';""")
+    __update_db(f"""UPDATE AppearanceConfig SET username='{new_username}' WHERE username='{orig_username}';""")
+    __update_db(f"""UPDATE Games SET username='{new_username}' WHERE username='{orig_username}';""")
+    print(f"Username {orig_username} changed to {new_username}")
+
+def change_password(username, new_password):
+    __setup()
+    __update_db(f"""UPDATE Passwords SET password='{encrypt_password(new_password)}' WHERE username='{username}';""")
+    print(f"Password updated for username {username}")
+
 if __name__ in "__main__":
     #create_new_account("admin", "admin")
-    print(password_at("admin"))
-    print(appearance_config_at("admin"))
+    # print(password_at("admin"))
+    # print(appearance_config_at("admin"))
+    print(__fetch_data("""SELECT * FROM Passwords"""))
 
     print(__fetch_data("""SELECT MAX(game_id) FROM Games""")[0][0])
 
