@@ -181,7 +181,7 @@ class Label(QLabel): # Screen label
             self.setFont(QFont(self._font_family, self._orig_font_size))
 
 class ComboBox(QComboBox): # Screen ComboBox to input data
-    def __init__(self, window, x, y, width, height, font_family, font_size, options):
+    def __init__(self, window, x, y, width, height, font_family, font_size, options, add_blank=True):
         super().__init__(window)
 
         self._orig_x = x
@@ -193,7 +193,8 @@ class ComboBox(QComboBox): # Screen ComboBox to input data
 
         self.setGeometry(x, y, width, height)
         self.setFont(QFont(font_family, font_size))
-        self.addItem("")
+        if add_blank:
+            self.addItem("")
         self.addItems(options)
     
     def maximise(self, factor):
@@ -1011,15 +1012,23 @@ class CustomiseGUIScreen(Screen):
         self.__colour2 = LineEdit(self, 325, 270, 120, 50, self._account.app_config.regular_font, 14, self._account.app_config.colour2, False)
         self.__colour3 = LineEdit(self, 325, 330, 120, 50, self._account.app_config.regular_font, 14, self._account.app_config.colour3, False)
         self.__colour4 = LineEdit(self, 325, 390, 120, 50, self._account.app_config.regular_font, 14, self._account.app_config.colour4, False)
-        self.__title_font = LineEdit(self, 325, 450, 200, 50, self._account.app_config.regular_font, 14, self._account.app_config.title_font, False)
-        self.__regular_font = LineEdit(self, 775, 150, 200, 50, self._account.app_config.regular_font, 14, self._account.app_config.regular_font, False)
+
+        self.__title_font = ComboBox(self, 325, 450, 200, 50, self._account.app_config.regular_font, 14, QFontDatabase.families(), add_blank=False)
+        self.__title_font.setCurrentText(self._account.app_config.title_font)
+        self.__title_font.setStyleSheet(f"background: white; border: 2px solid black;")
+
+        self.__regular_font = ComboBox(self, 775, 150, 200, 50, self._account.app_config.regular_font, 14, QFontDatabase.families(), add_blank=False)
+        self.__regular_font.setCurrentText(self._account.app_config.regular_font)
+        self.__regular_font.setStyleSheet(f"background: white; border: 2px solid black;")
+
         self.__killer_colour1 = LineEdit(self, 775, 210, 120, 50, self._account.app_config.regular_font, 14, self._account.app_config.killer_colours[0], False)
         self.__killer_colour2 = LineEdit(self, 775, 270, 120, 50, self._account.app_config.regular_font, 14, self._account.app_config.killer_colours[1], False)
         self.__killer_colour3 = LineEdit(self, 775, 330, 120, 50, self._account.app_config.regular_font, 14, self._account.app_config.killer_colours[2], False)
         self.__killer_colour4 = LineEdit(self, 775, 390, 120, 50, self._account.app_config.regular_font, 14, self._account.app_config.killer_colours[3], False)
         self.__killer_colour5 = LineEdit(self, 775, 450, 120, 50, self._account.app_config.regular_font, 14, self._account.app_config.killer_colours[4], False)
-        self.__options = [self.__bg_colour, self.__colour1, self.__colour2, self.__colour3, self.__colour4, self.__title_font,
-                          self.__regular_font, self.__killer_colour1, self.__killer_colour2, self.__killer_colour3, self.__killer_colour4, self.__killer_colour5]
+
+        self.__options = [self.__bg_colour, self.__colour1, self.__colour2, self.__colour3, self.__colour4, self.__killer_colour1, 
+                          self.__killer_colour2, self.__killer_colour3, self.__killer_colour4, self.__killer_colour5]
 
         self.__save = Button(self, "Save Changes", 275, 525, 200, 50, self._account.app_config.regular_font, 18, self.__save)
         self.__save.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
@@ -1032,11 +1041,16 @@ class CustomiseGUIScreen(Screen):
                           self.__save, self.__reset]
     
     def __get_options(self):
-        return [text if (text := textbox.text()) else textbox.placeholderText() for textbox in self.__options]
+        options = [text if (text := textbox.text()) else textbox.placeholderText() for textbox in self.__options]
+        combo_boxes = [self.__title_font.currentText(), self.__regular_font.currentText()]
+        return options[0:5] + combo_boxes + options[5:]
+    
+    def __font_options_changed(self):
+        return self.__title_font.currentText() != AppearanceConfiguration.DEFAULT_SETTINGS[5] or self.__regular_font.currentText() != AppearanceConfiguration.DEFAULT_SETTINGS[6]
     
     def __save(self):
         options = self.__get_options()
-        if any([textbox.text() for textbox in self.__options]):
+        if any([textbox.text() for textbox in self.__options]) or self.__font_options_changed():
             self.save_signal.emit(options)
         else:
             self.statusBar().showMessage("Please fill in at least one box to save")
