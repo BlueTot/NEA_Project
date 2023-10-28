@@ -1356,6 +1356,8 @@ class GUI(UI):
     
     def __change_username(self, new_username):
         database.change_username(self.__account.username, new_username)
+        os.rename(os.path.join(Game.DEFAULT_DIRECTORY, f"{self.__account.username}"), 
+                  os.path.join(Game.DEFAULT_DIRECTORY, f"{new_username}"))
         self.__account.set_account(new_username)
         self.__pop_screen()
 
@@ -1365,6 +1367,7 @@ class GUI(UI):
     
     def __delete_account(self):
         database.delete_account(self.__account.username)
+        os.rmdir(os.path.join(Game.DEFAULT_DIRECTORY, f"{self.__account.username}"))
         self.__account.set_account(None)
         self.__pop_screen()
             
