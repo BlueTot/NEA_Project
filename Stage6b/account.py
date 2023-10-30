@@ -64,11 +64,23 @@ class Account: # Account Class
 
     def __init__(self, username=None, app_config=AppearanceConfiguration(None)):
         self.__username = username
+        self.__singleplayer_rating = None
+        self.__singleplayer_title = None
         self.__app_config = app_config
+    
+    '''Getters'''
     
     @property
     def username(self):
         return self.__username
+    
+    @property
+    def singleplayer_rating(self):
+        return self.__singleplayer_rating
+    
+    @property
+    def singleplayer_title(self):
+        return self.__singleplayer_title
     
     @property
     def app_config(self):
@@ -80,6 +92,20 @@ class Account: # Account Class
         else:
             self.__app_config = AppearanceConfiguration(list(database.appearance_config_at(self.__username)[0]))
     
+    def update_singleplayer_rating(self):
+        if self.__username is None:
+            self.__singleplayer_rating = None
+        else:
+            self.__singleplayer_rating = database.singleplayer_rating(self.__username)[0][0]
+    
+    def update_singleplayer_title(self):
+        if self.__username is None:
+            self.__singleplayer_title = None
+        else:
+            self.__singleplayer_title = database.singleplayer_title(self.__username)[0][0]
+    
     def set_account(self, account):
         self.__username = account
         self.update_app_config()
+        self.update_singleplayer_rating()
+        self.update_singleplayer_title()

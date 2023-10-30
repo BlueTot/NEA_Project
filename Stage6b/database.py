@@ -34,6 +34,11 @@ def __setup():
         username VARCHAR(100) PRIMARY KEY,
         password VARCHAR(200)
         );""")
+        __update_db("""CREATE TABLE Ratings(
+                    username VARCHAR(100) PRIMARY KEY,
+                    singleplayer_rating INTEGER,
+                    singleplayer_title VARCHAR(20)
+        );""")
         __update_db("""CREATE TABLE AppearanceConfig(
                     username VARCHAR(100) PRIMARY KEY,
                     background_colour VARCHAR(7),
@@ -75,6 +80,7 @@ def create_new_account(username, password):
     if password_at(username):
         raise DBError("Username already taken")
     __update_db(f"""INSERT INTO Passwords VALUES('{username}', '{encrypt_password(password)}');""")
+    __update_db(f"""INSERT INTO Ratings VALUES('{username}', 0, 'Beginner');""")
     __update_db(f"""INSERT INTO AppearanceConfig VALUES('{username}', '#f0f0f0', '#ffffff', '#aee8f5',
                 '#969696', '#ffcccb', 'LIBRARY 3 AM soft', 'Metropolis', '#ff7276', '#ffffe0', '#add8e6', '#90ee90', '#c5b4e3');""")
     print(f"Account {username} created")
@@ -83,6 +89,7 @@ def delete_account(username):
     __setup()
     if password_at(username):
         __update_db(f"""DELETE FROM Passwords WHERE username='{username}';""")
+        __update_db(f"""DELETE FROM Ratings WHERE username='{username}';""")
         __update_db(f"""DELETE FROM AppearanceConfig WHERE username='{username}';""")
         __update_db(f"""DELETE FROM Games WHERE username='{username}';""")
         print(f"Account {username} deleted")
@@ -119,6 +126,7 @@ def add_game(username, stats):
 def change_username(orig_username, new_username):
     __setup()
     __update_db(f"""UPDATE Passwords SET username='{new_username}' WHERE username='{orig_username}';""")
+    __update_db(f"""UPDATE Ratings SET username='{new_username}' WHERE username='{orig_username}';""")
     __update_db(f"""UPDATE AppearanceConfig SET username='{new_username}' WHERE username='{orig_username}';""")
     __update_db(f"""UPDATE Games SET username='{new_username}' WHERE username='{orig_username}';""")
     print(f"Username {orig_username} changed to {new_username}")
@@ -128,11 +136,25 @@ def change_password(username, new_password):
     __update_db(f"""UPDATE Passwords SET password='{encrypt_password(new_password)}' WHERE username='{username}';""")
     print(f"Password updated for username {username}")
 
+def singleplayer_rating(username):
+    return __fetch_data(f"""SELECT singleplayer_rating FROM Ratings WHERE username='{username}';""")
+
+def singleplayer_title(username):
+    return __fetch_data(f"""SELECT singleplayer_title FROM Ratings WHERE username='{username}';""")
+
+def update_singleplayer_rating_and_title(username, rating, title):
+    __setup()
+    __update_db(f"""UPDATE Ratings SET singleplayer_rating={rating} WHERE username='{username}';""")
+    __update_db(f"""UPDATE Ratings SET singleplayer_title='{title}' WHERE username='{username}';""")
+    print(f"Rating and title updated for {username}")
+
 if __name__ in "__main__":
     #create_new_account("admin", "admin")
     # print(password_at("admin"))
     # print(appearance_config_at("admin"))
     print(__fetch_data("""SELECT * FROM Passwords"""))
+
+    print(__fetch_data("""SELECT * FROM Ratings"""))
 
     print(__fetch_data("""SELECT MAX(game_id) FROM Games""")[0][0])
 

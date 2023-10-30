@@ -13,6 +13,7 @@ from board import to_letter # Import to_letter function
 import database # Import database
 from database import DBError # Import Database Error
 from account import * # Import Account and AppearanceConfig classes
+from rating_calc import title # Import title function from rating_calc
 
 '''PyQt6 GUI Imports'''
 
@@ -233,6 +234,7 @@ class GameScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
     save_stats_signal = pyqtSignal(list)
+    update_rating_signal = pyqtSignal(int)
     PADDING, STARTX = 25, 10
     NUM_FONT_SIZES = {4: 20*9 // 4, 6: 20*9 // 6, 9: 20, 12: 20 * 9 // 12, 16: 20*9 // 16}
     HINT_FONT_SIZES = {4: 13*9 // 4, 6: 13*9 // 6, 9: 13, 12: 13 * 9 // 12, 16: 5}
@@ -393,6 +395,7 @@ class GameScreen(Screen):
             self.__timer_event.stop()
         if self._account.username is not None:
             self.save_stats_signal.emit(self.__game.get_stats(win))
+            self.update_rating_signal.emit(rating_change := self.__game.rating_change(self._account.singleplayer_rating, win))
 
         bg = Rect(self, 0, 0, 1000, 560, self._account.app_config.colour2_translucent, 0)
         bg.show()
@@ -407,15 +410,34 @@ class GameScreen(Screen):
 
         if self.__game.timed:
 
-            time_label_top = Label(self, "Time Elapsed: ", 0, 160, 1000, 100, self._account.app_config.regular_font, 20)
+            time_label_top = Label(self, "Time Elapsed: ", 0, 140, 1000, 100, self._account.app_config.regular_font, 20)
             time_label_top.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             time_label_top.setStyleSheet("background: transparent;")
             time_label_top.show()
 
-            time = Label(self, self.__game.time_elapsed, 0, 200, 1000, 100, self._account.app_config.regular_font, 60)
+            time = Label(self, self.__game.time_elapsed, 0, 180, 1000, 100, self._account.app_config.regular_font, 60)
             time.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             time.setStyleSheet("background: transparent;")
             time.show()
+
+            if self._account.username is not None:
+
+                rating_label_top = Label(self, "New Rating: ", 0, 270, 1000, 100, self._account.app_config.regular_font, 20)
+                rating_label_top.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+                rating_label_top.setStyleSheet("background: transparent;")
+                rating_label_top.show()
+
+                rating = Label(self, rating_str := str(self._account.singleplayer_rating), 0, 310, 1000, 100, self._account.app_config.regular_font, 60)
+                rating.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+                rating.setStyleSheet("background: transparent;")
+                rating.show()
+
+                rating_change = Label(self, f"({f'+{rating_change}' if rating_change >= 0 else rating_change})", 60*len(rating_str), 350, 1000, 100, self._account.app_config.regular_font, 20)
+                rating_change.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+                rating_change.setStyleSheet("background: transparent;")
+                rating_change.show()
+
+                self._widgets += [rating_label_top, rating, rating_change]
             
             self._widgets += [time, time_label_top]
 
@@ -859,6 +881,7 @@ class GUI(UI):
         game_screen = GameScreen(self.__account, self.__max_size)
         game_screen.return_to_home_screen_signal.connect(self.__quit_game)
         game_screen.save_stats_signal.connect(self.__save_game_stats)
+        game_screen.update_rating_signal.connect(self.__update_singleplayer_rating)
         return game_screen
 
     def __create_new_account_screen(self):
@@ -996,7 +1019,15 @@ class GUI(UI):
         os.rmdir(os.path.join(Game.DEFAULT_DIRECTORY, f"{self.__account.username}"))
         self.__account.set_account(None)
         self.__pop_screen()
-            
+    
+    def __update_singleplayer_rating(self, rating_change):
+        new_rating = self.__account.singleplayer_rating + rating_change
+        if new_rating >= 0:
+            new_title = title(new_rating)
+            database.update_singleplayer_rating_and_title(self.__account.username, new_rating, new_title)
+            self.__account.update_singleplayer_rating()
+            self.__account.update_singleplayer_title()
+                
     def __quit_game(self):
         self.__close_curr_screen()
         for _ in range(3):

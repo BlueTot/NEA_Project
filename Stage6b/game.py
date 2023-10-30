@@ -8,6 +8,7 @@ import json # Import json module
 import os # Import os module
 from copy import deepcopy # Import deepcopy function from copy
 from math import floor # Import floor function from math
+from rating_calc import * # Import rating calculation details
 
 class GameError(Exception): # GameError exception class
     pass
@@ -225,3 +226,9 @@ class Game: # Game class
                 self.__board.toggle_num_at_note(reverse_action.row, reverse_action.col, reverse_action.num)
             elif isinstance(reverse_action, SetNoteAction): # (for SetNoteAction)
                 self.__board.set_note_at(reverse_action.row, reverse_action.col, reverse_action.new_note)
+    
+    def rating_change(self, rating, won):
+        if won:
+            return rating_gain(self.__mode, self.__board_size, self.__difficulty, rating, self.__time_elapsed)
+        else:
+            return -rating_loss(self.__mode, self.__board_size, self.__difficulty, rating)
