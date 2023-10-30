@@ -62,8 +62,8 @@ class HomeScreen(Screen):
                                      [("Customise GUI", self.__customise_gui), ("Manage Account", self.__manage_account)]))
         self.__toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", self.__help_screen, False))
 
-        self.__account_label = Label(self, "Not Signed In" if self._account.username is None else f"Signed in as {self._account.username}", 
-                                     0, 0, 300, 50, self._account.app_config.regular_font, 15)
+        self.__account_label = Label(self, "Not Signed In" if self._account.username is None else f"Signed in as {self._account.username} ({self._account.singleplayer_title} | {self._account.singleplayer_rating})", 
+                                     0, 0, 400, 50, self._account.app_config.regular_font, 15)
 
         self._widgets += [self.__title, self.__play_singleplayer_button, self.__play_multiplayer_button, self.__leaderboard_button, self.__toolbar, self.__account_label]
 
