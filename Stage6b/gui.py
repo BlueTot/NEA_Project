@@ -959,6 +959,12 @@ class GUI(UI):
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")
+        
+    def __quit_game(self):
+        self.__close_curr_screen()
+        for _ in range(3):
+            self._pop_ui_from_stack()
+        self.__show_screen(self._get_curr_ui(), self.__screen_partials[self._get_curr_ui()])
 
     def __create_account(self, options):
         try:
@@ -1027,12 +1033,6 @@ class GUI(UI):
             database.update_singleplayer_rating_and_title(self.__account.username, new_rating, new_title)
             self.__account.update_singleplayer_rating()
             self.__account.update_singleplayer_title()
-                
-    def __quit_game(self):
-        self.__close_curr_screen()
-        for _ in range(3):
-            self._pop_ui_from_stack()
-        self.__show_curr_screen()
 
     def run(self):
         exit(self.__app.exec())
