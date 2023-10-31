@@ -28,8 +28,9 @@ class HomeScreen(Screen):
     create_new_account_signal = pyqtSignal()
     sign_in_singal = pyqtSignal()
     sign_out_signal = pyqtSignal()
-    view_stats_signal = pyqtSignal()
     manage_account_signal = pyqtSignal()
+    view_stats_signal = pyqtSignal()
+    game_milestones_signal = pyqtSignal()
     customise_gui_signal = pyqtSignal()
     help_signal = pyqtSignal()
 
@@ -56,10 +57,11 @@ class HomeScreen(Screen):
         if self._account.username is None:
             options = [("Create Account", self.__create_new_account), ("Sign In", self.__sign_in)]
         else:
-            options = [("Create Account", self.__create_new_account), ("Sign Out", self.__sign_out), ("Show Stats", self.__view_stats),]
+            options = [("Create Account", self.__create_new_account), ("Sign Out", self.__sign_out)]
         self.__toolbar.addWidget(MenuButton(self, QIcon("resources/account.svg"), size, QFont(font_family, font_size), options))
         self.__toolbar.addWidget(MenuButton(self, QIcon("resources/settings.svg"), size, QFont(font_family, font_size), 
                                      [("Customise GUI", self.__customise_gui), ("Manage Account", self.__manage_account)]))
+        self.__toolbar.addWidget(MenuButton(self, QIcon("resources/stats.svg"), size, QFont(font_family, font_size), [("Show Stats", self.__view_stats), ("Game Milestones", self.__game_milestones)]))
         self.__toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", self.__help_screen, False))
 
         self.__account_label = Label(self, "Not Signed In" if self._account.username is None else f"Signed in as {self._account.username} ({self._account.singleplayer_title} | {self._account.singleplayer_rating})", 
@@ -78,12 +80,6 @@ class HomeScreen(Screen):
     
     def __sign_out(self):
         self.sign_out_signal.emit()
-
-    def __view_stats(self):
-        if self._account.username is None:
-            self.statusBar().showMessage("Please sign in to view stats")
-        else:
-            self.view_stats_signal.emit()
     
     def __manage_account(self):
         if self._account.username is None:
@@ -96,6 +92,18 @@ class HomeScreen(Screen):
             self.statusBar().showMessage("Please sign in to customise GUI")
         else:
             self.customise_gui_signal.emit()
+    
+    def __view_stats(self):
+        if self._account.username is None:
+            self.statusBar().showMessage("Please sign in to view stats")
+        else:
+            self.view_stats_signal.emit()
+    
+    def __game_milestones(self):
+        if self._account.username is None:
+            self.statusBar().showMessage("Please sign in to view stats")
+        else:
+            self.game_milestones_signal.emit()
     
     def __help_screen(self):
         self.help_signal.emit()
@@ -624,24 +632,6 @@ class SignInScreen(Screen):
         else:
             self.statusBar().showMessage("One or more input boxes are still empty")
 
-class ViewStatsScreen(Screen):
-
-    return_to_home_screen_signal = pyqtSignal()
-    
-    def __init__(self, account, max_size):
-
-        super().__init__(account, max_size)
-
-        self.__title = Label(self, "PLAYER STATS", 0, 25, 1000, 100, self._account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        self.__back = BackButton(self, self.__return_to_home_screen)
-
-        self._widgets += [self.__back, self.__title]
-    
-    def __return_to_home_screen(self):
-        self.return_to_home_screen_signal.emit()
-
 class CustomiseGUIScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
@@ -792,6 +782,47 @@ class ManageAccountScreen(Screen):
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
+class ViewStatsScreen(Screen):
+
+    return_to_home_screen_signal = pyqtSignal()
+    
+    def __init__(self, account, max_size):
+
+        super().__init__(account, max_size)
+
+        self.__title = Label(self, "PLAYER STATS", 0, 25, 1000, 100, self._account.app_config.title_font, 50)
+        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.__player_rating = Label(self, f"Rating: {self._account.singleplayer_rating}", 
+                                        50, 150, 400, 50, self._account.app_config.regular_font, 20)
+        self.__player_title = Label(self, f"Title: {self._account.singleplayer_title}", 
+                                        50, 200, 400, 50, self._account.app_config.regular_font, 20)
+
+        self.__back = BackButton(self, self.__return_to_home_screen)
+
+        self._widgets += [self.__back, self.__title, self.__player_rating, self.__player_title]
+    
+    def __return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+
+class GameMilestonesScreen(Screen):
+
+    return_to_home_screen_signal = pyqtSignal()
+    
+    def __init__(self, account, max_size):
+
+        super().__init__(account, max_size)
+
+        self.__title = Label(self, "GAME MILESTONES", 0, 25, 1000, 100, self._account.app_config.title_font, 50)
+        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.__back = BackButton(self, self.__return_to_home_screen)
+
+        self._widgets += [self.__back, self.__title]
+    
+    def __return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+
 class HelpScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
@@ -833,15 +864,15 @@ class GUI(UI):
         self.__screens = {"home": self.__home_screen(), "open or create new game": self.__open_or_create_new_game_screen(),
                            "config game": self.__config_game_screen(), "open game": self.__open_game_screen(),
                            "game": self.__game_screen(), "create new account": self.__create_new_account_screen(), 
-                           "sign in": self.__sign_in_screen(), "view stats": self.__view_stats_screen(),
-                           "manage account": self.__manage_account_screen(),
+                           "sign in": self.__sign_in_screen(), "manage account": self.__manage_account_screen(),
+                           "view stats": self.__view_stats_screen(), "game milestones": self.__game_milestones_screen(),
                            "customise gui": self.__customise_gui_screen(), "help": self.__help_screen()}
 
         self.__screen_partials = {"home": self.__home_screen, "open or create new game": self.__open_or_create_new_game_screen,
                            "config game": self.__config_game_screen, "open game": self.__open_game_screen,
                            "game": self.__game_screen, "create new account": self.__create_new_account_screen, 
-                           "sign in": self.__sign_in_screen, "view stats": self.__view_stats_screen,
-                           "manage account": self.__manage_account_screen,
+                           "sign in": self.__sign_in_screen, "manage account": self.__manage_account_screen, 
+                           "view stats": self.__view_stats_screen, "game milestones": self.__game_milestones_screen,
                            "customise gui": self.__customise_gui_screen, "help": self.__help_screen}
 
         self.__show_curr_screen()
@@ -852,9 +883,10 @@ class GUI(UI):
         home_screen.create_new_account_signal.connect(partial(self.__show_screen, "create new account", self.__create_new_account_screen))
         home_screen.sign_in_singal.connect(partial(self.__show_screen, "sign in", self.__sign_in_screen))
         home_screen.sign_out_signal.connect(self.__sign_out)
-        home_screen.view_stats_signal.connect(partial(self.__show_screen, "view stats", self.__view_stats_screen))
         home_screen.manage_account_signal.connect(partial(self.__show_screen, "manage account", self.__manage_account_screen))
         home_screen.customise_gui_signal.connect(partial(self.__show_screen, "customise gui", self.__customise_gui_screen))
+        home_screen.view_stats_signal.connect(partial(self.__show_screen, "view stats", self.__view_stats_screen))
+        home_screen.game_milestones_signal.connect(partial(self.__show_screen, "game milestones", self.__game_milestones_screen))
         home_screen.help_signal.connect(partial(self.__show_screen, "help", self.__help_screen))
         return home_screen
     
@@ -895,11 +927,6 @@ class GUI(UI):
         sign_in_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         sign_in_screen.sign_in_signal.connect(self.__sign_in)
         return sign_in_screen
-    
-    def __view_stats_screen(self):
-        view_stats_screen = ViewStatsScreen(self.__account, self.__max_size)
-        view_stats_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        return view_stats_screen
 
     def __manage_account_screen(self):
         manage_account_screen = ManageAccountScreen(self.__account, self.__max_size)
@@ -915,6 +942,16 @@ class GUI(UI):
         customise_gui_screen.save_signal.connect(self.__update_appearance_config)
         customise_gui_screen.reset_signal.connect(self.__reset_appearance_config)
         return customise_gui_screen
+    
+    def __view_stats_screen(self):
+        view_stats_screen = ViewStatsScreen(self.__account, self.__max_size)
+        view_stats_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        return view_stats_screen
+    
+    def __game_milestones_screen(self):
+        game_milestones_screen = GameMilestonesScreen(self.__account, self.__max_size)
+        game_milestones_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        return game_milestones_screen
 
     def __help_screen(self):
         help_screen = HelpScreen(self.__account, self.__max_size)

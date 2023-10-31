@@ -148,6 +148,10 @@ def update_singleplayer_rating_and_title(username, rating, title):
     __update_db(f"""UPDATE Ratings SET singleplayer_title='{title}' WHERE username='{username}';""")
     print(f"Rating and title updated for {username}")
 
+def get_games_of(username):
+    __setup()
+    return __fetch_data(f"""SELECT * FROM Games WHERE username='{username}';""")
+
 if __name__ in "__main__":
     #create_new_account("admin", "admin")
     # print(password_at("admin"))
