@@ -2,6 +2,11 @@ import sqlite3
 import os
 import hashlib
 
+def time_format(secs):
+    if secs is None:
+        return None
+    return f"{int(secs // 3600)}h {(int(secs // 60)) % 60}m {int(secs % 60)}s"
+
 class DBError(Exception):
     pass
 
@@ -64,6 +69,7 @@ def __setup():
                     rem_num_hints INTEGER,
                     timed BOOLEAN,
                     completed BOOLEAN,
+                    hardcore BOOLEAN,
                     time_to_complete FLOAT(24),
                     creation_date DATE,
                     creation_time TIME
@@ -119,7 +125,7 @@ def add_game(username, stats):
         game_id = 0
     __update_db(f"""INSERT INTO Games VALUES('{game_id}', '{username}', 
                     '{stats[0]}', '{stats[1]}', {stats[2]}, {stats[3]}, {stats[4]},
-                    '{stats[5]}', '{stats[6]}', {stats[7]}, '{stats[8]}', '{stats[9]}'
+                    '{stats[5]}', '{stats[6]}', '{stats[7]}', {stats[8]}, '{stats[9]}', '{stats[10]}'
                 );""")
     print(f"Game stats successfully saved to {username}")
 
@@ -152,6 +158,37 @@ def get_games_of(username):
     __setup()
     return __fetch_data(f"""SELECT * FROM Games WHERE username='{username}';""")
 
+def num_of_games(username):
+    __setup()
+    return len(get_games_of(username))
+
+def num_completed_games(username):
+    __setup()
+    return len(__fetch_data(f"""SELECT * FROM Games WHERE username='{username}' AND completed='True';"""))
+
+def times_played(username, mode, board_size, difficulty):
+    __setup()
+    return len(__fetch_data(f"""SELECT * FROM Games WHERE username='{username}' 
+                            AND mode='{mode}' AND board_size={board_size} AND difficulty='{difficulty}';"""))
+
+def num_completions(username, mode, board_size, difficulty):
+    __setup()
+    return len(__fetch_data(f"""SELECT * FROM Games WHERE username='{username}' 
+                            AND mode='{mode}' AND board_size={board_size} AND difficulty='{difficulty}'
+                            AND completed='True';"""))
+
+def best_time(username, mode, board_size, difficulty):
+    __setup()
+    return time_format(__fetch_data(f"""SELECT MIN(time_to_complete) FROM Games WHERE username='{username}' 
+                            AND mode='{mode}' AND board_size={board_size} AND difficulty='{difficulty}'
+                            AND completed='True';""")[0][0])
+
+def best_hardcore_time(username, mode, board_size, difficulty):
+    __setup()
+    return time_format(__fetch_data(f"""SELECT MIN(time_to_complete) FROM Games WHERE username='{username}' 
+                            AND mode='{mode}' AND board_size={board_size} AND difficulty='{difficulty}'
+                            AND completed='True' AND hardcore='True';""")[0][0])
+
 if __name__ in "__main__":
     #create_new_account("admin", "admin")
     # print(password_at("admin"))
@@ -163,6 +200,13 @@ if __name__ in "__main__":
     print(__fetch_data("""SELECT MAX(game_id) FROM Games""")[0][0])
 
     for line in __fetch_data("""SELECT * FROM Games"""):
-        print(line)
+        print(line) 
+    
+    print("\nadmin games")
+    for game in get_games_of("admin"):
+        print(game)
+    
+    print(best_time("admin", "Normal", 4, "Easy"))
+    print(best_hardcore_time("admin", "Normal", 4, "Easy"))
 
 ##C5B4E3

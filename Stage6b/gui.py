@@ -211,6 +211,7 @@ class ConfigGameScreen(Screen):
         self.__difficulty = Label(self, "DIFFICULTY: ", 50, 225, 300, 100, self._account.app_config.regular_font, 24)
         self.__timed = Label(self, "TIMED: ", 50, 300, 300, 100, self._account.app_config.regular_font, 24)
         self.__board_size = Label(self, "BOARD SIZE: ", 50, 375, 300, 100, self._account.app_config.regular_font, 24)
+        self.__hardcore = Label(self, "HARDCORE: ", 50, 450, 300, 100, self._account.app_config.regular_font, 24)
 
         self.__mode_menu = ComboBox(self, 330, 175, 200, 50, self._account.app_config.regular_font, 20, ["Normal", "Killer"])
         self.__mode_menu.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
@@ -220,18 +221,21 @@ class ConfigGameScreen(Screen):
         self.__timed_menu.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
         self.__board_size_menu = ComboBox(self, 330, 400, 200, 50, self._account.app_config.regular_font, 20, ["4x4", "6x6", "9x9", "12x12", "16x16"])
         self.__board_size_menu.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
+        self.__hardcore_menu = ComboBox(self, 330, 475, 200, 50, self._account.app_config.regular_font, 20, ["Yes", "No"])
+        self.__hardcore_menu.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
 
-        self._widgets += [self.__title, self.__play, self.__back, self.__mode, self.__difficulty, self.__timed, self.__board_size,
-                          self.__mode_menu, self.__difficulty_menu, self.__timed_menu, self.__board_size_menu]
+        self._widgets += [self.__title, self.__play, self.__back, self.__mode, self.__difficulty, self.__timed, self.__board_size, self.__hardcore,
+                          self.__mode_menu, self.__difficulty_menu, self.__timed_menu, self.__board_size_menu, self.__hardcore_menu]
 
     def __play_game(self):
         if (difficulty := self.__difficulty_menu.currentText()) and (timed := self.__timed_menu.currentText()) and \
-            (board_size := self.__board_size_menu.currentText()) and (mode := self.__mode_menu.currentText()):
+            (board_size := self.__board_size_menu.currentText()) and (mode := self.__mode_menu.currentText()) and \
+                (hardcore := self.__hardcore_menu.currentText()):
             if board_size == "16x16" and difficulty == "Expert":
                 self.statusBar().showMessage("*16x16 Expert is not available")
             else:
                 self.setWindowTitle("Board Generation in Progress")
-                self.play_game_signal.emit([mode, difficulty, int(board_size.split("x")[0]), True if timed == "Yes" else False])
+                self.play_game_signal.emit([mode, difficulty, int(board_size.split("x")[0]), True if timed == "Yes" else False, True if hardcore == "Yes" else False])
         else:
             self.statusBar().showMessage("*To continue, please fill all boxes")
 
@@ -262,7 +266,7 @@ class GameScreen(Screen):
         self.__progress.setStyleSheet("QProgressBar::chunk{background-color: " + self._account.app_config.colour2 + ";}")
 
         self.__back = BackButton(self, self.__return_to_home_screen)
-        self.__info_label = Label(self, "", 595, 15, 310, 90, self._account.app_config.regular_font, 14)
+        self.__info_label = Label(self, "", 595, 15, 310, 90, self._account.app_config.regular_font, 12)
         self.__info_label.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black; border-radius: 30px;")
         self.__info_label.hide()
         self.__info_button = CircularButton(self, 845, 15, 60, 60, QIcon("resources/info.svg"), self.__toggle_info_screen)
@@ -300,7 +304,7 @@ class GameScreen(Screen):
     def set_game(self, game : Game):
 
         self.__game = game
-        self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nBoard Size: {self.__game.board_size}x{self.__game.board_size} \nTimed: {self.__game.timed}")
+        self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nBoard Size: {self.__game.board_size}x{self.__game.board_size} \nTimed: {self.__game.timed} \nHardcore: {self.__game.hardcore}")
         self.__num_hints_label.setText(str(self.__game.num_hints_left))
 
         if self.__game.mode == "Killer":
@@ -792,15 +796,53 @@ class ViewStatsScreen(Screen):
 
         self.__title = Label(self, "PLAYER STATS", 0, 25, 1000, 100, self._account.app_config.title_font, 50)
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        
+        self.__stats = TextEdit(self, 50, 150, 400, 450, self._account.app_config.colour2_translucent, 4, self._account.app_config.regular_font, 18)
 
-        self.__player_rating = Label(self, f"Rating: {self._account.singleplayer_rating}", 
-                                        50, 150, 400, 50, self._account.app_config.regular_font, 20)
-        self.__player_title = Label(self, f"Title: {self._account.singleplayer_title}", 
-                                        50, 200, 400, 50, self._account.app_config.regular_font, 20)
+        total_games = database.num_of_games(self._account.username)
+        completed_games = database.num_completed_games(self._account.username)
 
+        stats_txt = "\n".join([
+        "OVERALL STATS: \n",
+        f"Rating: {self._account.singleplayer_rating}",                         
+        f"Title: {self._account.singleplayer_title}\n",
+        f"Total Games Played: {total_games}",
+        f"Completed Games: {completed_games}",
+        f"% Complete: {f'{round(completed_games/total_games*100)}%' if total_games != 0 else 'N/A'}\n",
+        ])
+    
+        self.__stats.insertPlainText(stats_txt)
+
+        for idx, label in enumerate(["Mode", "Board Size", "Difficulty"]):
+            label_obj = Label(self, label, 525, 150+idx*60, 200, 45, self._account.app_config.regular_font, 20)
+            self._widgets.append(label_obj)
+
+        self.__mode_menu = ComboBox(self, 700, 150, 200, 45, self._account.app_config.regular_font, 20, ["Normal", "Killer"])
+        self.__mode_menu.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
+        self.__mode_menu.activated.connect(self.update_gamemode_stats)
+        self.__board_size_menu = ComboBox(self, 700, 210, 200, 45, self._account.app_config.regular_font, 20, ["4x4", "6x6", "9x9", "12x12", "16x16"])
+        self.__board_size_menu.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
+        self.__board_size_menu.activated.connect(self.update_gamemode_stats)
+        self.__difficulty_menu = ComboBox(self, 700, 270, 200, 45, self._account.app_config.regular_font, 20, ["Easy", "Medium", "Hard", "Expert"])
+        self.__difficulty_menu.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
+        self.__difficulty_menu.activated.connect(self.update_gamemode_stats)
+
+        self.__gamemode_stats = TextEdit(self, 525, 350, 400, 250, self._account.app_config.colour2_translucent, 4, self._account.app_config.regular_font, 18)
+    
         self.__back = BackButton(self, self.__return_to_home_screen)
 
-        self._widgets += [self.__back, self.__title, self.__player_rating, self.__player_title]
+        self._widgets += [self.__back, self.__title, self.__stats, self.__mode_menu, self.__board_size_menu, 
+                          self.__difficulty_menu, self.__gamemode_stats]
+    
+    def update_gamemode_stats(self):
+        if self.__mode_menu.currentText() and self.__board_size_menu.currentText() and self.__difficulty_menu.currentText():
+            mode, board_size, difficulty = self.__mode_menu.currentText(), int(self.__board_size_menu.currentText().split("x")[0]), self.__difficulty_menu.currentText()
+            self.__gamemode_stats.setText("\n".join([
+                f"Times Played: {database.times_played(self._account.username, mode, board_size, difficulty)}",
+                f"Number of Completions: {database.num_completions(self._account.username, mode, board_size, difficulty)}",
+                f"Best Time: {database.best_time(self._account.username, mode, board_size, difficulty)}",
+                f"Best Hardcore Time: {database.best_hardcore_time(self._account.username, mode, board_size, difficulty)}"
+            ]))
     
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
@@ -983,9 +1025,9 @@ class GUI(UI):
         self.__push_screen(screen_name)
     
     def __show_game_screen(self, options):
-        mode, difficulty, board_size, timed = options
+        mode, difficulty, board_size, timed, hardcore = options
         self.__game = Game()
-        self.__game.generate(mode, difficulty, board_size, timed)
+        self.__game.generate(mode, difficulty, board_size, timed, hardcore)
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")

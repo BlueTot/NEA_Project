@@ -25,16 +25,21 @@ class Game: # Game class
         self.__creation_date = str(datetime.now().date()) # Creation date
         self.__creation_time = str(datetime.now().time()) # Creation time
         
-    def generate(self, mode, difficulty, board_size, timed): # Generate new board method (takes mode : str, difficulty: str, board_size : int, timed: boolean)
+    def generate(self, mode, difficulty, board_size, timed, hardcore): # Generate new board method (takes mode : str, difficulty: str, board_size : int, timed: boolean)
         self.__mode = mode # Set mode
         self.__difficulty = difficulty # Set difficulty
-        self.__num_of_hints = int(self.NUM_HINTS[self.__difficulty] / 81 * (board_size ** 2)) # Calculate number of hints based on number of squares
-        self.__orig_num_of_hints = self.__num_of_hints # Set original number of hints
         self.__board_size = board_size # Set board size
         self.__VALID_NUMS = [i for i in range(1, self.__board_size + 1)] # Set valid numbers depending on board size
         self.__board = BoardGenerator.new_board(self.__mode, self.__difficulty, self.__board_size) # Create the board object
         self.__orig_board = deepcopy(self.__board) # Create orig board object using deepcopy
         self.__timed = timed # Set timed
+        self.__hardcore = hardcore # Set hardcore
+        if self.__hardcore:
+            self.__num_of_hints = 0
+            self.__orig_num_of_hints = 0
+        else:
+            self.__num_of_hints = int(self.NUM_HINTS[self.__difficulty] / 81 * (board_size ** 2)) # Calculate number of hints based on number of squares
+            self.__orig_num_of_hints = self.__num_of_hints # Set original number of hints
         self.__time_elapsed = 0 if self.__timed else None # Set time elapsed
     
     @staticmethod
@@ -62,6 +67,7 @@ class Game: # Game class
         self.__creation_date = data["creation date"] # Set creation date
         self.__creation_time = data["creation time"] # Set creation time
         self.__timed = data["timed"] # Set timed
+        self.__hardcore = data["hardcore"]
         self.__time_elapsed = data["time elapsed"] # Set time elapsed
     
     def save_game(self, account): # Save game to file method
@@ -74,7 +80,7 @@ class Game: # Game class
                                 "mode": self.__mode, "difficulty": self.__difficulty, "num of hints": self.__num_of_hints, 
                                 "board size": self.__board_size, "board": self.__board.hash(), 
                                 "orig board": self.__orig_board.hash(), "timed": self.__timed, 
-                                "time elapsed": self.__time_elapsed}, indent=4)) # Write data to json file
+                                "hardcore": self.__hardcore, "time elapsed": self.__time_elapsed}, indent=4)) # Write data to json file
     
     def remove_game_file(self, account): # Remove game file when game is resigned or won
         if self.__file is not None:
@@ -82,8 +88,8 @@ class Game: # Game class
                 os.remove(path) # Remove file if the file exists
 
     def get_stats(self, completed):
-        return [self.__mode, self.__difficulty, self.__board_size, self.__orig_num_of_hints, self.__num_of_hints, self.__timed, completed, 
-                self.__time_elapsed, self.__creation_date, self.__creation_time]
+        return [self.__mode, self.__difficulty, self.__board_size, self.__orig_num_of_hints, self.__num_of_hints, self.__timed, 
+                completed, self.__hardcore, self.__time_elapsed, self.__creation_date, self.__creation_time]
     
     '''Getters'''
 
@@ -106,6 +112,10 @@ class Game: # Game class
     @property
     def timed(self): # Gets timed (returns bool)
         return self.__timed
+    
+    @property
+    def hardcore(self): # Gets hardcore (returns bool)
+        return self.__hardcore
     
     @property
     def time_elapsed(self): # Getstime elapsed (returns str)
