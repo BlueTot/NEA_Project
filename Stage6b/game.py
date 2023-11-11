@@ -16,7 +16,7 @@ class GameError(Exception): # GameError exception class
 class Game: # Game class
 
     DIFFICULTY_NUMS = {1: "Easy", 2: "Medium", 3: "Hard", 4:"Expert"} # Difficulty-number pair for TERMINAL only
-    NUM_HINTS = {"Easy": 80, "Medium": 65, "Hard": 50, "Expert": 35} # Number of hints for each difficulty
+    NUM_AUTO_NOTES = {"Easy": 80, "Medium": 65, "Hard": 50, "Expert": 35} # Number of auto notes for each difficulty
     DEFAULT_DIRECTORY = "games" # Default directory to save game files
     
     def __init__(self): # Constructor
@@ -35,11 +35,15 @@ class Game: # Game class
         self.__timed = timed # Set timed
         self.__hardcore = hardcore # Set hardcore
         if self.__hardcore:
+            self.__num_of_auto_notes = 0
+            self.__orig_num_of_auto_notes = 0
             self.__num_of_hints = 0
             self.__orig_num_of_hints = 0
         else:
-            self.__num_of_hints = int(self.NUM_HINTS[self.__difficulty] / 81 * (board_size ** 2)) # Calculate number of hints based on number of squares
-            self.__orig_num_of_hints = self.__num_of_hints # Set original number of hints
+            self.__num_of_auto_notes = int(self.NUM_AUTO_NOTES[self.__difficulty] / 81 * (board_size ** 2)) # Calculate number of auto notes based on number of squares
+            self.__orig_num_of_auto_notes = self.__num_of_auto_notes # Set original number of auto notes
+            self.__num_of_hints = 0
+            self.__orig_num_of_hints = 0
         self.__time_elapsed = 0 if self.__timed else None # Set time elapsed
     
     @staticmethod
@@ -53,8 +57,10 @@ class Game: # Game class
         self.__file = file # Set file attribute to file name
         self.__mode = data["mode"] # Set mode
         self.__difficulty = data["difficulty"] # Set difficulty
+        self.__num_of_auto_notes = data["num of auto notes"]
+        self.__orig_num_of_auto_notes = data["orig num of auto notes"]
         self.__num_of_hints = data["num of hints"] # Set number of hints
-        self.__orig_num_of_hints = self.__num_of_hints # Set original number of hints
+        self.__orig_num_of_hints = data["orig num of hints"] # Set original number of hints
         self.__board_size = data["board size"] # Set board size
         self.__VALID_NUMS = [i for i in range(1, self.__board_size + 1)] # Set valid numbers depending on board size
 
@@ -67,7 +73,7 @@ class Game: # Game class
         self.__creation_date = data["creation date"] # Set creation date
         self.__creation_time = data["creation time"] # Set creation time
         self.__timed = data["timed"] # Set timed
-        self.__hardcore = data["hardcore"]
+        self.__hardcore = data["hardcore"] # Set hardcore
         self.__time_elapsed = data["time elapsed"] # Set time elapsed
     
     def save_game(self, account): # Save game to file method
@@ -78,6 +84,8 @@ class Game: # Game class
         with open(f"{self.DEFAULT_DIRECTORY}/{account}/{file_name}", "w") as f: # Open json file
             f.write(json.dumps({"creation date": self.__creation_date, "creation time": self.__creation_time, 
                                 "mode": self.__mode, "difficulty": self.__difficulty, "num of hints": self.__num_of_hints, 
+                                "orig num of hints": self.__orig_num_of_hints, "num of auto notes": self.__num_of_auto_notes,
+                                "orig num of auto notes": self.__orig_num_of_auto_notes,
                                 "board size": self.__board_size, "board": self.__board.hash(), 
                                 "orig board": self.__orig_board.hash(), "timed": self.__timed, 
                                 "hardcore": self.__hardcore, "time elapsed": self.__time_elapsed}, indent=4)) # Write data to json file
@@ -88,14 +96,23 @@ class Game: # Game class
                 os.remove(path) # Remove file if the file exists
 
     def get_stats(self, completed):
-        return [self.__mode, self.__difficulty, self.__board_size, self.__orig_num_of_hints, self.__num_of_hints, self.__timed, 
-                completed, self.__hardcore, self.__time_elapsed, self.__creation_date, self.__creation_time]
+        return [self.__mode, self.__difficulty, self.__board_size, self.__orig_num_of_auto_notes, self.__num_of_auto_notes, 
+                self.__orig_num_of_hints, self.__num_of_hints, self.__timed, completed, self.__hardcore, 
+                self.__time_elapsed, self.__creation_date, self.__creation_time]
     
     '''Getters'''
 
     @property
     def difficulty(self): # Gets difficulty (returns str)
         return self.__difficulty
+    
+    @property
+    def orig_num_of_auto_notes(self): # Gets original number of auto notes given (returns int)
+        return self.__orig_num_of_auto_notes
+    
+    @property
+    def num_auto_notes_left(self): # Gets number of auto notes left (returns int)
+        return self.__num_of_auto_notes
     
     @property
     def orig_num_hints(self): # Gets original number of hints given (returns int)
@@ -186,13 +203,17 @@ class Game: # Game class
     
     '''UI Specific Methods to interact with the game/board (with validation)'''
 
+    def get_num_at(self, row, col):
+        row, col = self.__validate(row) - 1, self.__validate(col) - 1 # '-1' is used to convert 1-based system to a 0-based system
+        return self.__board.get_num_at(row, col)
+
     def put_down_number(self, row, col, num): # Put down number method (takes row, col, num where row, col are in a 1-based system)
         row, col, num = self.__validate(row) - 1, self.__validate(col) - 1, self.__validate(to_num(num))
         if (orig_num := self.__board.get_num_at(row, col)) == 0:
             if self.__board.is_safe(row, col, num):
                 self.__board.set_num_at(row, col, num)
             else:
-                raise GameError(f"Please enter a number that doesn't exist in the row / column / 3x3 matrix you specified")
+                raise GameError(f"Please enter a number that doesn't exist in the row / column / box you specified")
         else:
             raise GameError(f"A number already exists at this square")
         self.push_action(SetNumAction(row, col, orig_num, num))
@@ -213,18 +234,18 @@ class Game: # Game class
         self.__board.toggle_num_at_note(row, col, num)
         self.push_action(EditNoteAction(row, col, num))
     
-    def __get_hint_at(self, row, col): # INTERNAL PRIVATE Get hint at square method (takes row, col where both are in a 0-based system)
+    def __get_auto_note_at(self, row, col): # INTERNAL PRIVATE Get auto note at square method (takes row, col where both are in a 0-based system)
         if self.__board.get_num_at(row, col) != 0:
-            raise GameError(f"ERROR: Hint is unavailable for this square as it is not empty")
-        if self.__num_of_hints == 0:
-            raise GameError(f"Not enough hints")
-        self.__num_of_hints -= 1
+            raise GameError(f"ERROR: Auto-Note is unavailable for this square as it is not empty")
+        if self.__num_of_auto_notes == 0:
+            raise GameError(f"Not enough auto-notes")
+        self.__num_of_auto_notes -= 1
         return [self.__board.is_safe(row, col, num) for num in self.__VALID_NUMS]
     
-    def add_hint_to_notes(self, row, col): # EXTERNAL Give hint by adding to notes method (takes row, col where both are in a 1-based system)
+    def add_auto_note_to_notes(self, row, col): # EXTERNAL Give auto note hint by adding to notes method (takes row, col where both are in a 1-based system)
         row, col = self.__validate(row)-1, self.__validate(col)-1 # '-1' is used to convert 1-based system to a 0-based system
         orig_note = self.__board.get_note_at(row, col)
-        self.__board.set_note_at(row, col, new_note := self.__get_hint_at(row, col))
+        self.__board.set_note_at(row, col, new_note := self.__get_auto_note_at(row, col))
         self.push_action(SetNoteAction(row, col, orig_note, new_note))
     
     def undo_last_move(self): # Undo method, uses BoardActions imported from board_actions.py

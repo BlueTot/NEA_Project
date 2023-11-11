@@ -59,12 +59,22 @@ def __setup():
                     killer_colour4 VARCHAR(7),
                     killer_colour5 VARCHAR(7)
         );""")
+        __update_db("""CREATE TABLE GameMilestones(
+                    username VARCHAR(100) PRIMARY KEY,
+                    milestone_4x4 INTEGER,
+                    milestone_6x6 INTEGER,
+                    milestone_9x9 INTEGER,
+                    milestone_12x12 INTEGER,
+                    milestone_16x16 INTEGER
+        )""")
         __update_db("""CREATE TABLE Games(
                     game_id INTEGER PRIMARY KEY,
                     username VARCHAR(100),
                     mode VARCHAR(20),
                     difficulty VARCHAR(20),
                     board_size INTEGER,
+                    orig_num_auto_notes INTEGER,
+                    rem_num_auto_notes INTEGER,
                     orig_num_hints INTEGER,
                     rem_num_hints INTEGER,
                     timed BOOLEAN,
@@ -73,7 +83,6 @@ def __setup():
                     time_to_complete FLOAT(24),
                     creation_date DATE,
                     creation_time TIME
-
         );""")
 
 def encrypt_password(password):
@@ -87,6 +96,7 @@ def create_new_account(username, password):
         raise DBError("Username already taken")
     __update_db(f"""INSERT INTO Passwords VALUES('{username}', '{encrypt_password(password)}');""")
     __update_db(f"""INSERT INTO Ratings VALUES('{username}', 0, 'Beginner');""")
+    __update_db(f"""INSERT INTO GameMilestones VALUES('{username}', 0, 0, 0, 0, 0);""")
     __update_db(f"""INSERT INTO AppearanceConfig VALUES('{username}', '#f0f0f0', '#ffffff', '#aee8f5',
                 '#969696', '#ffcccb', 'LIBRARY 3 AM soft', 'Metropolis', '#ff7276', '#ffffe0', '#add8e6', '#90ee90', '#c5b4e3');""")
     print(f"Account {username} created")
@@ -96,6 +106,7 @@ def delete_account(username):
     if password_at(username):
         __update_db(f"""DELETE FROM Passwords WHERE username='{username}';""")
         __update_db(f"""DELETE FROM Ratings WHERE username='{username}';""")
+        __update_db(f""""DELTE FROM GameMilestones WHERE username='{username}';""")
         __update_db(f"""DELETE FROM AppearanceConfig WHERE username='{username}';""")
         __update_db(f"""DELETE FROM Games WHERE username='{username}';""")
         print(f"Account {username} deleted")
@@ -124,8 +135,8 @@ def add_game(username, stats):
     else:
         game_id = 0
     __update_db(f"""INSERT INTO Games VALUES('{game_id}', '{username}', 
-                    '{stats[0]}', '{stats[1]}', {stats[2]}, {stats[3]}, {stats[4]},
-                    '{stats[5]}', '{stats[6]}', '{stats[7]}', {stats[8]}, '{stats[9]}', '{stats[10]}'
+                    '{stats[0]}', '{stats[1]}', {stats[2]}, {stats[3]}, {stats[4]}, {stats[5]}, {stats[6]},
+                    '{stats[7]}', '{stats[8]}', '{stats[9]}', {stats[10]}, '{stats[11]}', '{stats[12]}'
                 );""")
     print(f"Game stats successfully saved to {username}")
 
@@ -133,6 +144,7 @@ def change_username(orig_username, new_username):
     __setup()
     __update_db(f"""UPDATE Passwords SET username='{new_username}' WHERE username='{orig_username}';""")
     __update_db(f"""UPDATE Ratings SET username='{new_username}' WHERE username='{orig_username}';""")
+    __update_db(f"""UPDATE GameMilestones SET username='{new_username}' WHERE usernames='{orig_username}';""")
     __update_db(f"""UPDATE AppearanceConfig SET username='{new_username}' WHERE username='{orig_username}';""")
     __update_db(f"""UPDATE Games SET username='{new_username}' WHERE username='{orig_username}';""")
     print(f"Username {orig_username} changed to {new_username}")
@@ -189,7 +201,20 @@ def best_hardcore_time(username, mode, board_size, difficulty):
                             AND mode='{mode}' AND board_size={board_size} AND difficulty='{difficulty}'
                             AND completed='True' AND hardcore='True';""")[0][0])
 
+def milestones(username):
+    __setup()
+    return __fetch_data(f"""SELECT * FROM GameMilestones WHERE username='{username}';""")
+
+def set_milestones(username, milestones):
+    __setup()
+    __update_db(f"""UPDATE GameMilestones SET 4x4_milestone={milestones[0]} WHERE username='{username}';""")
+    __update_db(f"""UPDATE GameMilestones SET 6x6_milestone={milestones[1]} WHERE username='{username}';""")
+    __update_db(f"""UPDATE GameMilestones SET 9x9_milestone={milestones[2]} WHERE username='{username}';""")
+    __update_db(f"""UPDATE GameMilestones SET 12x12_milestone={milestones[3]} WHERE username='{username}';""")
+    __update_db(f"""UPDATE GameMilestones SET 16x16_milestone={milestones[4]} WHERE username='{username}';""")
+
 if __name__ in "__main__":
+    __setup()
     #create_new_account("admin", "admin")
     # print(password_at("admin"))
     # print(appearance_config_at("admin"))

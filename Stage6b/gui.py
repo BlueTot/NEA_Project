@@ -272,10 +272,10 @@ class GameScreen(Screen):
         self.__info_button = CircularButton(self, 845, 15, 60, 60, QIcon("resources/info.svg"), self.__toggle_info_screen)
 
         self.__undo_button = CircularButton(self, 610, 470, 58, 58, QIcon("resources/undo.svg"), self.__undo_move)
-        self.__delete_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/delete.svg"), self.__remove_num)
-        self.__delete_button.setIconSize(QSize(53, 53))
-        self.__delete_button.setStyleSheet("border-radius: 29px; border: 5px solid black;")
-        self.__hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), self.__show_hint)
+        self.__auto_note_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/auto_note.svg"), self.__show_auto_note)
+        self.__num_auto_notes_label = Label(self, "", 681, 535, 58, 58, self._account.app_config.regular_font, 15)
+        self.__num_auto_notes_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.__hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), None)
         self.__num_hints_label = Label(self, "", 748, 535, 58, 58, self._account.app_config.regular_font, 15)
         self.__num_hints_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.__notes_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/notes_off.svg"), self.__toggle_notes_mode)
@@ -284,7 +284,7 @@ class GameScreen(Screen):
         self.__resign_button = CircularButton(self, 878, 470, 58, 58, QIcon("resources/resign.svg"), partial(self.__show_end_screen, False))
 
         self._widgets += [self.__timer, self.__back, self.__info_label, self.__info_button, self.__undo_button, 
-                          self.__delete_button, self.__hint_button, self.__num_hints_label, self.__notes_button, 
+                          self.__auto_note_button, self.__hint_button, self.__num_auto_notes_label, self.__num_hints_label, self.__notes_button, 
                           self.__resign_button, self.__progress]
 
     def __show_border(self, board_size, matrix_size):
@@ -305,6 +305,7 @@ class GameScreen(Screen):
 
         self.__game = game
         self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nBoard Size: {self.__game.board_size}x{self.__game.board_size} \nTimed: {self.__game.timed} \nHardcore: {self.__game.hardcore}")
+        self.__num_auto_notes_label.setText(str(self.__game.num_auto_notes_left))
         self.__num_hints_label.setText(str(self.__game.num_hints_left))
 
         if self.__game.mode == "Killer":
@@ -496,7 +497,10 @@ class GameScreen(Screen):
                 if self.__notes_mode:
                     self.__game.edit_note(self.__selected_square[0], self.__selected_square[1], num)
                 else:
-                    self.__game.put_down_number(self.__selected_square[0], self.__selected_square[1], num)            
+                    if self.__game.get_num_at(self.__selected_square[0], self.__selected_square[1]) == 0:
+                        self.__game.put_down_number(self.__selected_square[0], self.__selected_square[1], num)   
+                    else:
+                        self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])         
             except GameError as err:
                 self.show_error(err)
             self.__update_curr_grid()
@@ -504,22 +508,12 @@ class GameScreen(Screen):
             self.__show_game_paused_error()
         if self.__game.is_complete():
             self.__show_end_screen(True)
-            
-    def __remove_num(self):
-        if self.__running:
-            try:
-                self.__game.remove_number(self.__selected_square[0], self.__selected_square[1])
-            except GameError as err:
-                self.show_error(err)
-            self.__update_curr_grid()
-        else:
-            self.__show_game_paused_error()
     
-    def __show_hint(self):
+    def __show_auto_note(self):
         if self.__running:
             try:
-                self.__game.add_hint_to_notes(self.__selected_square[0], self.__selected_square[1])
-                self.__num_hints_label.setText(str(self.__game.num_hints_left))
+                self.__game.add_auto_note_to_notes(self.__selected_square[0], self.__selected_square[1])
+                self.__num_auto_notes_label.setText(str(self.__game.num_auto_notes_left))
             except GameError as err:
                 self.show_error(err)
             self.__update_curr_grid()
@@ -1048,8 +1042,8 @@ class GUI(UI):
     def __create_account(self, options):
         try:
             username, password = options
-            database.create_new_account(username, password)
             os.mkdir(os.path.join(Game.DEFAULT_DIRECTORY, f"{username}"))
+            database.create_new_account(username, password)
             self.__account.set_account(username)
             self.__pop_screen()
         except DBError as err:
