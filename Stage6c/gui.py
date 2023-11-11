@@ -275,7 +275,7 @@ class GameScreen(Screen):
         self.__auto_note_button = CircularButton(self, 677, 470, 58, 58, QIcon("resources/auto_note.svg"), self.__show_auto_note)
         self.__num_auto_notes_label = Label(self, "", 681, 535, 58, 58, self._account.app_config.regular_font, 15)
         self.__num_auto_notes_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.__hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), None)
+        self.__hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), self.__show_hint)
         self.__num_hints_label = Label(self, "", 748, 535, 58, 58, self._account.app_config.regular_font, 15)
         self.__num_hints_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.__notes_button = CircularButton(self, 811, 470, 58, 58, QIcon("resources/notes_off.svg"), self.__toggle_notes_mode)
@@ -512,8 +512,19 @@ class GameScreen(Screen):
     def __show_auto_note(self):
         if self.__running:
             try:
-                self.__game.add_auto_note_to_notes(self.__selected_square[0], self.__selected_square[1])
+                self.__game.use_auto_note(self.__selected_square[0], self.__selected_square[1])
                 self.__num_auto_notes_label.setText(str(self.__game.num_auto_notes_left))
+            except GameError as err:
+                self.show_error(err)
+            self.__update_curr_grid()
+        else:
+            self.__show_game_paused_error()
+    
+    def __show_hint(self):
+        if self.__running:
+            try:
+                self.__game.use_hint(self.__selected_square[0], self.__selected_square[1])
+                self.__num_hints_label.setText(str(self.__game.num_hints_left))
             except GameError as err:
                 self.show_error(err)
             self.__update_curr_grid()
@@ -1028,7 +1039,7 @@ class GUI(UI):
     
     def __load_game_screen(self, file):
         self.__game = Game()
-        self.__game.load_game(self.__account, file)
+        self.__game.load_game(self.__account.username, file)
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")

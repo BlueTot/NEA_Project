@@ -17,6 +17,7 @@ class Game: # Game class
 
     DIFFICULTY_NUMS = {1: "Easy", 2: "Medium", 3: "Hard", 4:"Expert"} # Difficulty-number pair for TERMINAL only
     NUM_AUTO_NOTES = {"Easy": 80, "Medium": 65, "Hard": 50, "Expert": 35} # Number of auto notes for each difficulty
+    NUM_HINTS = {"Easy": 5, "Medium": 6, "Hard": 8, "Expert": 11} # Number of hints for each difficulty
     DEFAULT_DIRECTORY = "games" # Default directory to save game files
     
     def __init__(self): # Constructor
@@ -34,7 +35,7 @@ class Game: # Game class
         self.__orig_board = deepcopy(self.__board) # Create orig board object using deepcopy
         self.__timed = timed # Set timed
         self.__hardcore = hardcore # Set hardcore
-        if self.__hardcore:
+        if self.__hardcore: # No auto notes or hints allowed in hardcore mode
             self.__num_of_auto_notes = 0
             self.__orig_num_of_auto_notes = 0
             self.__num_of_hints = 0
@@ -42,9 +43,10 @@ class Game: # Game class
         else:
             self.__num_of_auto_notes = int(self.NUM_AUTO_NOTES[self.__difficulty] / 81 * (board_size ** 2)) # Calculate number of auto notes based on number of squares
             self.__orig_num_of_auto_notes = self.__num_of_auto_notes # Set original number of auto notes
-            self.__num_of_hints = 0
-            self.__orig_num_of_hints = 0
+            self.__num_of_hints = int(self.NUM_HINTS[self.__difficulty] / 81 * (board_size ** 2)) # Calculate number of hints based on number of squares
+            self.__orig_num_of_hints = 0 # Set original number of hints
         self.__time_elapsed = 0 if self.__timed else None # Set time elapsed
+        self.__solved_board = BoardSolver.solver(deepcopy(self.__orig_board))
     
     @staticmethod
     def get_stats_from(account, file): # Method to get stats of a given file (returns dictionary)
@@ -67,9 +69,12 @@ class Game: # Game class
         # Create null board object
         self.__board = NormalModeBoard(self.__board_size) if self.__mode == "Normal" else KillerModeBoard(self.__board_size)
         self.__orig_board = deepcopy(self.__board) # Deepcopy to get orig board
+        self.__solved_board = NormalModeBoard(self.__board_size) if self.__mode == "Normal" else KillerModeBoard(self.__board_size) # Create null solved board object
         
         self.__board.load(data["board"]) # Load null board with squares
         self.__orig_board.load(data["orig board"]) # Load null orig board with squares
+        self.__solved_board.load(data["solved board"]) # Load null solved board with squares
+
         self.__creation_date = data["creation date"] # Set creation date
         self.__creation_time = data["creation time"] # Set creation time
         self.__timed = data["timed"] # Set timed
@@ -87,7 +92,8 @@ class Game: # Game class
                                 "orig num of hints": self.__orig_num_of_hints, "num of auto notes": self.__num_of_auto_notes,
                                 "orig num of auto notes": self.__orig_num_of_auto_notes,
                                 "board size": self.__board_size, "board": self.__board.hash(), 
-                                "orig board": self.__orig_board.hash(), "timed": self.__timed, 
+                                "orig board": self.__orig_board.hash(), 
+                                "solved board": self.__solved_board.hash(), "timed": self.__timed, 
                                 "hardcore": self.__hardcore, "time elapsed": self.__time_elapsed}, indent=4)) # Write data to json file
     
     def remove_game_file(self, account): # Remove game file when game is resigned or won
@@ -156,7 +162,7 @@ class Game: # Game class
     
     @property
     def solved_board(self): # Gets solved board (returns 2D array of square objects)
-        return BoardSolver.solver(deepcopy(self.__orig_board)).board
+        return self.__solved_board.board
     
     @property
     def groups(self): # Gets groups (returns dictionary if board is a killer mode board, returns None otherwise)
@@ -242,11 +248,21 @@ class Game: # Game class
         self.__num_of_auto_notes -= 1
         return [self.__board.is_safe(row, col, num) for num in self.__VALID_NUMS]
     
-    def add_auto_note_to_notes(self, row, col): # EXTERNAL Give auto note hint by adding to notes method (takes row, col where both are in a 1-based system)
+    def use_auto_note(self, row, col): # EXTERNAL Use auto note method (takes row, col where both are in a 1-based system)
         row, col = self.__validate(row)-1, self.__validate(col)-1 # '-1' is used to convert 1-based system to a 0-based system
         orig_note = self.__board.get_note_at(row, col)
         self.__board.set_note_at(row, col, new_note := self.__get_auto_note_at(row, col))
         self.push_action(SetNoteAction(row, col, orig_note, new_note))
+    
+    def use_hint(self, row, col): # EXTERNAL Use hint method (takes row, col where both are in a 1-based system)
+        row, col = self.__validate(row)-1, self.__validate(col)-1 # '-1' is used to convert 1-based system to a 0-based system
+        if (orig_num := self.__board.get_num_at(row, col)) != 0:
+            raise GameError(f"ERROR: Hint is unavailable for this square as it is not empty")
+        if self.__num_of_hints == 0:
+            raise GameError(f"Not enough hints")
+        self.__board.set_num_at(row, col, new_num := self.__solved_board.get_num_at(row, col))
+        self.push_action(SetNumAction(row, col, orig_num, new_num))
+        self.__num_of_hints -= 1
     
     def undo_last_move(self): # Undo method, uses BoardActions imported from board_actions.py
         if (action := self.pop_action()) != -1: # Check if action stack isn't empty
