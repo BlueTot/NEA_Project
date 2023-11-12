@@ -1,6 +1,17 @@
 from hex_to_dec import to_translucent # Import convert to translucent function
 import database # Import database
 
+class GameMilestones:
+
+    MILESTONES = {1: 10, 2: 20, 3: 35, 4: 60, 5: 100, 6: 180, 7: 270}
+    MILESTONE_GAIN = {"Easy": 1, "Medium": 2, "Hard": 3, "Expert": 4}
+    BOARD_SIZE_IDXS = {4: 0, 6: 1, 9: 2, 12: 3, 16: 4}
+    REWARDS = {"4x4": {1: ("H", 1), 2: ("H", 2), 3: ("H", 4), 4: ("H", 6), 5: ("H", 9), 6: ("H", 15), 7: ("H", 21)},
+               "6x6": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None},
+               "9x9": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None},
+               "12x12": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None},
+               "16x16": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}}
+
 class AppearanceConfiguration: # Appearance Configuration class
 
     DEFAULT_SETTINGS = ['#f0f0f0', '#ffffff', '#aee8f5', '#969696', '#ffcccb', 'LIBRARY 3 AM soft', 

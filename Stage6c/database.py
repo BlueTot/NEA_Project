@@ -65,7 +65,8 @@ def __setup():
                     milestone_6x6 INTEGER,
                     milestone_9x9 INTEGER,
                     milestone_12x12 INTEGER,
-                    milestone_16x16 INTEGER
+                    milestone_16x16 INTEGER,
+                    claimed VARCHAR(35)
         )""")
         __update_db("""CREATE TABLE Games(
                     game_id INTEGER PRIMARY KEY,
@@ -84,6 +85,10 @@ def __setup():
                     creation_date DATE,
                     creation_time TIME
         );""")
+        __update_db("""CREATE TABLE MilestoneRewards(
+                    username VARCHAR(100) PRIMARY KEY,
+                    bonus_hints INTEGER
+        )""")
 
 def encrypt_password(password):
     salt = "sudoku"
@@ -96,7 +101,8 @@ def create_new_account(username, password):
         raise DBError("Username already taken")
     __update_db(f"""INSERT INTO Passwords VALUES('{username}', '{encrypt_password(password)}');""")
     __update_db(f"""INSERT INTO Ratings VALUES('{username}', 0, 'Beginner');""")
-    __update_db(f"""INSERT INTO GameMilestones VALUES('{username}', 0, 0, 0, 0, 0);""")
+    __update_db(f"""INSERT INTO GameMilestones VALUES('{username}', 0, 0, 0, 0, 0, '{'0'*35}');""")
+    __update_db(f"""INSERT INTO MilestoneRewards VALUES('{username}', 0);""")
     __update_db(f"""INSERT INTO AppearanceConfig VALUES('{username}', '#f0f0f0', '#ffffff', '#aee8f5',
                 '#969696', '#ffcccb', 'LIBRARY 3 AM soft', 'Metropolis', '#ff7276', '#ffffe0', '#add8e6', '#90ee90', '#c5b4e3');""")
     print(f"Account {username} created")
@@ -107,6 +113,7 @@ def delete_account(username):
         __update_db(f"""DELETE FROM Passwords WHERE username='{username}';""")
         __update_db(f"""DELETE FROM Ratings WHERE username='{username}';""")
         __update_db(f""""DELTE FROM GameMilestones WHERE username='{username}';""")
+        __update_db(f"""DELETE FROM MilestoneRewards WHERE username='{username}';""")
         __update_db(f"""DELETE FROM AppearanceConfig WHERE username='{username}';""")
         __update_db(f"""DELETE FROM Games WHERE username='{username}';""")
         print(f"Account {username} deleted")
@@ -201,17 +208,29 @@ def best_hardcore_time(username, mode, board_size, difficulty):
                             AND mode='{mode}' AND board_size={board_size} AND difficulty='{difficulty}'
                             AND completed='True' AND hardcore='True';""")[0][0])
 
-def milestones(username):
+def milestone(username, board_size):
     __setup()
-    return __fetch_data(f"""SELECT * FROM GameMilestones WHERE username='{username}';""")
+    return __fetch_data(f"""SELECT {board_size} FROM GameMilestones WHERE username='{username}';""")[0][0]
 
-def set_milestones(username, milestones):
+def milestone_claimed(username):
     __setup()
-    __update_db(f"""UPDATE GameMilestones SET 4x4_milestone={milestones[0]} WHERE username='{username}';""")
-    __update_db(f"""UPDATE GameMilestones SET 6x6_milestone={milestones[1]} WHERE username='{username}';""")
-    __update_db(f"""UPDATE GameMilestones SET 9x9_milestone={milestones[2]} WHERE username='{username}';""")
-    __update_db(f"""UPDATE GameMilestones SET 12x12_milestone={milestones[3]} WHERE username='{username}';""")
-    __update_db(f"""UPDATE GameMilestones SET 16x16_milestone={milestones[4]} WHERE username='{username}';""")
+    return __fetch_data(f"""SELECT claimed FROM GameMilestones WHERE username='{username}';""")[0][0]
+
+def set_milestone(username, board_size, new_milestone):
+    __setup()
+    __update_db(f"""UPDATE GameMilestones SET {board_size}={new_milestone} WHERE username='{username}';""")
+
+def set_milestone_claimed(username, claimed):
+    __setup()
+    __update_db(f"""UPDATE GameMilestones SET claimed='{claimed}' WHERE username='{username}';""")
+
+def bonus_hints(username):
+    __setup()
+    return __fetch_data(f"""SELECT bonus_hints FROM MilestoneRewards WHERE username='{username}';""")[0][0]
+
+def set_bonus_hints(username, num_hints):
+    __setup()
+    __update_db(f"""UPDATE MilestoneRewards SET bonus_hints={num_hints} WHERE username='{username}';""")
 
 if __name__ in "__main__":
     __setup()
@@ -233,5 +252,10 @@ if __name__ in "__main__":
     
     print(best_time("admin", "Normal", 4, "Easy"))
     print(best_hardcore_time("admin", "Normal", 4, "Easy"))
+    print(milestone("admin", "milestone_4x4"))
+    print(milestone_claimed("admin"))
+    print(bonus_hints("admin"))
+    # set_milestone("admin", "milestone_4x4", 6)
+    # set_milestone_claimed("admin", "0"*35)
 
 ##C5B4E3

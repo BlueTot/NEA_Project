@@ -4,6 +4,7 @@ from sys import argv, exit # Import argv and edit from sys
 import os # Import os module
 from functools import partial # Import partial from functools module
 import json # Import json module
+from roman import toRoman # Import roman numerals module
 
 '''File Imports'''
 
@@ -101,7 +102,7 @@ class HomeScreen(Screen):
     
     def __game_milestones(self):
         if self._account.username is None:
-            self.statusBar().showMessage("Please sign in to view stats")
+            self.statusBar().showMessage("Please sign in to view game milestones")
         else:
             self.game_milestones_signal.emit()
     
@@ -247,6 +248,7 @@ class GameScreen(Screen):
     return_to_home_screen_signal = pyqtSignal()
     save_stats_signal = pyqtSignal(list)
     update_rating_signal = pyqtSignal(int)
+    update_milestone_signal = pyqtSignal(list)
     PADDING, STARTX = 25, 10
     NUM_FONT_SIZES = {4: 20*9 // 4, 6: 20*9 // 6, 9: 20, 12: 20 * 9 // 12, 16: 20*9 // 16}
     HINT_FONT_SIZES = {4: 13*9 // 4, 6: 13*9 // 6, 9: 13, 12: 13 * 9 // 12, 16: 5}
@@ -305,8 +307,12 @@ class GameScreen(Screen):
 
         self.__game = game
         self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nBoard Size: {self.__game.board_size}x{self.__game.board_size} \nTimed: {self.__game.timed} \nHardcore: {self.__game.hardcore}")
-        self.__num_auto_notes_label.setText(str(self.__game.num_auto_notes_left))
-        self.__num_hints_label.setText(str(self.__game.num_hints_left))
+        self.__num_auto_notes_label.setText(f"{self.__game.num_auto_notes_left}")
+        if self._account.username is None:
+            bonus_hint_str = ""
+        else:
+            bonus_hint_str = f'(+{bonus_hints})' if (bonus_hints := database.bonus_hints(self._account.username)) != 0 and self.__game.num_hints_left > 0 else ''
+        self.__num_hints_label.setText(f"{self.__game.num_hints_left} {bonus_hint_str}")
 
         if self.__game.mode == "Killer":
             self.__colours = self.__game.group_colours
@@ -409,6 +415,7 @@ class GameScreen(Screen):
         if self._account.username is not None:
             self.save_stats_signal.emit(self.__game.get_stats(win))
             self.update_rating_signal.emit(rating_change := self.__game.rating_change(self._account.singleplayer_rating, win))
+            self.update_milestone_signal.emit([self.__game.mode, self.__game.board_size, self.__game.difficulty, win])
 
         bg = Rect(self, 0, 0, 1000, 560, self._account.app_config.colour2_translucent, 0)
         bg.show()
@@ -524,7 +531,11 @@ class GameScreen(Screen):
         if self.__running:
             try:
                 self.__game.use_hint(self.__selected_square[0], self.__selected_square[1])
-                self.__num_hints_label.setText(str(self.__game.num_hints_left))
+                if self._account.username is None:
+                    bonus_hint_str = ""
+                else:
+                    bonus_hint_str = f'(+{bonus_hints})' if (bonus_hints := database.bonus_hints(self._account.username)) != 0 and self.__game.num_hints_left > 0 else ''
+                self.__num_hints_label.setText(f"{self.__game.num_hints_left} {bonus_hint_str}")
             except GameError as err:
                 self.show_error(err)
             self.__update_curr_grid()
@@ -807,16 +818,19 @@ class ViewStatsScreen(Screen):
         total_games = database.num_of_games(self._account.username)
         completed_games = database.num_completed_games(self._account.username)
 
-        stats_txt = "\n".join([
-        "OVERALL STATS: \n",
-        f"Rating: {self._account.singleplayer_rating}",                         
-        f"Title: {self._account.singleplayer_title}\n",
-        f"Total Games Played: {total_games}",
-        f"Completed Games: {completed_games}",
-        f"% Complete: {f'{round(completed_games/total_games*100)}%' if total_games != 0 else 'N/A'}\n",
-        ])
-    
-        self.__stats.insertPlainText(stats_txt)
+        if self._account.username is not None:
+
+            stats_txt = "\n".join([
+            "OVERALL STATS: \n",
+            f"Rating: {self._account.singleplayer_rating}",                         
+            f"Title: {self._account.singleplayer_title}\n",
+            f"Total Games Played: {total_games}",
+            f"Completed Games: {completed_games}",
+            f"% Complete: {f'{round(completed_games/total_games*100)}%' if total_games != 0 else 'N/A'}\n",
+            f"Num of Bonus Hints: {database.bonus_hints(self._account.username)}"
+            ])
+        
+            self.__stats.insertPlainText(stats_txt)
 
         for idx, label in enumerate(["Mode", "Board Size", "Difficulty"]):
             label_obj = Label(self, label, 525, 150+idx*60, 200, 45, self._account.app_config.regular_font, 20)
@@ -855,6 +869,7 @@ class ViewStatsScreen(Screen):
 class GameMilestonesScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
+    claim_reward_signal = pyqtSignal(list)
     
     def __init__(self, account, max_size):
 
@@ -865,8 +880,82 @@ class GameMilestonesScreen(Screen):
 
         self.__back = BackButton(self, self.__return_to_home_screen)
 
-        self._widgets += [self.__back, self.__title]
+        self.__selected_milestone = None
+
+        for idx, label in enumerate(milestone_types := ("4x4", "6x6", "9x9", "12x12", "16x16")):
+            label = Label(self, label, 50, 175+80*idx, 100, 50, self._account.app_config.regular_font, 30)
+            self._widgets.append(label)
+
+        if self._account.username is not None:
+
+            milestone_claimed = database.milestone_claimed(self._account.username)
+            self.__milestone_buttons = {}
+            for vidx, board_size in enumerate(milestone_types):
+                for hidx, milestone_num in enumerate(range(1, 8)):
+                    box = Button(self, toRoman(milestone_num), x := 200+hidx*70, y := 175+80*vidx, 60, 60, self._account.app_config.title_font, 22, partial(self.__view_game_milestone, board_size, milestone_num))
+                    box.setStyleSheet(f"background: {self._account.app_config.killer_colours[3 if self.__complete(board_size, milestone_num) else 0]}; border: 3px solid black;")
+                    unclaimed_label = Label(self, "!" if int(milestone_claimed[vidx*7+hidx]) else "", x+48, y+5, 14, 14, self._account.app_config.regular_font, 14)
+                    unclaimed_label.setStyleSheet("background: transparent; color: red;")
+                    self.__milestone_buttons[(vidx, hidx)] = (board_size, milestone_num, box, unclaimed_label)
+                    self._widgets.extend([box, unclaimed_label])
+            
+        self.__milestone_data_box = TextEdit(self, 725, 175, 250, 330, self._account.app_config.colour2_translucent, 3, self._account.app_config.regular_font, 16)
+        self.__claim_reward = Button(self, "Claim Reward", 725, 515, 250, 40, self._account.app_config.regular_font, 18, self.__claim_reward)
+        self.__claim_reward.setStyleSheet("background: rgb(175, 175, 175); border: 2px solid black;")
+            
+        self._widgets += [self.__back, self.__title, self.__milestone_data_box, self.__claim_reward]
     
+    def __update_milestone_grid(self):
+        milestone_claimed = database.milestone_claimed(self._account.username)
+        for k, v in self.__milestone_buttons.items():
+            vidx, hidx = k
+            board_size, milestone_num, box, unclaimed_label = v
+            box.setStyleSheet(f"background: {self._account.app_config.killer_colours[3 if self.__complete(board_size, milestone_num) else 0]}; border: 3px solid black;")
+            unclaimed_label.setText("!" if int(milestone_claimed[vidx*7+hidx]) else "")
+        self.__view_game_milestone(self.__selected_milestone[0], self.__selected_milestone[1])
+
+    def __complete(self, board_size, milestone_num):
+        milestone = database.milestone(self._account.username, f"milestone_{board_size}")
+        return milestone >= GameMilestones.MILESTONES[int(milestone_num)]
+    
+    def __parse_reward(self, reward):
+        if reward is None:
+            return "None"
+        elif reward[0] == "H":
+            return f"+{reward[1]} Hint(s)"
+    
+    def __selected_milestone_not_claimed(self):
+        board_size, milestone_num = self.__selected_milestone
+        claimed = database.milestone_claimed(self._account.username)
+        idx = GameMilestones.BOARD_SIZE_IDXS[int(board_size.split("x")[0])] * 7 + int(milestone_num) - 1
+        return int(claimed[idx])
+    
+    def __view_game_milestone(self, board_size, milestone_num):
+        self.__selected_milestone = (board_size, milestone_num)
+        milestone = database.milestone(self._account.username, f"milestone_{board_size}")
+        status = "Complete" if self.__complete(board_size, milestone_num) else "Incomplete"
+        target = GameMilestones.MILESTONES[int(milestone_num)]
+        self.__milestone_data_box.setText("\n".join([
+            f"{board_size} MILESTONE {toRoman(milestone_num)}: \n",
+            f"Status: {status}",
+            f"Progress: {milestone}/{target} ({round(milestone/target*100)}%)\n",
+            f"Reward: {self.__parse_reward(GameMilestones.REWARDS[board_size][int(milestone_num)])}"
+        ]))
+        self.__claim_reward.setStyleSheet(f"background: {self._account.app_config.killer_colours[3] if self.__selected_milestone_not_claimed() else 'rgb(175, 175, 175)'}; border: 2px solid black;")
+    
+    def __claim_reward(self):
+        if self.__selected_milestone is not None:
+            if self.__complete(self.__selected_milestone[0], self.__selected_milestone[1]):
+                if self.__selected_milestone_not_claimed():
+                    self.claim_reward_signal.emit([int(self.__selected_milestone[0].split("x")[0]), int(self.__selected_milestone[1])])
+                    self.__update_milestone_grid()
+                else:
+                    self.statusBar().showMessage("You already claimed this reward!")
+            else:
+                self.statusBar().showMessage("You haven't unlocked this reward yet!")
+        else:
+            self.statusBar().showMessage("Please select a milestone to claim")
+        
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
@@ -961,6 +1050,7 @@ class GUI(UI):
         game_screen.return_to_home_screen_signal.connect(self.__quit_game)
         game_screen.save_stats_signal.connect(self.__save_game_stats)
         game_screen.update_rating_signal.connect(self.__update_singleplayer_rating)
+        game_screen.update_milestone_signal.connect(self.__update_milestone)
         return game_screen
 
     def __create_new_account_screen(self):
@@ -998,6 +1088,7 @@ class GUI(UI):
     def __game_milestones_screen(self):
         game_milestones_screen = GameMilestonesScreen(self.__account, self.__max_size)
         game_milestones_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        game_milestones_screen.claim_reward_signal.connect(self.__claim_reward)
         return game_milestones_screen
 
     def __help_screen(self):
@@ -1032,7 +1123,8 @@ class GUI(UI):
     def __show_game_screen(self, options):
         mode, difficulty, board_size, timed, hardcore = options
         self.__game = Game()
-        self.__game.generate(mode, difficulty, board_size, timed, hardcore)
+        bonus_hints = 0 if self.__account.username is None else database.bonus_hints(self.__account.username)
+        self.__game.generate(mode, difficulty, board_size, timed, hardcore, bonus_hints)
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")
@@ -1117,6 +1209,46 @@ class GUI(UI):
             database.update_singleplayer_rating_and_title(self.__account.username, new_rating, new_title)
             self.__account.update_singleplayer_rating()
             self.__account.update_singleplayer_title()
+    
+    def __curr_milestone_rank(self, milestone):
+        for rank, comps in reversed(GameMilestones.MILESTONES.items()):
+            if milestone >= comps:
+                return rank
+        else:
+            return 0
+    
+    def __update_milestone(self, data):
+
+        mode, board_size, difficulty, won = data
+
+        if won:
+
+            milestone = database.milestone(self.__account.username, bs := f"milestone_{board_size}x{board_size}")
+            new_milestone = milestone + GameMilestones.MILESTONE_GAIN[difficulty] * (2 if mode == "Killer" else 1)
+            database.set_milestone(self.__account.username, bs, new_milestone)
+
+            old_rank = self.__curr_milestone_rank(milestone)
+            new_rank = self.__curr_milestone_rank(new_milestone)
+
+            if new_rank != old_rank:
+                claimed = database.milestone_claimed(self.__account.username)
+                idx = GameMilestones.BOARD_SIZE_IDXS[board_size] * 7 + new_rank - 1
+                database.set_milestone_claimed(self.__account.username, claimed[:idx] + "1" + claimed[idx+1:])
+
+            print(f"Milestone successfully updated for {self.__account.username}")
+    
+    def __claim_reward(self, data):
+        
+        board_size, milestone_num = data
+        claimed = database.milestone_claimed(self.__account.username)
+        idx = GameMilestones.BOARD_SIZE_IDXS[board_size] * 7 + milestone_num - 1
+        database.set_milestone_claimed(self.__account.username, claimed[:idx] + "0" + claimed[idx+1:])
+        reward = GameMilestones.REWARDS[f"{board_size}x{board_size}"][milestone_num]
+        if reward is not None and reward[0] == "H":
+            bonus_hints = database.bonus_hints(self.__account.username)
+            database.set_bonus_hints(self.__account.username, bonus_hints + reward[1])
+        
+        print(f"Milestone reward claimed")
 
     def run(self):
         exit(self.__app.exec())

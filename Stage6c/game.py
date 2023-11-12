@@ -26,7 +26,7 @@ class Game: # Game class
         self.__creation_date = str(datetime.now().date()) # Creation date
         self.__creation_time = str(datetime.now().time()) # Creation time
         
-    def generate(self, mode, difficulty, board_size, timed, hardcore): # Generate new board method (takes mode : str, difficulty: str, board_size : int, timed: boolean)
+    def generate(self, mode, difficulty, board_size, timed, hardcore, bonus_hints): # Generate new board method (takes mode : str, difficulty: str, board_size : int, timed: boolean)
         self.__mode = mode # Set mode
         self.__difficulty = difficulty # Set difficulty
         self.__board_size = board_size # Set board size
@@ -35,6 +35,7 @@ class Game: # Game class
         self.__orig_board = deepcopy(self.__board) # Create orig board object using deepcopy
         self.__timed = timed # Set timed
         self.__hardcore = hardcore # Set hardcore
+        self.__bonus_hints = bonus_hints
         if self.__hardcore: # No auto notes or hints allowed in hardcore mode
             self.__num_of_auto_notes = 0
             self.__orig_num_of_auto_notes = 0
@@ -43,8 +44,8 @@ class Game: # Game class
         else:
             self.__num_of_auto_notes = int(self.NUM_AUTO_NOTES[self.__difficulty] / 81 * (board_size ** 2)) # Calculate number of auto notes based on number of squares
             self.__orig_num_of_auto_notes = self.__num_of_auto_notes # Set original number of auto notes
-            self.__num_of_hints = int(self.NUM_HINTS[self.__difficulty] / 81 * (board_size ** 2)) # Calculate number of hints based on number of squares
-            self.__orig_num_of_hints = 0 # Set original number of hints
+            self.__num_of_hints = int(self.NUM_HINTS[self.__difficulty] / 81 * (board_size ** 2)) + self.__bonus_hints # Calculate number of hints based on number of squares
+            self.__orig_num_of_hints = self.__num_of_hints # Set original number of hints
         self.__time_elapsed = 0 if self.__timed else None # Set time elapsed
         self.__solved_board = BoardSolver.solver(deepcopy(self.__orig_board))
     
