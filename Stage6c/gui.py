@@ -818,19 +818,17 @@ class ViewStatsScreen(Screen):
         total_games = database.num_of_games(self._account.username)
         completed_games = database.num_completed_games(self._account.username)
 
-        if self._account.username is not None:
-
-            stats_txt = "\n".join([
-            "OVERALL STATS: \n",
-            f"Rating: {self._account.singleplayer_rating}",                         
-            f"Title: {self._account.singleplayer_title}\n",
-            f"Total Games Played: {total_games}",
-            f"Completed Games: {completed_games}",
-            f"% Complete: {f'{round(completed_games/total_games*100)}%' if total_games != 0 else 'N/A'}\n",
-            f"Num of Bonus Hints: {database.bonus_hints(self._account.username)}"
-            ])
-        
-            self.__stats.insertPlainText(stats_txt)
+        stats_txt = "\n".join([
+        "OVERALL STATS: \n",
+        f"Rating: {self._account.singleplayer_rating}",                         
+        f"Title: {self._account.singleplayer_title}\n",
+        f"Total Games Played: {total_games}",
+        f"Completed Games: {completed_games}",
+        f"% Complete: {f'{round(completed_games/total_games*100)}%' if total_games != 0 else 'N/A'}\n",
+        f"Num of Bonus Hints: {database.bonus_hints(self._account.username)}"
+        ])
+    
+        self.__stats.insertPlainText(stats_txt)
 
         for idx, label in enumerate(["Mode", "Board Size", "Difficulty"]):
             label_obj = Label(self, label, 525, 150+idx*60, 200, 45, self._account.app_config.regular_font, 20)
@@ -886,18 +884,16 @@ class GameMilestonesScreen(Screen):
             label = Label(self, label, 50, 175+80*idx, 100, 50, self._account.app_config.regular_font, 30)
             self._widgets.append(label)
 
-        if self._account.username is not None:
-
-            milestone_claimed = database.milestone_claimed(self._account.username)
-            self.__milestone_buttons = {}
-            for vidx, board_size in enumerate(milestone_types):
-                for hidx, milestone_num in enumerate(range(1, 8)):
-                    box = Button(self, toRoman(milestone_num), x := 200+hidx*70, y := 175+80*vidx, 60, 60, self._account.app_config.title_font, 22, partial(self.__view_game_milestone, board_size, milestone_num))
-                    box.setStyleSheet(f"background: {self._account.app_config.killer_colours[3 if self.__complete(board_size, milestone_num) else 0]}; border: 3px solid black;")
-                    unclaimed_label = Label(self, "!" if int(milestone_claimed[vidx*7+hidx]) else "", x+48, y+5, 14, 14, self._account.app_config.regular_font, 14)
-                    unclaimed_label.setStyleSheet("background: transparent; color: red;")
-                    self.__milestone_buttons[(vidx, hidx)] = (board_size, milestone_num, box, unclaimed_label)
-                    self._widgets.extend([box, unclaimed_label])
+        milestone_claimed = database.milestone_claimed(self._account.username)
+        self.__milestone_buttons = {}
+        for vidx, board_size in enumerate(milestone_types):
+            for hidx, milestone_num in enumerate(range(1, 8)):
+                box = Button(self, toRoman(milestone_num), x := 200+hidx*70, y := 175+80*vidx, 60, 60, self._account.app_config.title_font, 22, partial(self.__view_game_milestone, board_size, milestone_num))
+                box.setStyleSheet(f"background: {self._account.app_config.killer_colours[3 if self.__complete(board_size, milestone_num) else 0]}; border: 3px solid black;")
+                unclaimed_label = Label(self, "!" if int(milestone_claimed[vidx*7+hidx]) else "", x+48, y+5, 14, 14, self._account.app_config.regular_font, 14)
+                unclaimed_label.setStyleSheet("background: transparent; color: red;")
+                self.__milestone_buttons[(vidx, hidx)] = (board_size, milestone_num, box, unclaimed_label)
+                self._widgets.extend([box, unclaimed_label])
             
         self.__milestone_data_box = TextEdit(self, 725, 175, 250, 330, self._account.app_config.colour2_translucent, 3, self._account.app_config.regular_font, 16)
         self.__claim_reward = Button(self, "Claim Reward", 725, 515, 250, 40, self._account.app_config.regular_font, 18, self.__claim_reward)
@@ -980,40 +976,34 @@ class HelpScreen(Screen):
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
-class GUI(UI):
+class GUI(UI): # Graphical User Interface (GUI) class
 
-    def __init__(self):
+    def __init__(self): # Constructor
 
-        super().__init__()
+        super().__init__() # Inherit from UI
 
-        self.__account = Account()
+        self.__account = Account() # Create account
 
-        self.__app = QApplication(argv)
-        self.__max_size = self.__app.primaryScreen().size()
+        self.__app = QApplication(argv) # Create PyQt Application
+        self.__max_size = self.__app.primaryScreen().size() # Create maximum size (for maximising the window)
 
-        with open("options.json") as f:
+        with open("options.json") as f: # Load in options file
             self.__options = json.load(f)
 
+        # Initialise fonts used in GUI
         QFontDatabase.addApplicationFont("resources/library-3-am.3amsoft.otf")
         QFontDatabase.addApplicationFont("resources/Metropolis-Regular.otf")
 
-        self.__screens = {"home": self.__home_screen(), "open or create new game": self.__open_or_create_new_game_screen(),
-                           "config game": self.__config_game_screen(), "open game": self.__open_game_screen(),
-                           "game": self.__game_screen(), "create new account": self.__create_new_account_screen(), 
-                           "sign in": self.__sign_in_screen(), "manage account": self.__manage_account_screen(),
-                           "view stats": self.__view_stats_screen(), "game milestones": self.__game_milestones_screen(),
-                           "customise gui": self.__customise_gui_screen(), "help": self.__help_screen()}
-
+        self.__screens = {} # Placeholder screens dictionary to make it easier to load and render screens
         self.__screen_partials = {"home": self.__home_screen, "open or create new game": self.__open_or_create_new_game_screen,
                            "config game": self.__config_game_screen, "open game": self.__open_game_screen,
                            "game": self.__game_screen, "create new account": self.__create_new_account_screen, 
                            "sign in": self.__sign_in_screen, "manage account": self.__manage_account_screen, 
                            "view stats": self.__view_stats_screen, "game milestones": self.__game_milestones_screen,
-                           "customise gui": self.__customise_gui_screen, "help": self.__help_screen}
-
-        self.__show_curr_screen()
+                           "customise gui": self.__customise_gui_screen, "help": self.__help_screen} # Dictionary of screen partials used to initialise each screen
+        self.__show_screen("home", self.__screen_partials["home"]) # Show the home screen
     
-    def __home_screen(self):
+    def __home_screen(self): # Initialise home screen
         home_screen = HomeScreen(self.__account, self.__max_size)
         home_screen.play_singleplayer_signal.connect(partial(self.__show_screen, "open or create new game", self.__open_or_create_new_game_screen))
         home_screen.create_new_account_signal.connect(partial(self.__show_screen, "create new account", self.__create_new_account_screen))
@@ -1026,26 +1016,26 @@ class GUI(UI):
         home_screen.help_signal.connect(partial(self.__show_screen, "help", self.__help_screen))
         return home_screen
     
-    def __open_or_create_new_game_screen(self):
+    def __open_or_create_new_game_screen(self): # Initialise open or create new game screen
         open_or_create_new_game_screen = OpenOrCreateNewGameScreen(self.__account, self.__max_size)
         open_or_create_new_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         open_or_create_new_game_screen.open_game_signal.connect(partial(self.__show_screen, "open game", self.__open_game_screen))
         open_or_create_new_game_screen.create_new_game_signal.connect(partial(self.__show_screen, "config game", self.__config_game_screen))  
         return open_or_create_new_game_screen
     
-    def __open_game_screen(self):
+    def __open_game_screen(self): # Initialise open game screen
         open_game_screen = OpenGameScreen(self.__account, self.__max_size)
         open_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         open_game_screen.play_game_signal.connect(self.__load_game_screen)
         return open_game_screen
 
-    def __config_game_screen(self):
+    def __config_game_screen(self): # Initialise config game screen
         config_game_screen = ConfigGameScreen(self.__account, self.__max_size)
         config_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         config_game_screen.play_game_signal.connect(self.__show_game_screen)
         return config_game_screen
 
-    def __game_screen(self):
+    def __game_screen(self): # Initialise game screen
         game_screen = GameScreen(self.__account, self.__max_size)
         game_screen.return_to_home_screen_signal.connect(self.__quit_game)
         game_screen.save_stats_signal.connect(self.__save_game_stats)
@@ -1053,19 +1043,19 @@ class GUI(UI):
         game_screen.update_milestone_signal.connect(self.__update_milestone)
         return game_screen
 
-    def __create_new_account_screen(self):
+    def __create_new_account_screen(self): # Initialise create new account screen
         create_new_account_screen = CreateNewAccountScreen(self.__account, self.__max_size)
         create_new_account_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         create_new_account_screen.create_account_signal.connect(self.__create_account)
         return create_new_account_screen
 
-    def __sign_in_screen(self):
+    def __sign_in_screen(self): # Initialise sign in screen
         sign_in_screen = SignInScreen(self.__account, self.__max_size)
         sign_in_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         sign_in_screen.sign_in_signal.connect(self.__sign_in)
         return sign_in_screen
 
-    def __manage_account_screen(self):
+    def __manage_account_screen(self): # Initialise manage account screen
         manage_account_screen = ManageAccountScreen(self.__account, self.__max_size)
         manage_account_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         manage_account_screen.change_username_signal.connect(self.__change_username)
@@ -1073,54 +1063,54 @@ class GUI(UI):
         manage_account_screen.delete_account_signal.connect(self.__delete_account)
         return manage_account_screen
     
-    def __customise_gui_screen(self):
+    def __customise_gui_screen(self): # Initialise customise gui screen
         customise_gui_screen = CustomiseGUIScreen(self.__account, self.__max_size)
         customise_gui_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         customise_gui_screen.save_signal.connect(self.__update_appearance_config)
         customise_gui_screen.reset_signal.connect(self.__reset_appearance_config)
         return customise_gui_screen
     
-    def __view_stats_screen(self):
+    def __view_stats_screen(self): # Initialise view stats screen
         view_stats_screen = ViewStatsScreen(self.__account, self.__max_size)
         view_stats_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         return view_stats_screen
     
-    def __game_milestones_screen(self):
+    def __game_milestones_screen(self): # Initialise game milestones screen
         game_milestones_screen = GameMilestonesScreen(self.__account, self.__max_size)
         game_milestones_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         game_milestones_screen.claim_reward_signal.connect(self.__claim_reward)
         return game_milestones_screen
 
-    def __help_screen(self):
+    def __help_screen(self): # Initialise help screen
         help_screen = HelpScreen(self.__account, self.__max_size)
         help_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         return help_screen
 
-    def __close_curr_screen(self):
+    def __close_curr_screen(self): # Close current screen method
         self.__screens[self._get_curr_ui()].close()
     
-    def __show_curr_screen(self):
+    def __show_curr_screen(self): # Show current screen method (show maximised or normal size based on options file)
         if self.__options["full screen"]:
             self.__screens[self._get_curr_ui()].initShowMaximised()
         else:
             self.__screens[self._get_curr_ui()].show()
    
-    def __push_screen(self, screen):
+    def __push_screen(self, screen): # Push screen to ui stack method
         self.__close_curr_screen()
         self._push_ui_to_stack(screen)
         self.__show_curr_screen()
         
-    def __pop_screen(self):
+    def __pop_screen(self): # Pop screen from ui stack method
         self.__close_curr_screen()
         self._pop_ui_from_stack()
         self.__screens[ui] = self.__screen_partials[ui := self._get_curr_ui()]()
         self.__show_curr_screen()
     
-    def __show_screen(self, screen_name, screen_func):
+    def __show_screen(self, screen_name, screen_func): # Method to create new instance of a screen and show it
         self.__screens[screen_name] = screen_func()
         self.__push_screen(screen_name)
     
-    def __show_game_screen(self, options):
+    def __show_game_screen(self, options): # Show game screen (generate new game)
         mode, difficulty, board_size, timed, hardcore = options
         self.__game = Game()
         bonus_hints = 0 if self.__account.username is None else database.bonus_hints(self.__account.username)
@@ -1129,30 +1119,30 @@ class GUI(UI):
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")
     
-    def __load_game_screen(self, file):
+    def __load_game_screen(self, file): # Load game screen (load from file)
         self.__game = Game()
         self.__game.load_game(self.__account.username, file)
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")
         
-    def __quit_game(self):
+    def __quit_game(self): # Quit game screen (returns to home screen)
         self.__close_curr_screen()
         for _ in range(3):
             self._pop_ui_from_stack()
         self.__show_screen(self._get_curr_ui(), self.__screen_partials[self._get_curr_ui()])
 
-    def __create_account(self, options):
+    def __create_account(self, options): # Method to create new account
         try:
             username, password = options
-            os.mkdir(os.path.join(Game.DEFAULT_DIRECTORY, f"{username}"))
-            database.create_new_account(username, password)
-            self.__account.set_account(username)
+            os.mkdir(os.path.join(Game.DEFAULT_DIRECTORY, f"{username}")) # Create new directory for stored games
+            database.create_new_account(username, password) # Create new account in database
+            self.__account.set_account(username) # Set the account in the GUI
             self.__pop_screen()
         except DBError as err:
             self.__screens["create new account"].show_error(err)
     
-    def __sign_in(self, options):
+    def __sign_in(self, options): # Method to sign in
         try:
             username, password = options
             if not database.password_at(username):
@@ -1166,43 +1156,43 @@ class GUI(UI):
         except DBError as err:
             self.__screens["sign in"].show_error(err)
     
-    def __sign_out(self):
+    def __sign_out(self): # Method to sign out
         self.__account.set_account(None)
         print("Signed Out")
         self.__close_curr_screen()
         self.__show_screen("home", self.__screen_partials["home"])
     
-    def __update_appearance_config(self, options):
+    def __update_appearance_config(self, options): # Method to update appearance config (from customise gui screen)
         database.update_appearance_config(self.__account.username, options)
         self.__account.update_app_config()
         self.__pop_screen()
 
-    def __reset_appearance_config(self):
+    def __reset_appearance_config(self): # Method to reset appearance config (from customise gui screen)
         database.update_appearance_config(self.__account.username, AppearanceConfiguration.DEFAULT_SETTINGS)
         self.__account.update_app_config()
         self.__pop_screen()
     
-    def __save_game_stats(self, data):
+    def __save_game_stats(self, data): # Method to save game stats after each game
         database.add_game(self.__account.username, data)
     
-    def __change_username(self, new_username):
+    def __change_username(self, new_username): # Method to change username (from manage account screen)
         database.change_username(self.__account.username, new_username)
         os.rename(os.path.join(Game.DEFAULT_DIRECTORY, f"{self.__account.username}"), 
                   os.path.join(Game.DEFAULT_DIRECTORY, f"{new_username}"))
         self.__account.set_account(new_username)
         self.__pop_screen()
 
-    def __change_password(self, password):
+    def __change_password(self, password): # Method to change password (from manage account screen)
         database.change_password(self.__account.username, password)
         self.__pop_screen()
     
-    def __delete_account(self):
+    def __delete_account(self): # Method to delete account (from manage account screen)
         database.delete_account(self.__account.username)
         os.rmdir(os.path.join(Game.DEFAULT_DIRECTORY, f"{self.__account.username}"))
         self.__account.set_account(None)
         self.__pop_screen()
     
-    def __update_singleplayer_rating(self, rating_change):
+    def __update_singleplayer_rating(self, rating_change): # Method to update singleplayer rating (after each game)
         new_rating = self.__account.singleplayer_rating + rating_change
         if new_rating >= 0:
             new_title = title(new_rating)
@@ -1210,14 +1200,14 @@ class GUI(UI):
             self.__account.update_singleplayer_rating()
             self.__account.update_singleplayer_title()
     
-    def __curr_milestone_rank(self, milestone):
+    def __curr_milestone_rank(self, milestone): # Method to get current milestone rank (1 to 7) of any milestone collection
         for rank, comps in reversed(GameMilestones.MILESTONES.items()):
             if milestone >= comps:
                 return rank
         else:
             return 0
     
-    def __update_milestone(self, data):
+    def __update_milestone(self, data): # Method to update milestone after each game
 
         mode, board_size, difficulty, won = data
 
@@ -1237,7 +1227,7 @@ class GUI(UI):
 
             print(f"Milestone successfully updated for {self.__account.username}")
     
-    def __claim_reward(self, data):
+    def __claim_reward(self, data): # Method to claim reward for a milestone (from game milestone screen)
         
         board_size, milestone_num = data
         claimed = database.milestone_claimed(self.__account.username)
@@ -1250,5 +1240,5 @@ class GUI(UI):
         
         print(f"Milestone reward claimed")
 
-    def run(self):
+    def run(self): # run function executed by sudoku.py
         exit(self.__app.exec())
