@@ -19,7 +19,7 @@ from rating_calc import title # Import title function from rating_calc
 '''PyQt6 GUI Imports'''
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal, QTimer
-from PyQt6.QtGui import QFont, QIcon, QFontDatabase
+from PyQt6.QtGui import QFont, QIcon, QFontDatabase, QCursor
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from pyqt_widgets import * # Import all customisable widget classes
   
@@ -34,6 +34,7 @@ class HomeScreen(Screen):
     game_milestones_signal = pyqtSignal()
     customise_gui_signal = pyqtSignal()
     help_signal = pyqtSignal()
+    leaderboard_signal = pyqtSignal()
 
     def __init__(self, account, max_size):
 
@@ -49,7 +50,7 @@ class HomeScreen(Screen):
         self.__play_multiplayer_button = Button(self, "PLAY MULTIPLAYER", 300, 320, 400, 50, self._account.app_config.regular_font, 25, None)
         self.__play_multiplayer_button.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
 
-        self.__leaderboard_button = Button(self, "LEADERBOARD", 300, 390, 400, 50, self._account.app_config.regular_font, 25, None)
+        self.__leaderboard_button = Button(self, "LEADERBOARD", 300, 390, 400, 50, self._account.app_config.regular_font, 25, self.__leaderboard_screen)
         self.__leaderboard_button.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
 
         self.__toolbar = ToolBar(self, size := QSize(60, 60), self._account.app_config.colour3, font_family := self._account.app_config.regular_font, font_size := 15)
@@ -108,6 +109,9 @@ class HomeScreen(Screen):
     
     def __help_screen(self):
         self.help_signal.emit()
+
+    def __leaderboard_screen(self):
+        self.leaderboard_signal.emit()
 
     def __quit_game(self):
         exit()
@@ -976,6 +980,84 @@ class HelpScreen(Screen):
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
 
+class LeaderboardScreen(Screen):
+
+    return_to_home_screen_signal = pyqtSignal()
+
+    def __init__(self, account, max_size):
+
+        super().__init__(account, max_size)
+
+        self.__title = Label(self, "LEADERBOARD", 0, 25, 1000, 100, self._account.app_config.title_font, 50)
+        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.__back = BackButton(self, self.__return_to_home_screen)
+
+        self.__table = TableWidget(self, 50, 125, 600, 450, self._account.app_config.regular_font, 18, self._account.app_config.colour2_translucent, 25, 3)
+        self.__show_default_leaderboard()
+
+        gamemode_options = []
+        for mode in ("Normal", "Killer"):
+            for board_size in (milestone_options := ["4x4", "6x6", "9x9", "12x12", "16x16"]):
+                for difficulty in ("Easy", "Medium", "Hard", "Expert"):
+                    gamemode_options.append(f"{mode} {board_size} {difficulty}")
+
+        self.__type_label = Label(self, "Leaderboard Options", 700, 125, 250, 40, self._account.app_config.regular_font, 18)
+        
+        self.__type = ComboBox(self, 700, 175, 250, 40, self._account.app_config.regular_font, 18, ["Best Time", "Milestone"])
+        self.__type.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
+        self.__type.activated.connect(self.__show_options)
+
+        self.__next_label = Label(self, "", 700, 225, 250, 40, self._account.app_config.regular_font, 18)
+
+        self.__gamemode = ComboBox(self, 700, 275, 250, 40, self._account.app_config.regular_font, 18, gamemode_options)
+        self.__gamemode.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
+        self.__gamemode.activated.connect(partial(self.__update_table, "gamemode"))
+        self.__gamemode.hide()
+
+        self.__milestone = ComboBox(self, 700, 275, 250, 40, self._account.app_config.regular_font, 18, milestone_options)
+        self.__milestone.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
+        self.__milestone.activated.connect(partial(self.__update_table, "milestone"))
+        self.__milestone.hide()
+
+        self._widgets += [self.__back, self.__title, self.__table, self.__type, self.__gamemode, 
+                          self.__milestone, self.__type_label, self.__next_label]  
+    
+    def __show_options(self):
+        if self.__type.currentText() == "Best Time":
+            self.__gamemode.show()
+            self.__milestone.hide()
+            self.__next_label.setText("Choose Gamemode")
+        elif self.__type.currentText() == "Milestone":
+            self.__gamemode.hide()
+            self.__milestone.show()
+            self.__next_label.setText("Choose Milestone")
+        else:
+            self.__gamemode.hide()
+            self.__milestone.hide()
+            self.__next_label.setText("")
+            self.__show_default_leaderboard()
+    
+    def __show_default_leaderboard(self):
+        headings = ["Player Username", "Rating", "Title"]
+        self.__table.load_data(headings, database.all_account_rating_data())
+    
+    def __update_table(self, mode):
+        if mode == "gamemode" and (txt := self.__gamemode.currentText()):
+            mode, bs, difficulty = txt.split(" ")
+            board_size = int(bs.split("x")[0])
+            headings = ["Player Username", "Rating", "Title", f"Best Time ({txt})"]
+            self.__table.load_data(headings, database.leaderboard_best_time_data(mode, board_size, difficulty))
+        elif mode == "milestone" and (board_size := self.__milestone.currentText()):
+            headings = ["Player Username", "Rating", "Title", f"Milestone Completions ({board_size})"]
+            self.__table.load_data(headings, database.leaderboard_milestone_data(board_size))
+        else:
+            self.__show_default_leaderboard()
+            self.statusBar().showMessage("Please select an option to continue")
+        
+    def __return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+
 class GUI(UI): # Graphical User Interface (GUI) class
 
     def __init__(self): # Constructor
@@ -1000,7 +1082,8 @@ class GUI(UI): # Graphical User Interface (GUI) class
                            "game": self.__game_screen, "create new account": self.__create_new_account_screen, 
                            "sign in": self.__sign_in_screen, "manage account": self.__manage_account_screen, 
                            "view stats": self.__view_stats_screen, "game milestones": self.__game_milestones_screen,
-                           "customise gui": self.__customise_gui_screen, "help": self.__help_screen} # Dictionary of screen partials used to initialise each screen
+                           "customise gui": self.__customise_gui_screen, "help": self.__help_screen,
+                           "leaderboard": self.__leaderboard_screen} # Dictionary of screen partials used to initialise each screen
         self.__show_screen("home", self.__screen_partials["home"]) # Show the home screen
     
     def __home_screen(self): # Initialise home screen
@@ -1014,6 +1097,7 @@ class GUI(UI): # Graphical User Interface (GUI) class
         home_screen.view_stats_signal.connect(partial(self.__show_screen, "view stats", self.__view_stats_screen))
         home_screen.game_milestones_signal.connect(partial(self.__show_screen, "game milestones", self.__game_milestones_screen))
         home_screen.help_signal.connect(partial(self.__show_screen, "help", self.__help_screen))
+        home_screen.leaderboard_signal.connect(partial(self.__show_screen, "leaderboard", self.__leaderboard_screen))
         return home_screen
     
     def __open_or_create_new_game_screen(self): # Initialise open or create new game screen
@@ -1085,6 +1169,11 @@ class GUI(UI): # Graphical User Interface (GUI) class
         help_screen = HelpScreen(self.__account, self.__max_size)
         help_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         return help_screen
+    
+    def __leaderboard_screen(self): # Initialise leaderboard screen
+        leaderboard_screen = LeaderboardScreen(self.__account, self.__max_size)
+        leaderboard_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        return leaderboard_screen
 
     def __close_curr_screen(self): # Close current screen method
         self.__screens[self._get_curr_ui()].close()

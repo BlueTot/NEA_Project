@@ -1,11 +1,12 @@
 import sqlite3
 import os
 import hashlib
+import datetime
 
-def time_format(secs):
-    if secs is None:
-        return None
-    return f"{int(secs // 3600)}h {(int(secs // 60)) % 60}m {int(secs % 60)}s"
+# def time_format(secs):
+#     if secs is None:
+#         return None
+#     return f"{int(secs // 3600)}h {(int(secs // 60)) % 60}m {int(secs % 60)}s"
 
 class DBError(Exception):
     pass
@@ -100,7 +101,7 @@ def create_new_account(username, password):
     if password_at(username):
         raise DBError("Username already taken")
     __update_db(f"""INSERT INTO Passwords VALUES('{username}', '{encrypt_password(password)}');""")
-    __update_db(f"""INSERT INTO Ratings VALUES('{username}', 0, 'Beginner');""")
+    __update_db(f"""INSERT INTO Ratings VALUES('{username}', 0, 'New Player');""")
     __update_db(f"""INSERT INTO GameMilestones VALUES('{username}', 0, 0, 0, 0, 0, '{'0'*35}');""")
     __update_db(f"""INSERT INTO MilestoneRewards VALUES('{username}', 0);""")
     __update_db(f"""INSERT INTO AppearanceConfig VALUES('{username}', '#f0f0f0', '#ffffff', '#aee8f5',
@@ -112,7 +113,7 @@ def delete_account(username):
     if password_at(username):
         __update_db(f"""DELETE FROM Passwords WHERE username='{username}';""")
         __update_db(f"""DELETE FROM Ratings WHERE username='{username}';""")
-        __update_db(f""""DELTE FROM GameMilestones WHERE username='{username}';""")
+        __update_db(f""""DELETE FROM GameMilestones WHERE username='{username}';""")
         __update_db(f"""DELETE FROM MilestoneRewards WHERE username='{username}';""")
         __update_db(f"""DELETE FROM AppearanceConfig WHERE username='{username}';""")
         __update_db(f"""DELETE FROM Games WHERE username='{username}';""")
@@ -198,15 +199,17 @@ def num_completions(username, mode, board_size, difficulty):
 
 def best_time(username, mode, board_size, difficulty):
     __setup()
-    return time_format(__fetch_data(f"""SELECT MIN(time_to_complete) FROM Games WHERE username='{username}' 
+    secs = __fetch_data(f"""SELECT MIN(time_to_complete) FROM Games WHERE username='{username}' 
                             AND mode='{mode}' AND board_size={board_size} AND difficulty='{difficulty}'
-                            AND completed='True';""")[0][0])
+                            AND completed='True';""")[0][0]
+    return str(datetime.timedelta(seconds=secs)) if secs is not None else "None"
 
 def best_hardcore_time(username, mode, board_size, difficulty):
     __setup()
-    return time_format(__fetch_data(f"""SELECT MIN(time_to_complete) FROM Games WHERE username='{username}' 
+    secs = __fetch_data(f"""SELECT MIN(time_to_complete) FROM Games WHERE username='{username}' 
                             AND mode='{mode}' AND board_size={board_size} AND difficulty='{difficulty}'
-                            AND completed='True' AND hardcore='True';""")[0][0])
+                            AND completed='True' AND hardcore='True';""")[0][0]
+    return str(datetime.timedelta(seconds=secs)) if secs is not None else "None"
 
 def milestone(username, board_size):
     __setup()
@@ -232,6 +235,46 @@ def set_bonus_hints(username, num_hints):
     __setup()
     __update_db(f"""UPDATE MilestoneRewards SET bonus_hints={num_hints} WHERE username='{username}';""")
 
+def flip_list(lst):
+    cols = len(lst[0])
+    lst2 = [[] for _ in range(cols)]
+    for col in range(cols):
+        for row in lst:
+            lst2[col].append(row[col])
+    return lst2
+
+def all_account_rating_data():
+    __setup()
+    return __fetch_data("""SELECT * FROM Ratings""")
+
+def all_best_time_data(mode, board_size, difficulty):
+    best_time_data = []
+    for data in __fetch_data("""SELECT username from Ratings"""):
+        username = data[0]
+        best_time_data.append(best_hardcore_time(username, mode, board_size, difficulty))
+    return best_time_data
+
+def leaderboard_best_time_data(mode, board_size, difficulty):
+    rating_data = [list(i) for i in all_account_rating_data()]
+    best_time_data = all_best_time_data(mode, board_size, difficulty)
+    for i in range(len(rating_data)):
+        rating_data[i].append(best_time_data[i])
+    return rating_data
+
+def all_milestone_data(board_size):
+    milestone_data = []
+    for data in __fetch_data("""SELECT username from Ratings"""):
+        username = data[0]
+        milestone_data.append(milestone(username, f"milestone_{board_size}"))
+    return milestone_data
+
+def leaderboard_milestone_data(board_size):
+    rating_data = [list(i) for i in all_account_rating_data()]
+    best_time_data = all_milestone_data(board_size)
+    for i in range(len(rating_data)):
+        rating_data[i].append(best_time_data[i])
+    return rating_data
+
 if __name__ in "__main__":
     __setup()
     #create_new_account("admin", "admin")
@@ -255,7 +298,11 @@ if __name__ in "__main__":
     print(milestone("admin", "milestone_4x4"))
     print(milestone_claimed("admin"))
     print(bonus_hints("admin"))
+    print(all_account_rating_data())
+    print(__fetch_data("""SELECT * FROM GameMilestones"""))
     # set_milestone("admin", "milestone_4x4", 6)
     # set_milestone_claimed("admin", "0"*35)
+    print(all_best_time_data("Normal", 4, "Expert"))
+    print(best_hardcore_time("test2", "Normal", 4, "Expert"))
 
 ##C5B4E3

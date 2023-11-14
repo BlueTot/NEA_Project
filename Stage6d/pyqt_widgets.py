@@ -4,7 +4,7 @@ from ui import UI # Import UI for the version number
 
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QFont, QAction, QIcon
-from PyQt6.QtWidgets import QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget, QTextEdit, QLineEdit
+from PyQt6.QtWidgets import QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget, QTextEdit, QLineEdit, QTableWidget, QAbstractScrollArea, QTableWidgetItem, QAbstractItemView, QHeaderView
 
 class Button(QPushButton): # Screen Button
 
@@ -283,6 +283,54 @@ class LineEdit(QLineEdit):
         self.setGeometry(self._orig_x, self._orig_y, self._orig_width, self._orig_height)
         if self._font_family is not None and self._orig_font_size is not None:
             self.setFont(QFont(self._font_family, self._orig_font_size))
+
+class TableWidget(QTableWidget):
+    def __init__(self, window, x, y, width, height, font_family, font_size, background_colour, num_rows, num_cols):
+
+        super().__init__(num_rows, num_cols, window)
+
+        self._orig_x = x
+        self._orig_y = y
+        self._orig_width = width
+        self._orig_height = height
+        self._font_family = font_family
+        self._orig_font_size = font_size
+
+        self.setGeometry(x, y, width, height)
+        self.setStyleSheet(f"background: {background_colour};")
+        self.setFont(QFont(font_family, font_size))
+        self.horizontalHeader().setFont(QFont(font_family, font_size))
+        self.verticalHeader().setFont(QFont(font_family, font_size))
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        self.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        self.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+
+    def load_data(self, headings, data):
+        self.setSortingEnabled(False)
+        self.setColumnCount(len(headings))
+        for row, rowdata in enumerate(data):
+            for col, value in enumerate(rowdata):
+                item = QTableWidgetItem()
+                item.setData(Qt.ItemDataRole.EditRole, value)
+                self.setItem(row, col, item)
+        self.setHorizontalHeaderLabels(headings)
+        self.setSortingEnabled(True)
+        self.sortByColumn(1, Qt.SortOrder.DescendingOrder)
+    
+    def maximise(self, factor):
+        self.setGeometry(int(self._orig_x*factor), int(self._orig_y*factor), int(self._orig_width*factor), int(self._orig_height*factor))
+        if self._font_family is not None and self._orig_font_size is not None:
+            self.setFont(QFont(self._font_family, int(self._orig_font_size*factor)))
+            self.horizontalHeader().setStyleSheet(ss := f"font-size: {self._orig_font_size*factor};")
+            self.verticalHeader().setStyleSheet(ss)
+            
+    def minimise(self):
+        self.setGeometry(self._orig_x, self._orig_y, self._orig_width, self._orig_height)
+        if self._font_family is not None and self._orig_font_size is not None:
+            self.setFont(QFont(self._font_family, self._orig_font_size))
+            self.horizontalHeader().setStyleSheet(ss := f"font-size: {self._orig_font_size};")
+            self.verticalHeader().setStyleSheet(ss)
 
 class Screen(QMainWindow): # Screen
     def __init__(self, account, max_size : QSize):
