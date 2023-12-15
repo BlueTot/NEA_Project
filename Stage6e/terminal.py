@@ -48,7 +48,7 @@ class Terminal(UI):
         if os.listdir("games"): # if there are games stored to play
             match self.__get_input("Would you like to (O)pen a new game or (C)reate a new game: ", ["O", "C"]):
                 case "O": # open new game
-                    self._push_ui_to_stack("open new game")
+                    input("Opening games is not supported in terminal")
                 case "C": # create new game
                     self._push_ui_to_stack("create new game")
         else:
@@ -67,7 +67,7 @@ class Terminal(UI):
     def __create_new_game(self):
         difficulty_num = int(self.__get_input("Press (1) for Easy, (2) for Medium, (3) for Hard, (4) for Expert: ", [str(i) for i in range(1, 5)]))
         self.__game = Game()
-        self.__game.generate(difficulty=Game.DIFFICULTY_NUMS[difficulty_num], timed=False)
+        self.__game.generate(mode="Normal", difficulty=Game.DIFFICULTY_NUMS[difficulty_num], board_size=9, timed=False, hardcore=False, bonus_hints=0)
         self._push_ui_to_stack("game")
 
     def __play_game(self):
@@ -88,18 +88,15 @@ class Terminal(UI):
                 case "D": self.__remove_number() # delete command
                 case "H": # hint command
                     self.__get_hint()
-                    # if isinstance(hint := self.__get_hint(), list):
-                    #     self.__print_hint(hint)
                 case "E": self.__edit_note() # edit note command
                 case "U": self.__game.undo_last_move() # undo command
                 case "N": self.__notes_mode = not self.__notes_mode # toggle notes mode command
                 case "S": # save game command
-                    self.__game.save_game()
+                    input("Game saving is not supported on terminal")
                     self.__exit_to_home_screen()
                     return
                 case "R": # resign game command
                     self.__print_solution()
-                    self.__game.remove_game_file()
                     self.__exit_to_home_screen()
                     return
     

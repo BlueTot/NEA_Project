@@ -1,1 +1,3 @@
 SUDOKU HELP MENU
+
+Welcome to Sudoku!

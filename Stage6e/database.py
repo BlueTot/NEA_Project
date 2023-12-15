@@ -3,11 +3,6 @@ import os
 import hashlib
 import datetime
 
-# def time_format(secs):
-#     if secs is None:
-#         return None
-#     return f"{int(secs // 3600)}h {(int(secs // 60)) % 60}m {int(secs % 60)}s"
-
 class DBError(Exception):
     pass
 

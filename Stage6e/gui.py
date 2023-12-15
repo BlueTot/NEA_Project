@@ -212,11 +212,9 @@ class ConfigGameScreen(Screen):
         self.__play.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
         self.__back = BackButton(self, self.__return_to_home_screen)
 
-        self.__mode = Label(self, "MODE: ", 50, 150, 300, 100, self._account.app_config.regular_font, 24)
-        self.__difficulty = Label(self, "DIFFICULTY: ", 50, 225, 300, 100, self._account.app_config.regular_font, 24)
-        self.__timed = Label(self, "TIMED: ", 50, 300, 300, 100, self._account.app_config.regular_font, 24)
-        self.__board_size = Label(self, "BOARD SIZE: ", 50, 375, 300, 100, self._account.app_config.regular_font, 24)
-        self.__hardcore = Label(self, "HARDCORE: ", 50, 450, 300, 100, self._account.app_config.regular_font, 24)
+        for idx, label in enumerate(("MODE: ", "DIFFICULTY: ", "TIMED: ", "BOARD_SIZE: ", "HARDCORE: ")):
+            label_obj = Label(self, label, 50, 150+75*idx, 300, 100, self._account.app_config.regular_font, 24)
+            self._widgets.append(label_obj)
 
         self.__mode_menu = ComboBox(self, 330, 175, 200, 50, self._account.app_config.regular_font, 20, ["Normal", "Killer"])
         self.__mode_menu.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
@@ -229,8 +227,8 @@ class ConfigGameScreen(Screen):
         self.__hardcore_menu = ComboBox(self, 330, 475, 200, 50, self._account.app_config.regular_font, 20, ["Yes", "No"])
         self.__hardcore_menu.setStyleSheet(f"background: {self._account.app_config.colour2}; border: 2px solid black;")
 
-        self._widgets += [self.__title, self.__play, self.__back, self.__mode, self.__difficulty, self.__timed, self.__board_size, self.__hardcore,
-                          self.__mode_menu, self.__difficulty_menu, self.__timed_menu, self.__board_size_menu, self.__hardcore_menu]
+        self._widgets += [self.__title, self.__play, self.__back, self.__mode_menu, self.__difficulty_menu, 
+                          self.__timed_menu, self.__board_size_menu, self.__hardcore_menu]
 
     def __play_game(self):
         if (difficulty := self.__difficulty_menu.currentText()) and (timed := self.__timed_menu.currentText()) and \
@@ -416,7 +414,7 @@ class GameScreen(Screen):
         self.__game.remove_game_file(self._account.username)
         if self.__game.timed:
             self.__timer_event.stop()
-        if self._account.username is not None:
+        if self._account.username is not None and self.__game.timed:
             self.save_stats_signal.emit(self.__game.get_stats(win))
             self.update_rating_signal.emit(rating_change := self.__game.rating_change(self._account.singleplayer_rating, win))
             self.update_milestone_signal.emit([self.__game.mode, self.__game.board_size, self.__game.difficulty, win])

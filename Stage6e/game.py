@@ -277,6 +277,8 @@ class Game: # Game class
     
     def rating_change(self, rating, won):
         if won:
-            return rating_gain(self.__mode, self.__board_size, self.__difficulty, rating, self.__time_elapsed)
+            return rating_gain(self.__mode, self.__board_size, self.__difficulty, rating, self.__time_elapsed, 
+                               self.__orig_num_of_auto_notes - self.__num_of_auto_notes, self.__orig_num_of_auto_notes, 
+                               self.__orig_num_of_hints - self.__num_of_hints, self.__orig_num_of_hints)
         else:
             return -rating_loss(self.__mode, self.__board_size, self.__difficulty, rating)

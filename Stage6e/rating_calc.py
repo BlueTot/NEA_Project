@@ -53,10 +53,19 @@ def __rating_gain(mode, board_size, difficulty, rating):
         return round(2*XP_PER_RUN - XP_PER_RUN*exp(-1/(10*e*ACTIVE_RANGE) * (rating - recommended_rating) ** 2)) # 2k - ke^(-1/(10eb) * (x-a)^2)
 
 # Exponential scaling formula for rating gain using time and base rating gain calculated from rating
-def rating_gain(mode, board_size, difficulty, rating, time):
+def __rating_gain_with_time(mode, board_size, difficulty, rating, time):
     base_rating = __rating_gain(mode, board_size, difficulty, rating) # R
     t_avg = average_time_to_complete(mode, board_size, difficulty) # T
     return round(5*base_rating/3 * exp(-log(2.5)/t_avg * time) + base_rating / 3) # 5R/3 * e^(-ln(2.5)/T * t) + R/3
+
+# Linearly scaling formula for rating gain given number of auto notes used and number of hints used
+def rating_gain(mode, board_size, difficulty, rating, time, num_auto_notes_used, orig_num_auto_notes, num_hints_used, orig_num_hints):
+    base_rating = __rating_gain_with_time(mode, board_size, difficulty, rating, time)
+    try:
+        factor = 1 - ((num_auto_notes_used + num_hints_used * (board_size ** 0.5)) / (orig_num_auto_notes + orig_num_hints * (board_size ** 0.5))) # 1 - (n + sqrt(s)*h) / (N + sqrt(s)*H)
+    except ZeroDivisionError:
+        factor = 1
+    return round(base_rating * factor)
 
 '''RATING FORMULA: y = 2k - rating_gain(...)'''
 def rating_loss(mode, board_size, difficulty, rating):

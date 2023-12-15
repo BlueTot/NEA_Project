@@ -19,19 +19,25 @@ def __num_givens(mode, board_size, difficulty):
 
 def get_num_givens(): # Get num givens for normal and killer modes
 
+    NUM_GIVENS = {}
+
     for board_size in [4, 6, 12, 16]: # scale to 4x4, 6x6, 12x12, 16x16
         NORMAL_NUM_GIVENS[board_size] = {diff : __num_givens("Normal", board_size, diff) for diff in ("Easy", "Medium", "Hard", "Expert")}
 
     for board_size in [4, 6, 12, 16]: # scale to 4x4, 6x6, 12x12, 16x16 killer
         KILLER_NUM_GIVENS[board_size] = {diff : __num_givens("Killer", board_size, diff) for diff in ("Easy", "Medium", "Hard", "Expert")}
+    
+    NUM_GIVENS["Normal"] = NORMAL_NUM_GIVENS
+    NUM_GIVENS["Killer"] = KILLER_NUM_GIVENS
 
-    return NORMAL_NUM_GIVENS, KILLER_NUM_GIVENS
+    return NUM_GIVENS
 
 if __name__ in "__main__":
-    for d in get_num_givens():
-        for k, v in d.items():
-            print(k, v)
-        print()
+    print(get_num_givens())
+    # for d in get_num_givens():
+    #     for k, v in d.items():
+    #         print(k, v)
+    #     print()
 
 '''OUTPUT OF FUNCTION SHOULD GIVE:
 

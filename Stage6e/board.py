@@ -225,7 +225,7 @@ class KillerModeBoard(Board): # Killer Mode Board Class
     def is_safe(self, row, col, num): # Is safe method to check if a number can be placed in a certain square
         # Is safe only if not in row, col and matrix, and group is also valid
         return self._not_in_row(row, num) and self._not_in_col(col, num) and self._not_in_3x3_matrix(row, col, num) and self.is_group_valid(row, col, num)
-
+    
     def group_colours(self): # Assign each group a colour such that no two groups with the same colour are adjacent
         colours = {} # Initialise colours dictionary
         while len(colours) != (self._board_size ** 2): # Continue while there are still squares to be assigned colours

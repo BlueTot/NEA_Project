@@ -8,7 +8,7 @@ from difficulty_settings import get_num_givens
 
 class BoardGenerator: # Board Generator Class
 
-    NORMAL_NUM_GIVENS, KILLER_NUM_GIVENS = get_num_givens()
+    NUM_GIVENS = get_num_givens()
 
     @staticmethod
     def __get_random_filled_board(board_size): # generate a randomly filled valid board
@@ -58,11 +58,8 @@ class BoardGenerator: # Board Generator Class
                 num_remaining = board_size ** 2 # number of remaining numbers in the board
                 tries = set() # set of already tried numbers
 
-                #dict for number of given numbers
-                num_givens_dict = BoardGenerator.NORMAL_NUM_GIVENS if mode == "Normal" else BoardGenerator.KILLER_NUM_GIVENS
-
                 # while there are still numbers to remove to reach the given difficulty
-                while num_remaining > num_givens_dict[board_size][difficulty]:
+                while num_remaining > BoardGenerator.NUM_GIVENS[mode][board_size][difficulty]:
                     
                     # iteratively find a random filled cell
                     while board.get_num_at(row := randint(0, board_size - 1), col := randint(0, board_size - 1)) == 0:

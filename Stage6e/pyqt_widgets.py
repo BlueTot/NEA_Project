@@ -62,7 +62,6 @@ class Border(QPushButton): # Border for number grid
         self.setGeometry(self._orig_x, self._orig_y, self._orig_width, self._orig_height)
         self.setStyleSheet(f"border: {self._orig_border_width}px solid black;")
 
-
 class Action(QAction): # Action for toolbar
     def __init__(self, window, image, text, command, checkable):
         if image is None:
