@@ -11,4 +11,4 @@ Milestones:
 - Stage 6 Commence: October 24th 2023
 - Stage 7 Commence: ???
 - Stage 8 Commence: ???
-- COMPLETION: ???
+- COMPLETION: January 15th 2024
