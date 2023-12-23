@@ -332,15 +332,15 @@ class TableWidget(QTableWidget):
             self.verticalHeader().setStyleSheet(ss)
 
 class Screen(QMainWindow): # Screen
-    def __init__(self, account, max_size : QSize):
+    def __init__(self, application, max_size : QSize):
         super().__init__()
         self._widgets = []
-        self._account = account
+        self._application = application
         self._max_size = max_size
         self.setWindowTitle(f"Sudoku {UI.VERSION}")
         self.setMinimumSize(QSize(1000, 560))
-        self.setStyleSheet(f"background: {self._account.app_config.background_colour};")
-        self.statusBar().setFont(QFont(self._account.app_config.regular_font, 14))
+        self.setStyleSheet(f"background: {self._application.account.app_config.background_colour};")
+        self.statusBar().setFont(QFont(self._application.account.app_config.regular_font, 14))
         self.statusBar().setStyleSheet("color : red;")
         self._resize_factor = self._max_size.width() / self.minimumSize().width()
     

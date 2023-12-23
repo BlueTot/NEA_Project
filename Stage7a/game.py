@@ -9,6 +9,7 @@ import os # Import os module
 from copy import deepcopy # Import deepcopy function from copy
 from math import floor # Import floor function from math
 from rating_calc import * # Import rating calculation details
+from application import Application # Import application class to get default directory to save games
 
 class GameError(Exception): # GameError exception class
     pass
@@ -18,7 +19,6 @@ class Game: # Game class
     DIFFICULTY_NUMS = {1: "Easy", 2: "Medium", 3: "Hard", 4:"Expert"} # Difficulty-number pair for TERMINAL only
     NUM_AUTO_NOTES = {"Easy": 80, "Medium": 65, "Hard": 50, "Expert": 35} # Number of auto notes for each difficulty
     NUM_HINTS = {"Easy": 5, "Medium": 6, "Hard": 8, "Expert": 11} # Number of hints for each difficulty
-    DEFAULT_DIRECTORY = "games" # Default directory to save game files
     
     def __init__(self): # Constructor
         self.__action_stack = Stack() # Stack to store user actions
@@ -51,7 +51,7 @@ class Game: # Game class
     
     @staticmethod
     def get_stats_from(account, file): # Method to get stats of a given file (returns dictionary)
-        with open(f"{Game.DEFAULT_DIRECTORY}/{account}/{file}") as f:
+        with open(f"{Application.DEFAULT_DIRECTORY}/{account}/{file}") as f:
             return json.load(f)
 
     def load_game(self, account, file): # Method to load game from file (takes file : str)
@@ -87,7 +87,7 @@ class Game: # Game class
         # Create file name based on local time if board is not loaded from a file
         file_name = f"singleplayer_{datetime.now().strftime('%d-%m-%y_%H-%M-%S')}.json" if self.__file is None else self.__file
 
-        with open(f"{self.DEFAULT_DIRECTORY}/{account}/{file_name}", "w") as f: # Open json file
+        with open(f"{Application.DEFAULT_DIRECTORY}/{account}/{file_name}", "w") as f: # Open json file
             f.write(json.dumps({"creation date": self.__creation_date, "creation time": self.__creation_time, 
                                 "mode": self.__mode, "difficulty": self.__difficulty, "num of hints": self.__num_of_hints, 
                                 "orig num of hints": self.__orig_num_of_hints, "num of auto notes": self.__num_of_auto_notes,
@@ -99,7 +99,7 @@ class Game: # Game class
     
     def remove_game_file(self, account): # Remove game file when game is resigned or won
         if self.__file is not None:
-            if os.path.exists(path := f"{self.DEFAULT_DIRECTORY}/{account}/{self.__file}"):
+            if os.path.exists(path := f"{Application.DEFAULT_DIRECTORY}/{account}/{self.__file}"):
                 os.remove(path) # Remove file if the file exists
 
     def get_stats(self, completed):

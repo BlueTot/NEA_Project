@@ -1,25 +1,25 @@
 # Summary
 
-Date : 2023-10-31 18:24:59
+Date : 2023-12-23 16:32:57
 
-Directory c:\\Users\\nhlo\\Documents\\GitHub\\NEA_Project\\Stage6b
+Directory c:\\Users\\nhlo\\Documents\\GitHub\\NEA_Project\\Stage7a
 
-Total : 32 files,  3342 codes, 68 comments, 647 blanks, all 4057 lines
+Total : 34 files,  3941 codes, 36 comments, 737 blanks, all 4714 lines
 
 Summary / [Details](details.md) / [Diff Summary](diff.md) / [Diff Details](diff-details.md)
 
 ## Languages
 | language | files | code | comment | blank | total |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| Python | 18 | 2,343 | 68 | 634 | 3,045 |
-| XML | 13 | 996 | 0 | 13 | 1,009 |
+| Python | 19 | 2,812 | 36 | 723 | 3,571 |
+| XML | 14 | 1,126 | 0 | 14 | 1,140 |
 | JSON | 1 | 3 | 0 | 0 | 3 |
 
 ## Directories
 | path | files | code | comment | blank | total |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| . | 32 | 3,342 | 68 | 647 | 4,057 |
-| . (Files) | 19 | 2,346 | 68 | 634 | 3,048 |
-| resources | 13 | 996 | 0 | 13 | 1,009 |
+| . | 34 | 3,941 | 36 | 737 | 4,714 |
+| . (Files) | 20 | 2,815 | 36 | 723 | 3,574 |
+| resources | 14 | 1,126 | 0 | 14 | 1,140 |
 
 Summary / [Details](details.md) / [Diff Summary](diff.md) / [Diff Details](diff-details.md)

@@ -1,0 +1,9 @@
+Stage 7a
+
+- Add account feature to terminal
+- Add create account, sign in and sign out features to terminal
+- Enable saving of games to terminal
+
+Stage 7b
+
+- Add classic multiplayer to terminal (two players on separate boards, competing to finish the game quicker)
