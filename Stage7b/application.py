@@ -20,8 +20,8 @@ class Application:
 
     def create_account(self, options): # Method to create new account
         username, password = options
-        os.mkdir(os.path.join(self.DEFAULT_DIRECTORY, f"{username}")) # Create new directory for stored games
         database.create_new_account(username, password) # Create new account in database
+        os.mkdir(os.path.join(self.DEFAULT_DIRECTORY, f"{username}")) # Create new directory for stored games
         self.__account.set_account(username) # Set the account in the GUI
     
     def sign_in(self, options): # Method to sign in

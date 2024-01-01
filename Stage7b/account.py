@@ -19,7 +19,7 @@ class AppearanceConfiguration: # Appearance Configuration class
 
     def __init__(self, settings): # Constructor
         if settings is not None:
-            self.__background_colour, self.__colour1, self.__colour2, self.__colour3, self.__colour4, self.__title_font, self.__regular_font = settings[1:-5]
+            self.__background_colour, self.__colour1, self.__colour2, self.__colour3, self.__colour4, self.__title_font, self.__regular_font = settings[:-5]
             self.__colour2_translucent = f"rgba{to_translucent(self.__colour2)}"
             self.__killer_colours = settings[-5:]
         else:

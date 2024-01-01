@@ -253,32 +253,6 @@ def leaderboard_milestone_data(board_size):
 
 if __name__ in "__main__":
     __setup()
-    #create_new_account("admin", "admin")
-    # print(password_at("admin"))
-    # print(appearance_config_at("admin"))
-    # print(__fetch_data("""SELECT * FROM Passwords"""))
-
-    # print(__fetch_data("""SELECT * FROM Ratings"""))
-
-    # print(__fetch_data("""SELECT MAX(game_id) FROM Games""")[0][0])
-
-    # for line in __fetch_data("""SELECT * FROM Games"""):
-    #     print(line) 
-    
-    # print("\nadmin games")
-    # for game in get_games_of("admin"):
-    #     print(game)
-    
-    # print(best_time("admin", "Normal", 4, "Easy"))
-    # print(best_hardcore_time("admin", "Normal", 4, "Easy"))
-    # print(milestone("admin", "milestone_4x4"))
-    # print(milestone_claimed("admin"))
-    # print(bonus_hints("admin"))
-    # print(all_account_rating_data())
-    # print(__fetch_data("""SELECT * FROM GameMilestones"""))
-    # set_milestone("admin", "milestone_4x4", 6)
-    # set_milestone_claimed("admin", "0"*35)
-    # print(all_best_time_data("Normal", 4, "Expert"))
-    # print(best_hardcore_time("test2", "Normal", 4, "Expert"))
+    print(__fetch_data("""SELECT * FROM Accounts"""))
 
 ##C5B4E3

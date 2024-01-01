@@ -614,11 +614,7 @@ class CreateNewAccountScreen(Screen):
     def __create_account(self):
         if self.__username.text() and self.__password.text() and self.__password2.text():
             if self.__password.text() == self.__password2.text():
-                try:
-                    self.create_account_signal.emit([self.__username.text(), self.__password.text()])
-                    self.__return_to_home_screen()
-                except DBError as err:
-                    self.show_error(err)
+                self.create_account_signal.emit([self.__username.text(), self.__password.text()])
             else:
                 self.statusBar().showMessage("Passwords inputted are not the same")
         else:
@@ -655,11 +651,7 @@ class SignInScreen(Screen):
     
     def __sign_in(self):
         if self.__username.text() and self.__password.text():
-            try:
-                self.sign_in_signal.emit([self.__username.text(), self.__password.text()])
-                self.__return_to_home_screen()
-            except DBError as err:
-                self.show_error(err)
+            self.sign_in_signal.emit([self.__username.text(), self.__password.text()])
         else:
             self.statusBar().showMessage("One or more input boxes are still empty")
 
@@ -1139,13 +1131,13 @@ class GUI(UI): # Graphical User Interface (GUI) class
     def __create_new_account_screen(self): # Initialise create new account screen
         create_new_account_screen = CreateNewAccountScreen(self._application, self.__max_size)
         create_new_account_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        create_new_account_screen.create_account_signal.connect(self._application.create_account)
+        create_new_account_screen.create_account_signal.connect(self.__create_new_account)
         return create_new_account_screen
 
     def __sign_in_screen(self): # Initialise sign in screen
         sign_in_screen = SignInScreen(self._application, self.__max_size)
         sign_in_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        sign_in_screen.sign_in_signal.connect(self._application.sign_in)
+        sign_in_screen.sign_in_signal.connect(self.__sign_in)
         return sign_in_screen
 
     def __manage_account_screen(self): # Initialise manage account screen
@@ -1229,6 +1221,20 @@ class GUI(UI): # Graphical User Interface (GUI) class
         for _ in range(3):
             self._pop_ui_from_stack()
         self.__show_screen(self._get_curr_ui(), self.__screen_partials[self._get_curr_ui()])
+    
+    def __create_new_account(self, options):
+        try:
+            self._application.create_account(options)
+            self.__pop_screen()
+        except DBError as err:
+            self.__screens["create new account"].show_error(err)
+
+    def __sign_in(self, options):
+        try:
+            self._application.sign_in(options)
+            self.__pop_screen()
+        except DBError as err:
+            self.__screens["sign in"].show_error(err)
 
     def __sign_out(self): # Method to sign out
         self._application.sign_out()
