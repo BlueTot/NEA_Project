@@ -13,6 +13,10 @@ class Application:
     @property
     def account(self):
         return self.__account
+    
+    @property
+    def games_directory(self):
+        return f"{self.DEFAULT_DIRECTORY}/{self.__account.username}"
 
     def create_account(self, options): # Method to create new account
         username, password = options

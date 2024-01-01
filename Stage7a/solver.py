@@ -36,7 +36,6 @@ class BoardSolver: # Board Solver Class
     def solver(board, generating_mode=False): # backtracking solver interface
         if board.mode == "Normal" and not generating_mode: # if board mode is Normal
             for sol in dlx.solve_sudoku(board): # solve board using DLX
-                #board.load_from_2darr(sol)
                 return sol # return board once solution is found
             raise BoardUnsolvableError # board is not solvable
         else:

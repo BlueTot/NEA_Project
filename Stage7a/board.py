@@ -1,5 +1,5 @@
-from random import randint # import randint
 from ast import literal_eval # importing function to convert string into list/tuple objects
+from group_colouring import group_colours
 
 def to_letter(num): # convert letter to number (A = 10 ...)
     return str(num) if 0 <= num <= 9 else chr(num-10+65)
@@ -71,9 +71,6 @@ class Board: # Board Base Class
         self._col_digits = [0 for _ in range(self._board_size)]
         self._matrix_digits = [0 for _ in range(self._board_size)]
     
-    def _bwn(self, num): # bitwise NOT function
-        return num ^ ((2**self._board_size) - 1)
-    
     @staticmethod
     def _bin(num): # convert index of number in binary number to decimal
         return 2 ** (num - 1)
@@ -82,13 +79,13 @@ class Board: # Board Base Class
         return self._matrix_size[0] * (row // self._matrix_size[0]) + col // self._matrix_size[1]
     
     def _not_in_row(self, row, num): # check if num isn't in row
-        return self._bwn(self._row_digits[row]) & self._bin(num)
+        return self._row_digits[row] & self._bin(num) == 0
 
     def _not_in_col(self, col, num): # check if num isn't in col
-        return self._bwn(self._col_digits[col]) & self._bin(num)
+        return self._col_digits[col] & self._bin(num) == 0
 
     def _not_in_3x3_matrix(self, row, col, num): # check if num isn't in matrix
-        return self._bwn(self._matrix_digits[self.matrix_num(row, col)]) & self._bin(num)
+        return self._matrix_digits[self.matrix_num(row, col)] & self._bin(num) == 0
     
     '''Getters'''
 
@@ -226,26 +223,8 @@ class KillerModeBoard(Board): # Killer Mode Board Class
         # Is safe only if not in row, col and matrix, and group is also valid
         return self._not_in_row(row, num) and self._not_in_col(col, num) and self._not_in_3x3_matrix(row, col, num) and self.is_group_valid(row, col, num)
     
-    def group_colours(self): # Assign each group a colour such that no two groups with the same colour are adjacent
-        colours = {} # Initialise colours dictionary
-        while len(colours) != (self._board_size ** 2): # Continue while there are still squares to be assigned colours
-            row, col = randint(0, self._board_size-1), randint(0, self._board_size-1) # Choose a random square
-            if (row, col) not in colours: # Check if random square hasn't been assigned a colour yet
-                for group, _ in self._groups.values(): # Find the group of that square
-                    if (row, col) in group:
-                        break   
-                possible_colours = [0, 1, 2, 3, 4] # 5 possible colours
-                has_coloured_adjacent = False
-                for sq in group: # iterate through all squares in the group
-                    for cell in self.adjacent_cells(sq[0], sq[1]): # iterate through all adjacent cells for each square
-                        if cell in colours and colours[cell] in possible_colours: # check if adjacent cell has been given a colour already
-                            has_coloured_adjacent = True 
-                            possible_colours.remove(colours[cell]) # remove colour from list of possible colours
-                if (has_coloured_adjacent and len(colours) != 0) or len(colours) == 0: # check if no colours have been assigned yet or a neightbouring cell is already coloured
-                    colour = possible_colours[0] # get a colour that isn't used by adjacent cells yet
-                    for sq in group: # assign colour to all squares in the group
-                        colours[sq] = colour
-        return colours
+    def group_colours(self):
+        return group_colours(self._groups)
 
     def load(self, hash): # Load board from hash (unique to KillerModeBoard)
         sqrs_hash, gp_hash = hash.split("/") # split hash into two parts

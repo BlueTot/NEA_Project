@@ -3,6 +3,7 @@ import os
 from colorama import Fore, Style
 from game import Game
 from game import GameError
+from database import DBError
 
 class Terminal(UI):
 
@@ -24,6 +25,10 @@ class Terminal(UI):
             curr_screen = self._get_curr_ui()
             if curr_screen == "home":
                 self.__play_home_screen()
+            elif curr_screen == "create new account":
+                self.__create_new_account()
+            elif curr_screen == "sign in":
+                self.__sign_in()
             elif curr_screen == "open or create new game":
                 self.__open_or_create_new_game()
             elif curr_screen == "open new game":
@@ -37,18 +42,58 @@ class Terminal(UI):
                 return
     
     def __play_home_screen(self):
-        main_menu_choice = self.__get_input("Press (S) to play singleplayer, (Q) to quit: ", ["S", "Q"])
+        if self._application.account.username is None: # Not signed in
+            print("\nNOT SIGNED IN\n")
+            main_menu_choice = self.__get_input("Press (S) to play singleplayer, (C) to create a new account, (I) to sign in, (Q) to quit: ", ["S", "C", "I", "Q"])
+        else:
+            print(f"\nSIGNED IN AS {self._application.account.username}\n")
+            main_menu_choice = self.__get_input("Press (S) to play singleplayer, (C) to create a new account, (O) to sign out, (Q) to quit: ", ["S", "C", "O", "Q"])
         if main_menu_choice == "S":
             self._push_ui_to_stack("open or create new game")
+        elif main_menu_choice == "C":
+            self._push_ui_to_stack("create new account")
+        elif main_menu_choice == "I":
+            self._push_ui_to_stack("sign in")
+        elif main_menu_choice == "O":
+            self._application.sign_out()
         elif main_menu_choice == "Q":
             self._pop_ui_from_stack()
             return
+    
+    def __create_new_account(self):
+        while True:
+            username = self.__get_default_input("Enter username: ")
+            password = self.__get_default_input("Enter password: ")
+            password2 = self.__get_default_input("Enter password again: ")
+            if password == password2:
+                break
+            print("Passwords entered don't match ... try again!")
+        self._application.create_account([username, password])
+        self._pop_ui_from_stack()
+        return
+    
+    def __sign_in(self):
+        while True:
+            try:
+                username = self.__get_default_input("Enter username: ")
+                password = self.__get_default_input("Enter password: ")
+                self._application.sign_in([username, password])
+                self._pop_ui_from_stack()
+                return
+            except DBError as err:
+                input(err)
 
     def __open_or_create_new_game(self):
         if os.listdir("games"): # if there are games stored to play
             match self.__get_input("Would you like to (O)pen a new game or (C)reate a new game: ", ["O", "C"]):
                 case "O": # open new game
-                    input("Opening games is not supported in terminal")
+                    if self._application.account.username is not None:
+                        if os.listdir(self._application.games_directory):
+                            self._push_ui_to_stack("open new game")
+                        else:
+                            input("No games saved at the moment")
+                    else:
+                        input("Opening games is only available if you sign in")
                 case "C": # create new game
                     self._push_ui_to_stack("create new game")
         else:
@@ -56,7 +101,7 @@ class Terminal(UI):
     
     def __open_new_game(self):
         print((heading := f"{'No. ':^5} | {'Game':^35} | {'Creation Date':^15} | {'Creation Time':^15} | {'Mode':^15} | {'Difficulty':^15}") + f"\n{'-'*len(heading)}")
-        for idx, file_name in enumerate(files := os.listdir(Game.DEFAULT_DIRECTORY)):
+        for idx, file_name in enumerate(files := os.listdir(self._application.games_directory)):
             stats = Game.get_stats_from(file_name)
             print(f"{idx+1:^5} | {file_name:^35} | {stats['creation date']:^15} | {stats['creation time']:^15} | {stats['mode']:^15} | {stats['difficulty']:^15}")
         game_num = int(self.__get_input("Type the number of the game you want to open: ", [str(i+1) for i in range(len(files))]))
@@ -155,6 +200,15 @@ class Terminal(UI):
             else:
                 print("Not one of the options ... try again!")
     
+    @staticmethod
+    def __get_default_input(inp_string):
+        while True:
+            choice = input(inp_string)
+            if choice:
+                return choice
+            else:
+                print("Please enter something ... try again!")
+    
     def __print_board(self, board, orig_board):
         print("\n" + (s := " "* 5 + f"{' '*5}".join(str(i) for i in range(1, 10))), end='')
         for row in range(len(board)):
@@ -191,3 +245,4 @@ class Terminal(UI):
         print("\n" + f"MODE: {self.__game.mode}")
         print(f"DIFFICULTY: {self.__game.difficulty.capitalize()}")
         print(f"% COMPLETE: {self.__game.percent_complete()}%")
+    

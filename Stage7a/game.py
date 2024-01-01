@@ -2,7 +2,7 @@ from board import * # Import everything from board
 from board_actions import * # Import everything from board_actions
 from generator import BoardGenerator
 from solver import BoardSolver
-from stack import Stack # Import stack class
+from data_structures import Stack # Import stack class
 from datetime import datetime, timedelta # Import datetime and timedelta functions from datetime
 import json # Import json module
 import os # Import os module

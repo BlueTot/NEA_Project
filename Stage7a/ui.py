@@ -1,11 +1,13 @@
-from stack import Stack # Import stack object from stack.py
+from data_structures import Stack # Import stack object from stack.py
 from abc import ABC, abstractmethod # Import abstract base class and abstract method
+from application import Application # Import game application
 
 class UI(ABC):
 
     VERSION = "v0.7" # Set version
 
     def __init__(self): # Constructor
+        self._application = Application() # Create game application
         self._ui_stack = Stack() # Create new UI stack (for back buttons)
         self._push_ui_to_stack("home") # Push "home" to stack, represents the home screen first being rendered
     
