@@ -55,7 +55,7 @@ def __setup():
                     milestone_16x16 INTEGER,
                     claimed VARCHAR(35),
                     bonus_hints INTEGER
-                    )""")
+                    );""")
 
         __update_db("""CREATE TABLE Games(
                     game_id INTEGER PRIMARY KEY,
@@ -211,48 +211,20 @@ def set_bonus_hints(username, num_hints):
     __setup()
     __update_db(f"""UPDATE Accounts SET bonus_hints={num_hints} WHERE username='{username}';""")
 
-def flip_list(lst):
-    cols = len(lst[0])
-    lst2 = [[] for _ in range(cols)]
-    for col in range(cols):
-        for row in lst:
-            lst2[col].append(row[col])
-    return lst2
-
 def all_account_rating_data():
     __setup()
     return __fetch_data("""SELECT username, singleplayer_rating, singleplayer_title FROM Accounts""")
 
-def all_best_time_data(mode, board_size, difficulty):
-    best_time_data = []
-    for data in __fetch_data("""SELECT username from Accounts"""):
-        username = data[0]
-        best_time_data.append(best_hardcore_time(username, mode, board_size, difficulty))
-    return best_time_data
-
 def leaderboard_best_time_data(mode, board_size, difficulty):
-    rating_data = [list(i) for i in all_account_rating_data()]
-    best_time_data = all_best_time_data(mode, board_size, difficulty)
-    for i in range(len(rating_data)):
-        rating_data[i].append(best_time_data[i])
-    return rating_data
-
-def all_milestone_data(board_size):
-    milestone_data = []
-    for data in __fetch_data("""SELECT username from Accounts"""):
-        username = data[0]
-        milestone_data.append(milestone(username, f"milestone_{board_size}"))
-    return milestone_data
+    return __fetch_data(f"""SELECT Accounts.username, Accounts.singleplayer_rating, Accounts.singleplayer_title, (SELECT MIN(Games.time_to_complete) FROM Games WHERE mode='{mode}' AND board_size={board_size}
+                       AND difficulty='{difficulty}' AND completed='True' AND hardcore='True' AND Games.username=Accounts.username) FROM Accounts;""")
 
 def leaderboard_milestone_data(board_size):
-    rating_data = [list(i) for i in all_account_rating_data()]
-    best_time_data = all_milestone_data(board_size)
-    for i in range(len(rating_data)):
-        rating_data[i].append(best_time_data[i])
-    return rating_data
+    return __fetch_data(f"""SELECT username, singleplayer_rating, singleplayer_title, milestone_{board_size} FROM Accounts;""")
 
 if __name__ in "__main__":
     __setup()
     print(__fetch_data("""SELECT * FROM Accounts"""))
+    print(__fetch_data("""SELECT * FROM Games"""))
 
 ##C5B4E3
