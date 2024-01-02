@@ -18,7 +18,7 @@ from account import * # Import account, appearance config and gme milestone clas
 '''PyQt6 GUI Imports'''
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal, QTimer
-from PyQt6.QtGui import QFont, QIcon, QFontDatabase, QCursor
+from PyQt6.QtGui import QFont, QIcon, QFontDatabase
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from pyqt_widgets import * # Import all customisable widget classes
   
@@ -170,9 +170,6 @@ class OpenGameScreen(Screen):
                                            os.listdir(os.path.join(Game.DEFAULT_DIRECTORY, self._application.account.username)) if self._application.account.username is not None else [])
         self.__choose_game_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
         self.__choose_game_menu.activated.connect(self.__show_game_info)
-
-        self.statusBar().setFont(QFont(self._application.account.app_config.regular_font, 14))
-        self.statusBar().setStyleSheet("QStatusBar{color:red;}")
 
         self.__game_info = TextEdit(self, 50, 300, 400, 235, self._application.account.app_config.colour2,  2, self._application.account.app_config.regular_font, 18)
 
@@ -655,17 +652,93 @@ class SignInScreen(Screen):
         else:
             self.statusBar().showMessage("One or more input boxes are still empty")
 
-class CustomiseGUIScreen(Screen):
+class ViewGUIPresetsScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
-    save_signal = pyqtSignal(list)
-    reset_signal = pyqtSignal()
+    update_preset_signal = pyqtSignal(list)
+    use_preset_signal = pyqtSignal(int)
 
     def __init__(self, application, max_size):
 
         super().__init__(application, max_size)
+
+        self.__title = Label(self, "VIEW PRESETS", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
+        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.__back = BackButton(self, self.__return_to_home_screen)
+
+        self.__create_preset = Button(self, "CREATE PRESET", 600, 180, 300, 100, self._application.account.app_config.regular_font, 22, self.__create_preset)
+        self.__create_preset.setStyleSheet(f"background: {self._application.account.app_config.killer_colours[3]}; border: 2px solid black;")
+        self.__edit_preset = Button(self, "EDIT PRESET", 600, 310, 300, 100, self._application.account.app_config.regular_font, 22, self.__edit_preset)
+        self.__edit_preset.setStyleSheet(f"background: {self._application.account.app_config.colour3}; border: 2px solid black;")
+        self.__use_preset = Button(self, "USE PRESET", 600, 440, 300, 100, self._application.account.app_config.regular_font, 22, self.__use_preset)
+        self.__use_preset.setStyleSheet(f"background: {self._application.account.app_config.colour3}; border: 2px solid black;")
+
+        self.__current_preset = Label(self, f"CURRENT PRESET: Preset {database.get_current_appearance_preset_num(self._application.account.username)}", 50, 150, 400, 60, self._application.account.app_config.regular_font, 20)
+        self.__choose_preset = Label(self, "CHOOSE A PRESET", 50, 200, 300, 50, self._application.account.app_config.regular_font, 20)
+        self.__choose_preset_menu = ComboBox(self, 50, 245, 400, 50,self._application.account.app_config.regular_font, 15, 
+                                           [f"Preset {preset[0]}" for preset in database.get_all_presets(self._application.account.username)])
+        self.__choose_preset_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
+        self.__choose_preset_menu.activated.connect(self.__show_preset_info)
+
+        self.__preset_preview = TextEdit(self, 50, 325, 400, 235, self._application.account.app_config.colour2, 2, self._application.account.app_config.regular_font, 14)
+
+        self._widgets += [self.__title, self.__back, self.__choose_preset, self.__choose_preset_menu, 
+                          self.__create_preset, self.__edit_preset, self.__use_preset, self.__preset_preview,
+                          self.__current_preset]
+    
+    def __create_preset(self):
+        self.update_preset_signal.emit(["create", database.next_preset_number(self._application.account.username)])
+
+    def __edit_preset(self):
+        if (text := self.__choose_preset_menu.currentText()):
+            if (text := self.__choose_preset_menu.currentText()) != "Preset 1":
+                self.update_preset_signal.emit(["edit", int(text.split(" ")[1])])
+            else:
+                self.statusBar().showMessage("*Preset 1 is the default appearance present and cannot be edited.")
+        else:
+            self.statusBar().showMessage("*Please select a preset to edit")
+    
+    def __use_preset(self):
+        if (text := self.__choose_preset_menu.currentText()):
+            if database.get_current_appearance_preset_num(self._application.account.username) != (num := int(text.split(" ")[1])):
+                self.use_preset_signal.emit(num)
+                self.__current_preset.setText(f"CURRENT PRESET: Preset {database.get_current_appearance_preset_num(self._application.account.username)}")
+            else:
+                self.statusBar().showMessage(f"*Preset {num} is currently being used.") 
+        else:
+            self.statusBar().showMessage("*Please select a preset to use")
         
-        self.__title = Label(self, "CUSTOMISE GUI", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
+    def __show_preset_info(self):
+        if (text := self.__choose_preset_menu.currentText()):
+            self.__edit_preset.setStyleSheet(f"background: {self._application.account.app_config.killer_colours[3]}; border: 2px solid black;")
+            self.__use_preset.setStyleSheet(f"background: {self._application.account.app_config.killer_colours[3]}; border: 2px solid black;")
+            data = database.get_preset(self._application.account.username, int(text.split(" ")[1]))
+            labels = ["Background Colour", "Colour 1", "Colour 2", "Colour 3", "Colour 4", "Title Font",
+                      "Regular Font", "Killer Colour 1", "Killer Colour 2", "Killer Colour 3", "Killer Colour 4", "Killer Colour 5"]
+            self.__preset_preview.setText("\n".join([f"{label}: {stat}" for label, stat in zip(labels, data)]))
+        else:
+            self.__edit_preset.setStyleSheet(f"background: {self._application.account.app_config.colour3}; border: 2px solid black;")
+            self.__use_preset.setStyleSheet(f"background: {self._application.account.app_config.colour3}; border: 2px solid black;")
+            self.__preset_preview.setText("")
+
+    def __return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+
+class EditGUIPresetScreen(Screen):
+
+    return_to_home_screen_signal = pyqtSignal()
+    save_signal = pyqtSignal(list)
+    delete_signal = pyqtSignal(int)
+
+    def __init__(self, application, max_size, mode, preset_num):
+
+        super().__init__(application, max_size)
+
+        self.__mode = mode
+        self.__preset_num = preset_num
+        
+        self.__title = Label(self, f"{'EDIT' if mode == 'edit' else 'CREATE'} PRESET {preset_num}", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.__back = BackButton(self, self.__return_to_home_screen)
@@ -704,12 +777,12 @@ class CustomiseGUIScreen(Screen):
         self.__save = Button(self, "Save Changes", 275, 525, 200, 50, self._application.account.app_config.regular_font, 18, self.__save)
         self.__save.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
 
-        self.__reset = Button(self, "Reset Settings", 525, 525, 200, 50, self._application.account.app_config.regular_font, 18, self.__reset)
-        self.__reset.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
+        self.__delete = Button(self, "Delete Preset", 525, 525, 200, 50, self._application.account.app_config.regular_font, 18, self.__delete)
+        self.__delete.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
 
         self._widgets += [self.__title, self.__back, self.__bg_colour, self.__colour1, self.__colour2, self.__colour3, self.__colour4, self.__title_font, 
                           self.__regular_font, self.__killer_colour1, self.__killer_colour2, self.__killer_colour3, self.__killer_colour4, self.__killer_colour5,
-                          self.__save, self.__reset]
+                          self.__save, self.__delete]
     
     def __get_options(self):
         options = [text if (text := textbox.text()) else textbox.placeholderText() for textbox in self.__options]
@@ -722,16 +795,16 @@ class CustomiseGUIScreen(Screen):
     def __save(self):
         options = self.__get_options()
         if any([textbox.text() for textbox in self.__options]) or self.__font_options_changed():
-            self.save_signal.emit(options)
+            self.save_signal.emit([self.__mode, self.__preset_num] + options)
             self.__return_to_home_screen()
         else:
             self.statusBar().showMessage("Please fill in at least one box to save")
     
-    def __reset(self):
-        if self.__get_options() == AppearanceConfiguration.DEFAULT_SETTINGS:
-            self.statusBar().showMessage("Settings already set to default")
+    def __delete(self):
+        if database.get_current_appearance_preset_num(self._application.account.username) == self.__preset_num:
+            self.statusBar().showMessage("*Preset is currently in use and cannot be deleted.")
         else:
-            self.reset_signal.emit()
+            self.delete_signal.emit(self.__preset_num)
             self.__return_to_home_screen()
 
     def __return_to_home_screen(self):
@@ -1083,7 +1156,8 @@ class GUI(UI): # Graphical User Interface (GUI) class
                            "game": self.__game_screen, "create new account": self.__create_new_account_screen, 
                            "sign in": self.__sign_in_screen, "manage account": self.__manage_account_screen, 
                            "view stats": self.__view_stats_screen, "game milestones": self.__game_milestones_screen,
-                           "customise gui": self.__customise_gui_screen, "help": self.__help_screen,
+                           "view gui presets": self.__view_gui_presets_screen,
+                           "edit gui preset": self.__edit_gui_preset_screen, "help": self.__help_screen,
                            "leaderboard": self.__leaderboard_screen} # Dictionary of screen partials used to initialise each screen
         self.__show_screen("home", self.__screen_partials["home"]) # Show the home screen
     
@@ -1094,7 +1168,7 @@ class GUI(UI): # Graphical User Interface (GUI) class
         home_screen.sign_in_singal.connect(partial(self.__show_screen, "sign in", self.__sign_in_screen))
         home_screen.sign_out_signal.connect(self.__sign_out)
         home_screen.manage_account_signal.connect(partial(self.__show_screen, "manage account", self.__manage_account_screen))
-        home_screen.customise_gui_signal.connect(partial(self.__show_screen, "customise gui", self.__customise_gui_screen))
+        home_screen.customise_gui_signal.connect(partial(self.__show_screen, "view gui presets", self.__view_gui_presets_screen))
         home_screen.view_stats_signal.connect(partial(self.__show_screen, "view stats", self.__view_stats_screen))
         home_screen.game_milestones_signal.connect(partial(self.__show_screen, "game milestones", self.__game_milestones_screen))
         home_screen.help_signal.connect(partial(self.__show_screen, "help", self.__help_screen))
@@ -1147,13 +1221,20 @@ class GUI(UI): # Graphical User Interface (GUI) class
         manage_account_screen.change_password_signal.connect(self._application.change_password)
         manage_account_screen.delete_account_signal.connect(self._application.delete_account)
         return manage_account_screen
+
+    def __view_gui_presets_screen(self): # Initialise view gui presets screen
+        view_gui_presets_screen = ViewGUIPresetsScreen(self._application, self.__max_size)
+        view_gui_presets_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        view_gui_presets_screen.update_preset_signal.connect(self.__show_edit_gui_preset_screen)
+        view_gui_presets_screen.use_preset_signal.connect(self._application.use_gui_preset)
+        return view_gui_presets_screen
     
-    def __customise_gui_screen(self): # Initialise customise gui screen
-        customise_gui_screen = CustomiseGUIScreen(self._application, self.__max_size)
-        customise_gui_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        customise_gui_screen.save_signal.connect(self._application.update_appearance_config)
-        customise_gui_screen.reset_signal.connect(self._application.reset_appearance_config)
-        return customise_gui_screen
+    def __edit_gui_preset_screen(self, mode, preset_id): # Initialise edit gui preset screen
+        edit_gui_preset_screen = EditGUIPresetScreen(self._application, self.__max_size, mode, preset_id)
+        edit_gui_preset_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+        edit_gui_preset_screen.save_signal.connect(self._application.update_appearance_preset)
+        edit_gui_preset_screen.delete_signal.connect(self._application.delete_appearance_preset)
+        return edit_gui_preset_screen
     
     def __view_stats_screen(self): # Initialise view stats screen
         view_stats_screen = ViewStatsScreen(self._application, self.__max_size)
@@ -1215,6 +1296,11 @@ class GUI(UI): # Graphical User Interface (GUI) class
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)
         self.__push_screen("game")
+    
+    def __show_edit_gui_preset_screen(self, options):
+        mode, preset_id = options
+        self.__screens["edit gui preset"] = self.__edit_gui_preset_screen(mode, preset_id)
+        self.__push_screen("edit gui preset")
         
     def __quit_game(self): # Quit game screen (returns to home screen)
         self.__close_curr_screen()

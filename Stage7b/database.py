@@ -36,6 +36,20 @@ def __setup():
                     singleplayer_rating INTEGER,
                     singleplayer_title VARCHAR(20),
                     password VARCHAR(200),
+                    current_appearance_preset_number INTEGER,
+                    milestone_4x4 INTEGER,
+                    milestone_6x6 INTEGER,
+                    milestone_9x9 INTEGER,
+                    milestone_12x12 INTEGER,
+                    milestone_16x16 INTEGER,
+                    claimed VARCHAR(35),
+                    bonus_hints INTEGER
+                    );""")
+    
+        __update_db("""CREATE TABLE AppearancePresets(
+                    preset_id INTEGER PRIMARY KEY,
+                    username VARCHAR(100),
+                    preset_number INTEGER,
                     background_colour VARCHAR(7),
                     colour1 VARCHAR(7),
                     colour2 VARCHAR(7),
@@ -47,14 +61,7 @@ def __setup():
                     killer_colour2 VARCHAR(7),
                     killer_colour3 VARCHAR(7),
                     killer_colour4 VARCHAR(7),
-                    killer_colour5 VARCHAR(7),
-                    milestone_4x4 INTEGER,
-                    milestone_6x6 INTEGER,
-                    milestone_9x9 INTEGER,
-                    milestone_12x12 INTEGER,
-                    milestone_16x16 INTEGER,
-                    claimed VARCHAR(35),
-                    bonus_hints INTEGER
+                    killer_colour5 VARCHAR(7)
                     );""")
 
         __update_db("""CREATE TABLE Games(
@@ -80,13 +87,25 @@ def encrypt_password(password):
     hashed = hashlib.md5((password+salt).encode())
     return hashed.hexdigest()
 
+def next_preset_id():
+    if (id := __fetch_data("""SELECT MAX(preset_id) FROM AppearancePresets;""")[0][0]) is not None:
+        return id + 1
+    else:
+        return 0
+
+def next_preset_number(username):
+    if (num := __fetch_data(f"""SELECT MAX(preset_number) FROM AppearancePresets WHERE username='{username}';""")[0][0]) is not None:
+        return num + 1
+    else:
+        return 1
+
 def create_new_account(username, password):
     __setup()
     if password_at(username):
         raise DBError("Username already taken")
-    __update_db(f"""INSERT INTO Accounts VALUES('{username}', 0, 'New Player', '{encrypt_password(password)}', '#f0f0f0', '#ffffff', '#aee8f5', 
-                '#969696', '#ffcccb', 'LIBRARY 3 AM soft', 'Metropolis', '#ff7276', '#ffffe0', '#add8e6', '#90ee90', '#c5b4e3', 
-                0, 0, 0, 0, 0, '{'0'*35}', 0);""")
+    __update_db(f"""INSERT INTO Accounts VALUES('{username}', 0, 'New Player', '{encrypt_password(password)}', 1, 0, 0, 0, 0, 0, '{'0'*35}', 0);""")
+    __update_db(f"""INSERT INTO AppearancePresets VALUES({next_preset_id()}, '{username}', 1, '#f0f0f0', '#ffffff', '#aee8f5', 
+                '#969696', '#ffcccb', 'LIBRARY 3 AM soft', 'Metropolis', '#ff7276', '#ffffe0', '#add8e6', '#90ee90', '#c5b4e3');""")
     print(f"Account {username} created")
 
 def delete_account(username):
@@ -94,6 +113,7 @@ def delete_account(username):
     if password_at(username):
         __update_db(f"""DELETE FROM Accounts WHERE username='{username}';""")
         __update_db(f"""DELETE FROM Games WHERE username='{username}';""")
+        __update_db(f"""DELETE FROM AppearancePresets WHERE username='{username}';""")
         print(f"Account {username} deleted")
     else:
         raise DBError("Username does not exist")
@@ -104,16 +124,50 @@ def password_at(username):
 
 def appearance_config_at(username):
     __setup()
-    return __fetch_data(f"""SELECT background_colour, colour1, colour2, colour3, colour4, title_font, regular_font, 
-                        killer_colour1, killer_colour2, killer_colour3, killer_colour4, killer_colour5 FROM Accounts WHERE username = '{username}';""")
+    return __fetch_data(f"""SELECT background_colour, colour1, colour2, colour3, colour4, title_font, 
+                        regular_font, killer_colour1, killer_colour2, killer_colour3, killer_colour4, killer_colour5 
+                        FROM AppearancePresets INNER JOIN Accounts ON AppearancePresets.username = Accounts.username 
+                        WHERE AppearancePresets.username = '{username}' AND AppearancePresets.preset_number = Accounts.current_appearance_preset_number;""")
 
-def update_appearance_config(username, options):
+def get_all_presets(username):
     __setup()
-    __update_db(f"""UPDATE Accounts SET background_colour='{options[0]}', colour1='{options[1]}', colour2='{options[2]}',
+    return __fetch_data(f"""SELECT preset_number, background_colour, colour1, colour2, colour3, colour4, title_font, 
+                        regular_font, killer_colour1, killer_colour2, killer_colour3, killer_colour4, killer_colour5 
+                        FROM AppearancePresets WHERE username='{username}';""")
+
+def get_preset(username, preset_num):
+    __setup()
+    return __fetch_data(f"""SELECT background_colour, colour1, colour2, colour3, colour4, title_font, 
+                        regular_font, killer_colour1, killer_colour2, killer_colour3, killer_colour4, killer_colour5 
+                        FROM AppearancePresets WHERE username='{username}' AND preset_number={preset_num};""")[0]
+
+def update_appearance_preset(username, preset_num, options):
+    __setup()
+    __update_db(f"""UPDATE AppearancePresets SET background_colour='{options[0]}', colour1='{options[1]}', colour2='{options[2]}',
                 colour3='{options[3]}', colour4='{options[4]}', title_font='{options[5]}', regular_font='{options[6]}',
                  killer_colour1='{options[7]}', killer_colour2='{options[8]}', killer_colour3='{options[9]}', killer_colour4='{options[10]}',
-                  killer_colour5='{options[11]}' WHERE username='{username}';""")
-    print(f"Appearance Config updated for {username}")
+                  killer_colour5='{options[11]}' WHERE username='{username}' AND preset_number={preset_num};""")
+    print(f"Appearance Preset {preset_num} updated for {username}")
+
+def create_new_appearance_preset(username, options):
+    __setup()
+    preset_num = next_preset_number(username)
+    __update_db(f"""INSERT INTO AppearancePresets VALUES({next_preset_id()}, '{username}', {preset_num}, '{options[0]}', 
+                '{options[1]}', '{options[2]}', '{options[3]}', '{options[4]}', '{options[5]}', '{options[6]}', '{options[7]}', 
+                '{options[8]}', '{options[9]}', '{options[10]}', '{options[11]}');""")
+    print(f"Appearance Preset {preset_num} created for for {username}")
+
+def delete_appearance_preset(username, preset_num):
+    __setup()
+    __update_db(f"""DELETE FROM AppearancePresets WHERE username='{username}' AND preset_number={preset_num};""")
+
+def get_current_appearance_preset_num(username):
+    __setup()
+    return __fetch_data(f"""SELECT current_appearance_preset_number FROM Accounts WHERE username='{username}';""")[0][0]
+
+def set_current_appearance_preset(username, preset_num):
+    __setup()
+    __update_db(f"""UPDATE Accounts SET current_appearance_preset_number={preset_num} WHERE username='{username}';""")
 
 def add_game(username, stats):
     __setup()
@@ -226,5 +280,9 @@ if __name__ in "__main__":
     __setup()
     print(__fetch_data("""SELECT * FROM Accounts"""))
     print(__fetch_data("""SELECT * FROM Games"""))
+    print(__fetch_data("SELECT * FROM AppearancePresets"))
+    print(get_all_presets("admin"))
+    print(appearance_config_at("admin"))
+    print(get_preset("admin", 1))
 
 ##C5B4E3

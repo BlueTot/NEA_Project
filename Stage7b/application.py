@@ -38,12 +38,20 @@ class Application:
         self.__account.set_account(None)
         print("Signed Out")
     
-    def update_appearance_config(self, options): # Method to update appearance config (from customise gui screen)
-        database.update_appearance_config(self.__account.username, options)
+    def use_gui_preset(self, preset_num): # Method to use certain appearance preset (from view gui preset screen)
+        database.set_current_appearance_preset(self.__account.username, preset_num)
+        self.__account.update_app_config()
+    
+    def update_appearance_preset(self, options): # Method to update appearance preset (from edit gui preset screen)
+        mode, preset_num, data = options[0], options[1], options[2:]
+        if mode == "edit":
+            database.update_appearance_preset(self.__account.username, preset_num, data)
+        else:
+            database.create_new_appearance_preset(self.__account.username, data)
         self.__account.update_app_config()
 
-    def reset_appearance_config(self): # Method to reset appearance config (from customise gui screen)
-        database.update_appearance_config(self.__account.username, AppearanceConfiguration.DEFAULT_SETTINGS)
+    def delete_appearance_preset(self, preset_num): # Method to reset appearance preset (from edit gui preset screen)
+        database.delete_appearance_preset(self.__account.username, preset_num)
         self.__account.update_app_config()
     
     def save_game_stats(self, data): # Method to save game stats after each game
