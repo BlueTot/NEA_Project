@@ -1,6 +1,6 @@
 from random import shuffle
 from copy import deepcopy
-import dlx
+from dlx import DLXSolver
 
 class BoardUnsolvableError(Exception): # Board unsolvable error
     pass
@@ -35,7 +35,7 @@ class BoardSolver: # Board Solver Class
     @staticmethod
     def solver(board, generating_mode=False): # backtracking solver interface
         if board.mode == "Normal" and not generating_mode: # if board mode is Normal
-            for sol in dlx.solve_sudoku(board): # solve board using DLX
+            for sol in DLXSolver.solve_sudoku(board): # solve board using DLX
                 return sol # return board once solution is found
             raise BoardUnsolvableError # board is not solvable
         else:
@@ -67,7 +67,7 @@ class BoardSolver: # Board Solver Class
     
     def is_unique(board): # unique solution interface
         if board.mode == "Normal": # if board mode is Normal
-            for num_sols, _ in enumerate(dlx.solve_sudoku(board)): # check solutions using DLX
+            for num_sols, _ in enumerate(DLXSolver.solve_sudoku(board)): # check solutions using DLX
                 if (num_sols+1) > 1: # check if number of solutions exceeds 1
                     return False
             return True
