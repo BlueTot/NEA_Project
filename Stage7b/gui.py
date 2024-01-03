@@ -737,6 +737,11 @@ class EditGUIPresetScreen(Screen):
 
         self.__mode = mode
         self.__preset_num = preset_num
+
+        try:
+            self.__curr_preset = database.get_preset(self._application.account.username, preset_num)
+        except IndexError:
+            self.__curr_preset = database.get_preset(self._application.account.username, 1)
         
         self.__title = Label(self, f"{'EDIT' if mode == 'edit' else 'CREATE'} PRESET {preset_num}", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -750,26 +755,26 @@ class EditGUIPresetScreen(Screen):
         for idx, label in enumerate(("Regular Font", "Killer Colour 1", "Killer Colour 2", "Killer Colour 3", "Killer Colour 4", "Killer Colour 5")):
             label_obj = Label(self, label, 575, 150+60*idx, 300, 40, self._application.account.app_config.regular_font, 18)
             self._widgets.append(label_obj)
-
-        self.__bg_colour = LineEdit(self, 325, 150, 120, 50, self._application.account.app_config.regular_font, 14, self._application.account.app_config.background_colour, False)
-        self.__colour1 = LineEdit(self, 325, 210, 120, 50, self._application.account.app_config.regular_font, 14, self._application.account.app_config.colour1, False)
-        self.__colour2 = LineEdit(self, 325, 270, 120, 50, self._application.account.app_config.regular_font, 14, self._application.account.app_config.colour2, False)
-        self.__colour3 = LineEdit(self, 325, 330, 120, 50, self._application.account.app_config.regular_font, 14, self._application.account.app_config.colour3, False)
-        self.__colour4 = LineEdit(self, 325, 390, 120, 50, self._application.account.app_config.regular_font, 14, self._application.account.app_config.colour4, False)
+        
+        self.__bg_colour = LineEdit(self, 325, 150, 120, 50, self._application.account.app_config.regular_font, 14, self.__curr_preset[0], False)
+        self.__colour1 = LineEdit(self, 325, 210, 120, 50, self._application.account.app_config.regular_font, 14, self.__curr_preset[1], False)
+        self.__colour2 = LineEdit(self, 325, 270, 120, 50, self._application.account.app_config.regular_font, 14, self.__curr_preset[2], False)
+        self.__colour3 = LineEdit(self, 325, 330, 120, 50, self._application.account.app_config.regular_font, 14, self.__curr_preset[3], False)
+        self.__colour4 = LineEdit(self, 325, 390, 120, 50, self._application.account.app_config.regular_font, 14, self.__curr_preset[4], False)
 
         self.__title_font = ComboBox(self, 325, 450, 200, 50, self._application.account.app_config.regular_font, 14, QFontDatabase.families(), add_blank=False)
-        self.__title_font.setCurrentText(self._application.account.app_config.title_font)
+        self.__title_font.setCurrentText(self.__curr_preset[5])
         self.__title_font.setStyleSheet(f"background: white; border: 2px solid black;")
 
         self.__regular_font = ComboBox(self, 775, 150, 200, 50, self._application.account.app_config.regular_font, 14, QFontDatabase.families(), add_blank=False)
-        self.__regular_font.setCurrentText(self._application.account.app_config.regular_font)
+        self.__regular_font.setCurrentText(self.__curr_preset[6])
         self.__regular_font.setStyleSheet(f"background: white; border: 2px solid black;")
 
-        self.__killer_colour1 = LineEdit(self, 775, 210, 120, 50, self._application.account.app_config.regular_font, 14, self._application.account.app_config.killer_colours[0], False)
-        self.__killer_colour2 = LineEdit(self, 775, 270, 120, 50, self._application.account.app_config.regular_font, 14, self._application.account.app_config.killer_colours[1], False)
-        self.__killer_colour3 = LineEdit(self, 775, 330, 120, 50, self._application.account.app_config.regular_font, 14, self._application.account.app_config.killer_colours[2], False)
-        self.__killer_colour4 = LineEdit(self, 775, 390, 120, 50, self._application.account.app_config.regular_font, 14, self._application.account.app_config.killer_colours[3], False)
-        self.__killer_colour5 = LineEdit(self, 775, 450, 120, 50, self._application.account.app_config.regular_font, 14, self._application.account.app_config.killer_colours[4], False)
+        self.__killer_colour1 = LineEdit(self, 775, 210, 120, 50, self._application.account.app_config.regular_font, 14, self.__curr_preset[7], False)
+        self.__killer_colour2 = LineEdit(self, 775, 270, 120, 50, self._application.account.app_config.regular_font, 14, self.__curr_preset[8], False)
+        self.__killer_colour3 = LineEdit(self, 775, 330, 120, 50, self._application.account.app_config.regular_font, 14, self.__curr_preset[9], False)
+        self.__killer_colour4 = LineEdit(self, 775, 390, 120, 50, self._application.account.app_config.regular_font, 14, self.__curr_preset[10], False)
+        self.__killer_colour5 = LineEdit(self, 775, 450, 120, 50, self._application.account.app_config.regular_font, 14, self.__curr_preset[11], False)
 
         self.__options = [self.__bg_colour, self.__colour1, self.__colour2, self.__colour3, self.__colour4, self.__killer_colour1, 
                           self.__killer_colour2, self.__killer_colour3, self.__killer_colour4, self.__killer_colour5]

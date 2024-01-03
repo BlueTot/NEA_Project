@@ -112,8 +112,8 @@ def delete_account(username):
     __setup()
     if password_at(username):
         __update_db(f"""DELETE FROM Accounts WHERE username='{username}';""")
-        __update_db(f"""DELETE FROM Games WHERE username='{username}';""")
         __update_db(f"""DELETE FROM AppearancePresets WHERE username='{username}';""")
+        __update_db(f"""DELETE FROM Games WHERE username='{username}';""")
         print(f"Account {username} deleted")
     else:
         raise DBError("Username does not exist")
