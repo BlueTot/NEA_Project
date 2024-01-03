@@ -308,9 +308,10 @@ class TableWidget(QTableWidget):
     def load_data(self, headings, data):
         self.setSortingEnabled(False)
         self.setColumnCount(len(headings))
-        for row, rowdata in enumerate(data):
-            for col, value in enumerate(rowdata):
+        for row in range(self.rowCount()):
+            for col in range(self.columnCount()):
                 item = QTableWidgetItem()
+                value = data[row][col] if 0 <= row < len(data) and 0 <= col < len(data[0]) else ""
                 item.setData(Qt.ItemDataRole.EditRole, value)
                 self.setItem(row, col, item)
         self.setHorizontalHeaderLabels(headings)

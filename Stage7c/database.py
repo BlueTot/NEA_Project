@@ -270,8 +270,11 @@ def all_account_rating_data():
     return __fetch_data("""SELECT username, singleplayer_rating, singleplayer_title FROM Accounts""")
 
 def leaderboard_best_time_data(mode, board_size, difficulty):
+    # return __fetch_data(f"""SELECT Accounts.username, Accounts.singleplayer_rating, Accounts.singleplayer_title, (SELECT MIN(Games.time_to_complete) FROM Games WHERE mode='{mode}' AND board_size={board_size}
+    #                    AND difficulty='{difficulty}' AND completed='True' AND hardcore='True' AND Games.username=Accounts.username) FROM Accounts ;""")
     return __fetch_data(f"""SELECT Accounts.username, Accounts.singleplayer_rating, Accounts.singleplayer_title, (SELECT MIN(Games.time_to_complete) FROM Games WHERE mode='{mode}' AND board_size={board_size}
-                       AND difficulty='{difficulty}' AND completed='True' AND hardcore='True' AND Games.username=Accounts.username) FROM Accounts;""")
+                       AND difficulty='{difficulty}' AND completed='True' AND hardcore='True' AND Games.username=Accounts.username) FROM Accounts 
+                       WHERE EXISTS (SELECT Games.time_to_complete FROM Games WHERE mode='{mode}' AND difficulty='{difficulty}' AND completed='True' AND hardcore='True' AND Games.username=Accounts.username);""")
 
 def leaderboard_milestone_data(board_size):
     return __fetch_data(f"""SELECT username, singleplayer_rating, singleplayer_title, milestone_{board_size} FROM Accounts;""")
@@ -279,11 +282,11 @@ def leaderboard_milestone_data(board_size):
 if __name__ in "__main__":
     __setup()
     print(__fetch_data("""SELECT * FROM Accounts"""))
-    print(__fetch_data("""SELECT * FROM Games"""))
-    print(__fetch_data("SELECT * FROM AppearancePresets"))
-    print(get_all_presets("admin"))
-    print(appearance_config_at("admin"))
-    print(get_preset("admin", 1))
+    # print(__fetch_data("""SELECT * FROM Games"""))
+    # print(__fetch_data("SELECT * FROM AppearancePresets"))
+    # print(get_all_presets("admin"))
+    # print(appearance_config_at("admin"))
+    # print(get_preset("admin", 1))
     print(leaderboard_best_time_data("Normal", 4, "Easy"))
 
 ##C5B4E3

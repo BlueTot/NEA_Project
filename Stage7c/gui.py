@@ -1106,11 +1106,13 @@ class LeaderboardScreen(Screen):
     
     def __show_options(self):
         if self.__type.currentText() == "Best Time":
+            self.__gamemode.setCurrentText("")
             self.__gamemode.show()
             self.__milestone.hide()
             self.__next_label.setText("Choose Gamemode")
         elif self.__type.currentText() == "Milestone":
             self.__gamemode.hide()
+            self.__milestone.setCurrentText("")
             self.__milestone.show()
             self.__next_label.setText("Choose Milestone")
         else:
