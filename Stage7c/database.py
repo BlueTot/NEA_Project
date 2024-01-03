@@ -270,11 +270,11 @@ def all_account_rating_data():
     return __fetch_data("""SELECT username, singleplayer_rating, singleplayer_title FROM Accounts""")
 
 def leaderboard_best_time_data(mode, board_size, difficulty):
-    # return __fetch_data(f"""SELECT Accounts.username, Accounts.singleplayer_rating, Accounts.singleplayer_title, (SELECT MIN(Games.time_to_complete) FROM Games WHERE mode='{mode}' AND board_size={board_size}
-    #                    AND difficulty='{difficulty}' AND completed='True' AND hardcore='True' AND Games.username=Accounts.username) FROM Accounts ;""")
-    return __fetch_data(f"""SELECT Accounts.username, Accounts.singleplayer_rating, Accounts.singleplayer_title, (SELECT MIN(Games.time_to_complete) FROM Games WHERE mode='{mode}' AND board_size={board_size}
-                       AND difficulty='{difficulty}' AND completed='True' AND hardcore='True' AND Games.username=Accounts.username) FROM Accounts 
-                       WHERE EXISTS (SELECT Games.time_to_complete FROM Games WHERE mode='{mode}' AND difficulty='{difficulty}' AND completed='True' AND hardcore='True' AND Games.username=Accounts.username);""")
+    return __fetch_data(f"""SELECT Accounts.username, Accounts.singleplayer_rating, Accounts.singleplayer_title, 
+                        (SELECT MIN(Games.time_to_complete) FROM Games WHERE mode='{mode}' AND board_size={board_size}
+                       AND difficulty='{difficulty}' AND completed='True' AND hardcore='True' AND Games.username=Accounts.username) 
+                       FROM Accounts WHERE EXISTS (SELECT Games.time_to_complete FROM Games WHERE mode='{mode}' AND difficulty='{difficulty}'
+                       AND completed='True' AND hardcore='True' AND Games.username=Accounts.username);""")
 
 def leaderboard_milestone_data(board_size):
     return __fetch_data(f"""SELECT username, singleplayer_rating, singleplayer_title, milestone_{board_size} FROM Accounts;""")
