@@ -42,7 +42,7 @@ class Terminal(UI):
                 return
     
     def __play_home_screen(self):
-        if self._application.account.username is None: # Not signed in
+        if not self._application.signed_in: # Not signed in
             print("\nNOT SIGNED IN\n")
             main_menu_choice = self.__get_input("Press (S) to play singleplayer, (C) to create a new account, (I) to sign in, (Q) to quit: ", ["S", "C", "I", "Q"])
         else:
@@ -88,9 +88,9 @@ class Terminal(UI):
 
     def __open_or_create_new_game(self):
         if os.listdir("games"): # if there are games stored to play
-            match self.__get_input("Would you like to (O)pen a new game or (C)reate a new game: ", ["O", "C"]):
+            match self.__get_input("Would you like to (O)pen a new game or (C)reate a new game, or go (B)ack to the previous screen: ", ["O", "C", "B"]):
                 case "O": # open new game
-                    if self._application.account.username is not None:
+                    if self._application.signed_in:
                         if os.listdir(self._application.games_directory):
                             self._push_ui_to_stack("open new game")
                         else:
@@ -99,17 +99,26 @@ class Terminal(UI):
                         input("Opening games is only available if you sign in")
                 case "C": # create new game
                     self._push_ui_to_stack("create new game")
+                case "B":
+                    self._pop_ui_from_stack()
+                    return
         else:
             self._push_ui_to_stack("create new game")
     
     def __open_new_game(self):
         print((heading := f"{'No. ':^5} | {'Game':^35} | {'Creation Date':^15} | {'Creation Time':^15} | {'Mode':^15} | {'Difficulty':^15} | {'Board Size':^15}") + f"\n{'-'*len(heading)}")
         for idx, file_name in enumerate(files := os.listdir(self._application.games_directory)):
-            stats = Game.get_stats_from(file_name)
+            stats = Game.get_stats_from(self._application.account.username, file_name)
             print(f"{idx+1:^5} | {file_name:^35} | {stats['creation date']:^15} | {stats['creation time']:^15} | {stats['mode']:^15} | {stats['difficulty']:^15} | {stats['board size']:^15}")
-        game_num = int(self.__get_input("Type the number of the game you want to open: ", [str(i+1) for i in range(len(files))]))
+        while True:
+            game_num = int(self.__get_input("Type the number of the game you want to open: ", [str(i+1) for i in range(len(files))]))
+            stats = Game.get_stats_from(self._application.account.username, files[game_num-1])
+            if stats['mode'] != "Normal" or stats['board size'] != 9:
+                input("Only Normal 9x9 Boards can be opened in terminal mode, please play in GUI mode to play other gamemodes")
+            else:
+                break
         self.__game = Game()
-        self.__game.load_game(files[game_num-1])
+        self.__game.load_game(self._application.account.username, files[game_num-1])
         self._push_ui_to_stack("game")
 
     def __create_new_game(self):
@@ -124,8 +133,10 @@ class Terminal(UI):
             self.__print_game_stats() # print stats
             self.__print_curr_board() # print board
             if self.__game.is_complete(): # exit game if game finished
+                if self._application.signed_in:
+                    self._application.save_game_stats(self.__game.get_stats(True))
+                    self.__game.remove_game_file(self._application.account.username)
                 input("\n" + "You completed the game!" + "\n")
-                self.__game.remove_game_file()
                 self.__exit_to_home_screen()
                 return
             if self.__notes_mode: print("\n~NOTES MODE~\n")
@@ -140,7 +151,7 @@ class Terminal(UI):
                 case "U": self.__game.undo_last_move() # undo command
                 case "N": self.__notes_mode = not self.__notes_mode # toggle notes mode command
                 case "S": # save game command
-                    if self._application.account.username is not None:
+                    if self._application.signed_in:
                         self.__game.save_game(self._application.account.username)
                         input()
                         self.__exit_to_home_screen()
@@ -148,6 +159,10 @@ class Terminal(UI):
                     else:
                         input("Saving games is only available if you sign in")
                 case "R": # resign game command
+                    if self._application.signed_in:
+                        print(self.__game.get_stats(False))
+                        self._application.save_game_stats(self.__game.get_stats(False))
+                        self.__game.remove_game_file(self._application.account.username)
                     self.__print_solution()
                     self.__exit_to_home_screen()
                     return

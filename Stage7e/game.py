@@ -106,7 +106,7 @@ class Game: # Game class
     def get_stats(self, completed):
         return [self.__mode, self.__difficulty, self.__board_size, self.__orig_num_of_auto_notes, self.__num_of_auto_notes, 
                 self.__orig_num_of_hints, self.__num_of_hints, self.__timed, completed, self.__hardcore, 
-                self.__time_elapsed, self.__creation_date, self.__creation_time]
+                0 if self.__time_elapsed is None else self.__time_elapsed, self.__creation_date, self.__creation_time]
     
     '''Getters'''
 

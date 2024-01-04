@@ -55,7 +55,7 @@ class HomeScreen(Screen):
         self.__toolbar = ToolBar(self, size := QSize(60, 60), self._application.account.app_config.colour3, font_family := self._application.account.app_config.regular_font, font_size := 15)
         self.addToolBar(Qt.ToolBarArea.RightToolBarArea, self.__toolbar)
         self.__toolbar.addAction(Action(self, QIcon("resources/exit.svg"), "Quit", self.__quit_game, False))
-        if self._application.account.username is None:
+        if not self._application.signed_in:
             options = [("Create Account", self.__create_new_account), ("Sign In", self.__sign_in)]
         else:
             options = [("Create Account", self.__create_new_account), ("Sign Out", self.__sign_out)]
@@ -65,7 +65,7 @@ class HomeScreen(Screen):
         self.__toolbar.addWidget(MenuButton(self, QIcon("resources/stats.svg"), size, QFont(font_family, font_size), [("Show Stats", self.__view_stats), ("Game Milestones", self.__game_milestones)]))
         self.__toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", self.__help_screen, False))
 
-        self.__account_label = Label(self, "Not Signed In" if self._application.account.username is None else f"Signed in as {self._application.account.username} ({self._application.account.singleplayer_title} | {self._application.account.singleplayer_rating})", 
+        self.__account_label = Label(self, "Not Signed In" if not self._application.signed_in else f"Signed in as {self._application.account.username} ({self._application.account.singleplayer_title} | {self._application.account.singleplayer_rating})", 
                                      0, 0, 400, 50, self._application.account.app_config.regular_font, 15)
 
         self._widgets += [self.__title, self.__play_singleplayer_button, self.__play_multiplayer_button, self.__leaderboard_button, self.__toolbar, self.__account_label]
@@ -83,25 +83,25 @@ class HomeScreen(Screen):
         self.sign_out_signal.emit()
     
     def __manage_account(self):
-        if self._application.account.username is None:
+        if not self._application.signed_in:
             self.statusBar().showMessage("Please sign in to manage account")
         else:
             self.manage_account_signal.emit()
     
     def __customise_gui(self):
-        if self._application.account.username is None:
+        if not self._application.signed_in:
             self.statusBar().showMessage("Please sign in to customise GUI")
         else:
             self.customise_gui_signal.emit()
     
     def __view_stats(self):
-        if self._application.account.username is None:
+        if not self._application.signed_in:
             self.statusBar().showMessage("Please sign in to view stats")
         else:
             self.view_stats_signal.emit()
     
     def __game_milestones(self):
-        if self._application.account.username is None:
+        if not self._application.signed_in:
             self.statusBar().showMessage("Please sign in to view game milestones")
         else:
             self.game_milestones_signal.emit()
@@ -135,7 +135,7 @@ class OpenOrCreateNewGameScreen(Screen):
         self._widgets += [self.__open_game_button, self.__create_new_game_button, self.__back_button]
     
     def __open_game(self):
-        if self._application.account.username is not None:
+        if self._application.signed_in:
             if os.listdir("games"):
                 self.open_game_signal.emit()
             else:
@@ -167,7 +167,7 @@ class OpenGameScreen(Screen):
 
         self.__choose_game = Label(self, "CHOOSE A GAME: ", 50, 150, 300, 100, self._application.account.app_config.regular_font, 20)
         self.__choose_game_menu = ComboBox(self, 50, 230, 400, 50,self._application.account.app_config.regular_font, 15, 
-                                           os.listdir(os.path.join(Game.DEFAULT_DIRECTORY, self._application.account.username)) if self._application.account.username is not None else [])
+                                           os.listdir(os.path.join(Game.DEFAULT_DIRECTORY, self._application.account.username)) if self._application.signed_in else [])
         self.__choose_game_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
         self.__choose_game_menu.activated.connect(self.__show_game_info)
 
@@ -308,7 +308,7 @@ class GameScreen(Screen):
         self.__game = game
         self.__info_label.setText(f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nBoard Size: {self.__game.board_size}x{self.__game.board_size} \nTimed: {self.__game.timed} \nHardcore: {self.__game.hardcore}")
         self.__num_auto_notes_label.setText(f"{self.__game.num_auto_notes_left}")
-        if self._application.account.username is None:
+        if not self._application.signed_in:
             bonus_hint_str = ""
         else:
             bonus_hint_str = f'(+{bonus_hints})' if (bonus_hints := database.bonus_hints(self._application.account.username)) != 0 and self.__game.num_hints_left > 0 else ''
@@ -412,7 +412,7 @@ class GameScreen(Screen):
         self.__game.remove_game_file(self._application.account.username)
         if self.__game.timed:
             self.__timer_event.stop()
-        if self._application.account.username is not None and self.__game.timed:
+        if self._application.signed_in and self.__game.timed:
             self.save_stats_signal.emit(self.__game.get_stats(win))
             self.update_rating_signal.emit(rating_change := self.__game.rating_change(self._application.account.singleplayer_rating, win))
             self.update_milestone_signal.emit([self.__game.mode, self.__game.board_size, self.__game.difficulty, win])
@@ -440,7 +440,7 @@ class GameScreen(Screen):
             time.setStyleSheet("background: transparent;")
             time.show()
 
-            if self._application.account.username is not None:
+            if self._application.signed_in:
 
                 rating_label_top = Label(self, "New Rating: ", 0, 270, 1000, 100, self._application.account.app_config.regular_font, 20)
                 rating_label_top.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -531,7 +531,7 @@ class GameScreen(Screen):
         if self.__running:
             try:
                 self.__game.use_hint(self.__selected_square[0], self.__selected_square[1])
-                if self._application.account.username is None:
+                if not self._application.signed_in:
                     bonus_hint_str = ""
                 else:
                     bonus_hint_str = f'(+{bonus_hints})' if (bonus_hints := database.bonus_hints(self._application.account.username)) != 0 and self.__game.num_hints_left > 0 else ''
@@ -572,7 +572,7 @@ class GameScreen(Screen):
         self.__timer.setText(str(self.__game.time_elapsed))
 
     def __return_to_home_screen(self):
-        if self.__running and self._application.account.username is not None: # game quit from the "back" button
+        if self.__running and self._application.signed_in: # game quit from the "back" button
             self.__game.save_game(self._application.account.username)
         self.return_to_home_screen_signal.emit()
 
@@ -1291,7 +1291,7 @@ class GUI(UI): # Graphical User Interface (GUI) class
     def __show_game_screen(self, options): # Show game screen (generate new game)
         mode, difficulty, board_size, timed, hardcore = options
         self.__game = Game()
-        bonus_hints = 0 if self._application.account.username is None else database.bonus_hints(self._application.account.username)
+        bonus_hints = 0 if not self._application.signed_in else database.bonus_hints(self._application.account.username)
         self.__game.generate(mode, difficulty, board_size, timed, hardcore, bonus_hints)
         self.__screens["game"] = self.__game_screen()
         self.__screens["game"].set_game(self.__game)

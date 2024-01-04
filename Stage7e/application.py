@@ -15,6 +15,10 @@ class Application:
         return self.__account
     
     @property
+    def signed_in(self):
+        return self.__account.username is not None
+    
+    @property
     def games_directory(self):
         return f"{self.DEFAULT_DIRECTORY}/{self.__account.username}"
 
