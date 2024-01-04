@@ -7,6 +7,8 @@ from itertools import product # import product function
 
 def solve_sudoku(board): # Main solver function (takes NormalModeBoard object)
 
+    print("USING OLD DLX")
+
     N = board.board_size
 
     cols = ([("row col", rc) for rc in product(range(N), range(N))] + # Constraint 1: each cell must have a number in it

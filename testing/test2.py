@@ -1,4 +1,4 @@
-from generator import BoardGenerator
+# from generator import BoardGenerator
 #from time import perf_counter
 
 # total = 0
@@ -19,5 +19,5 @@ from generator import BoardGenerator
 # with no priority queue: 23
 # with priority queue: 4
 
-board = BoardGenerator.new_board("Killer", "Easy", 6)
-print(board.group_colours())
+# board = BoardGenerator.new_board("Killer", "Easy", 6)
+# print(board.group_colours())

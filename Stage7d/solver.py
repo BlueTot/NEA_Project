@@ -72,3 +72,4 @@ class BoardSolver: # Board Solver Class
                     return False
             return True
         return BoardSolver.num_solutions(board) == 1 # otherwise check using backtracking solution checker
+    

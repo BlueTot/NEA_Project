@@ -1,26 +1,27 @@
-from itertools import product # Import product function from itertools
+from itertools import product # import product function
 
-class DLXSolver: # Dancing Links X Sudoku Solver
+class DLXSolver:
 
     @staticmethod
-    def solve_sudoku(board): # Public method called to solve sudoku, sets up the matrix for the DLX algorithm to solve
+    def solve_sudoku(board): # Main solver function (takes NormalModeBoard object)
 
-        N = board.board_size # Set board size constant
+        N = board.board_size
 
-        # CREATE COLUMNS SET
-        cols = set([("row col", row_col) for row_col in product(range(N), range(N))] + # Constraint 1: each cell must have a number in it
+        cols = ([("row col", row_col) for row_col in product(range(N), range(N))] + # Constraint 1: each cell must have a number in it
                 [("row num", row_num) for row_num in product(range(N), range(1, N + 1))] + # Constraint 2: each different number must appear in every row
                 [("col num", col_num) for col_num in product(range(N), range(1, N + 1))] + # Contraint 3: each different number must appear in every column
                 [("matrix num", matrix_num) for matrix_num in product(range(N), range(1, N + 1))]) # Constraint 4: each different number must appear in every matrix/box
         
-        # CREATE ROWS DICTIONARY
         rows = {}
         for row, col, num in product(range(N), range(N), range(1, N + 1)):
             # Populate rows dictionary with the columns that they match
-            matrix_num = board.matrix_num(row, col) # Get matrix number of square
-            rows[(row, col, num)] = [("row col", (row, col)), ("row num", (row, num)), ("col num", (col, num)), ("matrix num", (matrix_num, num))] 
+            matrix_num = board.matrix_num(row, col)
+            rows[(row, col, num)] = [("row col", (row, col)), 
+                                     ("row num", (row, num)), 
+                                     ("col num", (col, num)), 
+                                     ("matrix num", (matrix_num, num))] 
 
-        cols = DLXSolver.__convert_to_sets(cols, rows) # Convert cols into dictionary of sets for easy access from cols to rows
+        cols, rows = DLXSolver.__convert_to_sets(cols, rows) # Convert cols into dictionary of sets for easy access from cols to rows
 
         for rowidx, row in enumerate(board.board): # Iterate through all squares of the given board
             for colidx, sq in enumerate(row):
@@ -38,30 +39,32 @@ class DLXSolver: # Dancing Links X Sudoku Solver
 
         for solution_set in DLXSolver.__solve(cols, rows): # Iterate through all solutions of the board using DLX Solver
             for (row, col, num) in solution_set: # Iterate through all squares
-                board.set_num_at(row, col, num) # Set number at that square to be the correct number
+                board.set_num_at(row, col, num)
             yield board # Return a copy of the board
 
     @staticmethod
-    def __convert_to_sets(cols, rows): # Function to convert set to dictionary of sets for easy access from cols to rows
-        cols = {col : set() for col in cols} # Initialise dictionary
+    def __convert_to_sets(cols, rows): # Function to convert set to dictionary of sets for fast access
+        cols = {col : set() for col in cols} # Setup dictionary
         for row_id, row_contents in rows.items(): # Loop through rows
-            for col in row_contents: # Loop through intersecting columns
-                cols[col].add(row_id) # Add column to cols dictionary
-        return cols # Return dictionary
+            for col in row_contents: # Loop through cols
+                cols[col].add(row_id) # Add row to set
+        return cols, rows # Return dictionaries
 
     @staticmethod
     def __solve(cols, rows, solution_set=[]): # Dancing Links X main solver algorithm
         if not cols: # Return solution set when no columns left (base case)
-            yield solution_set
+            return [list(solution_set)]
         else:
             min_col = min(cols, key= lambda col : len(cols[col])) # Get column with least number of intersecting rows (S-heuristic)
+            sols = [] # Initialise list of solution sets
             for selected_row in list(cols[min_col]): # Iterate thorugh rows, selecting a row to cover every time
                 solution_set.append(selected_row) # Add to solution set
                 cols, cells_to_restore = DLXSolver.__cover(cols, rows, selected_row) # Cover selected row and intersecting cols
                 for sol in DLXSolver.__solve(cols, rows, solution_set): # Recursively solve the reduced matrix
-                    yield sol
+                    sols.extend([sol]) # Add solution set to list of solution sets
                 cols = DLXSolver.__uncover(cols, cells_to_restore) # Uncover
                 solution_set.pop() # Remove from solution set
+            return sols # return list of solution sets
 
     @staticmethod
     def __cover(cols, rows, selected_row): # Cover function

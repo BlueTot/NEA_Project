@@ -61,14 +61,17 @@ class Terminal(UI):
             return
     
     def __create_new_account(self):
-        while True:
-            username = self.__get_default_input("Enter username: ")
-            password = self.__get_default_input("Enter password: ")
-            password2 = self.__get_default_input("Enter password again: ")
-            if password == password2:
-                break
-            print("Passwords entered don't match ... try again!")
-        self._application.create_account([username, password])
+        try:
+            while True:
+                username = self.__get_default_input("Enter username: ")
+                password = self.__get_default_input("Enter password: ")
+                password2 = self.__get_default_input("Enter password again: ")
+                if password == password2:
+                    break
+                print("Passwords entered don't match ... try again!")
+            self._application.create_account([username, password])
+        except DBError as err:
+            input(err)
         self._pop_ui_from_stack()
         return
     
@@ -100,10 +103,10 @@ class Terminal(UI):
             self._push_ui_to_stack("create new game")
     
     def __open_new_game(self):
-        print((heading := f"{'No. ':^5} | {'Game':^35} | {'Creation Date':^15} | {'Creation Time':^15} | {'Mode':^15} | {'Difficulty':^15}") + f"\n{'-'*len(heading)}")
+        print((heading := f"{'No. ':^5} | {'Game':^35} | {'Creation Date':^15} | {'Creation Time':^15} | {'Mode':^15} | {'Difficulty':^15} | {'Board Size':^15}") + f"\n{'-'*len(heading)}")
         for idx, file_name in enumerate(files := os.listdir(self._application.games_directory)):
             stats = Game.get_stats_from(file_name)
-            print(f"{idx+1:^5} | {file_name:^35} | {stats['creation date']:^15} | {stats['creation time']:^15} | {stats['mode']:^15} | {stats['difficulty']:^15}")
+            print(f"{idx+1:^5} | {file_name:^35} | {stats['creation date']:^15} | {stats['creation time']:^15} | {stats['mode']:^15} | {stats['difficulty']:^15} | {stats['board size']:^15}")
         game_num = int(self.__get_input("Type the number of the game you want to open: ", [str(i+1) for i in range(len(files))]))
         self.__game = Game()
         self.__game.load_game(files[game_num-1])
@@ -137,9 +140,13 @@ class Terminal(UI):
                 case "U": self.__game.undo_last_move() # undo command
                 case "N": self.__notes_mode = not self.__notes_mode # toggle notes mode command
                 case "S": # save game command
-                    input("Game saving is not supported on terminal")
-                    self.__exit_to_home_screen()
-                    return
+                    if self._application.account.username is not None:
+                        self.__game.save_game(self._application.account.username)
+                        input()
+                        self.__exit_to_home_screen()
+                        return
+                    else:
+                        input("Saving games is only available if you sign in")
                 case "R": # resign game command
                     self.__print_solution()
                     self.__exit_to_home_screen()

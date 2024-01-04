@@ -87,7 +87,7 @@ class Game: # Game class
         # Create file name based on local time if board is not loaded from a file
         file_name = f"singleplayer_{datetime.now().strftime('%d-%m-%y_%H-%M-%S')}.json" if self.__file is None else self.__file
 
-        with open(f"{Application.DEFAULT_DIRECTORY}/{account}/{file_name}", "w") as f: # Open json file
+        with open(dir := f"{Application.DEFAULT_DIRECTORY}/{account}/{file_name}", "w") as f: # Open json file
             f.write(json.dumps({"creation date": self.__creation_date, "creation time": self.__creation_time, 
                                 "mode": self.__mode, "difficulty": self.__difficulty, "num of hints": self.__num_of_hints, 
                                 "orig num of hints": self.__orig_num_of_hints, "num of auto notes": self.__num_of_auto_notes,
@@ -96,6 +96,7 @@ class Game: # Game class
                                 "orig board": self.__orig_board.hash(), 
                                 "solved board": self.__solved_board.hash(), "timed": self.__timed, 
                                 "hardcore": self.__hardcore, "time elapsed": self.__time_elapsed}, indent=4)) # Write data to json file
+        print(f"Game saved to {dir}")
     
     def remove_game_file(self, account): # Remove game file when game is resigned or won
         if self.__file is not None:
