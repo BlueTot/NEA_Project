@@ -166,8 +166,7 @@ class OpenGameScreen(Screen):
         self.__back = BackButton(self, self.__return_to_home_screen)
 
         self.__choose_game = Label(self, "CHOOSE A GAME: ", 50, 150, 300, 100, self._application.account.app_config.regular_font, 20)
-        self.__choose_game_menu = ComboBox(self, 50, 230, 400, 50,self._application.account.app_config.regular_font, 15, 
-                                           os.listdir(os.path.join(Game.DEFAULT_DIRECTORY, self._application.account.username)) if self._application.signed_in else [])
+        self.__choose_game_menu = ComboBox(self, 50, 230, 400, 50,self._application.account.app_config.regular_font, 15, self._application.get_game_files())
         self.__choose_game_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
         self.__choose_game_menu.activated.connect(self.__show_game_info)
 

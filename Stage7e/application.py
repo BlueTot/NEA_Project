@@ -18,9 +18,10 @@ class Application:
     def signed_in(self):
         return self.__account.username is not None
     
-    @property
-    def games_directory(self):
-        return f"{self.DEFAULT_DIRECTORY}/{self.__account.username}"
+    def get_game_files(self):
+        if self.signed_in:
+            return os.listdir(os.path.join(self.DEFAULT_DIRECTORY, self.__account.username)) 
+        return []
 
     def create_account(self, options): # Method to create new account
         username, password = options

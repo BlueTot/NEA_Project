@@ -12,7 +12,7 @@ class Terminal(UI):
         self.__notes_mode = False
     
     def __valid_commands(self):
-        return ["E", "N", "S", "R", "help"] if self.__notes_mode else ["P", "D", "H", "U", "N", "S", "R", "help"]
+        return ["E", "N", "S", "R", "help"] if self.__notes_mode else ["P", "D", "A", "H", "U", "N", "S", "R", "help"]
     
     def __help_message(self):
         return "\nCOMMANDS: \n" + \
@@ -91,7 +91,7 @@ class Terminal(UI):
             match self.__get_input("Would you like to (O)pen a new game or (C)reate a new game, or go (B)ack to the previous screen: ", ["O", "C", "B"]):
                 case "O": # open new game
                     if self._application.signed_in:
-                        if os.listdir(self._application.games_directory):
+                        if self._application.get_game_files():
                             self._push_ui_to_stack("open new game")
                         else:
                             input("No games saved at the moment")
@@ -107,7 +107,7 @@ class Terminal(UI):
     
     def __open_new_game(self):
         print((heading := f"{'No. ':^5} | {'Game':^35} | {'Creation Date':^15} | {'Creation Time':^15} | {'Mode':^15} | {'Difficulty':^15} | {'Board Size':^15}") + f"\n{'-'*len(heading)}")
-        for idx, file_name in enumerate(files := os.listdir(self._application.games_directory)):
+        for idx, file_name in enumerate(files := self._application.get_game_files()):
             stats = Game.get_stats_from(self._application.account.username, file_name)
             print(f"{idx+1:^5} | {file_name:^35} | {stats['creation date']:^15} | {stats['creation time']:^15} | {stats['mode']:^15} | {stats['difficulty']:^15} | {stats['board size']:^15}")
         while True:
@@ -145,6 +145,7 @@ class Terminal(UI):
                 case "help": input(self.__help_message()) # help command
                 case "P": self.__put_down_number() # place command
                 case "D": self.__remove_number() # delete command
+                case "A": self.__get_auto_note() # auto note command
                 case "H": # hint command
                     self.__get_hint()
                 case "E": self.__edit_note() # edit note command
@@ -153,14 +154,12 @@ class Terminal(UI):
                 case "S": # save game command
                     if self._application.signed_in:
                         self.__game.save_game(self._application.account.username)
-                        input()
                         self.__exit_to_home_screen()
                         return
                     else:
                         input("Saving games is only available if you sign in")
                 case "R": # resign game command
                     if self._application.signed_in:
-                        print(self.__game.get_stats(False))
                         self._application.save_game_stats(self.__game.get_stats(False))
                         self.__game.remove_game_file(self._application.account.username)
                     self.__print_solution()
@@ -192,12 +191,22 @@ class Terminal(UI):
         except GameError as err:
             input(err)
     
+    def __get_auto_note(self):
+        try:
+            while True:
+                row = input("Enter the ROW you want to get the auto note for: ")
+                col = input("Enter the COLUMN you want to get the auto note for: ")
+                self.__game.use_auto_note(row, col)
+                break
+        except GameError as err:
+            input(err)
+    
     def __get_hint(self):
         try:
             while True:
                 row = input("Enter the ROW you want to get the hint for: ")
                 col = input("Enter the COLUMN you want to get the hint for: ")
-                self.__game.add_hint_to_notes(row, col)
+                self.__game.use_hint(row, col)
                 break
         except GameError as err:
             input(err)
@@ -267,4 +276,6 @@ class Terminal(UI):
         print("\n" + f"MODE: {self.__game.mode}")
         print(f"DIFFICULTY: {self.__game.difficulty.capitalize()}")
         print(f"% COMPLETE: {self.__game.percent_complete()}%")
+        print(f"\nAuto Notes: {self.__game.num_auto_notes_left}")
+        print(f"Hints: {self.__game.num_hints_left}")
     
