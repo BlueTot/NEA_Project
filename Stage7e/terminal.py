@@ -29,6 +29,8 @@ class Terminal(UI):
                 self.__create_new_account()
             elif curr_screen == "sign in":
                 self.__sign_in()
+            elif curr_screen == "manage account":
+                self.__manage_account()
             elif curr_screen == "open or create new game":
                 self.__open_or_create_new_game()
             elif curr_screen == "open new game":
@@ -47,11 +49,13 @@ class Terminal(UI):
             main_menu_choice = self.__get_input("Press (S) to play singleplayer, (C) to create a new account, (I) to sign in, (Q) to quit: ", ["S", "C", "I", "Q"])
         else:
             print(f"\nSIGNED IN AS {self._application.account.username}\n")
-            main_menu_choice = self.__get_input("Press (S) to play singleplayer, (C) to create a new account, (O) to sign out, (Q) to quit: ", ["S", "C", "O", "Q"])
+            main_menu_choice = self.__get_input("Press (S) to play singleplayer, (C) to create a new account, (M) to manage account, (O) to sign out, (Q) to quit: ", ["S", "C", "M", "O", "Q"])
         if main_menu_choice == "S":
             self._push_ui_to_stack("open or create new game")
         elif main_menu_choice == "C":
             self._push_ui_to_stack("create new account")
+        elif main_menu_choice == "M":
+            self._push_ui_to_stack("manage account")
         elif main_menu_choice == "I":
             self._push_ui_to_stack("sign in")
         elif main_menu_choice == "O":
@@ -62,14 +66,13 @@ class Terminal(UI):
     
     def __create_new_account(self):
         try:
-            while True:
-                username = self.__get_default_input("Enter username: ")
-                password = self.__get_default_input("Enter password: ")
-                password2 = self.__get_default_input("Enter password again: ")
-                if password == password2:
-                    break
-                print("Passwords entered don't match ... try again!")
-            self._application.create_account([username, password])
+            username = self.__get_default_input("Enter username: ")
+            password = self.__get_default_input("Enter password: ")
+            password2 = self.__get_default_input("Enter password again: ")
+            if password == password2:
+                self._application.create_account([username, password])
+                return
+            input("Passwords entered don't match")
         except DBError as err:
             input(err)
         self._pop_ui_from_stack()
@@ -85,6 +88,28 @@ class Terminal(UI):
                 return
             except DBError as err:
                 input(err)
+    
+    def __manage_account(self):
+        try:
+            match self.__get_input("Would you like to change your (U)sername, change your (P)assword, (D)elete your account or go (B)ack: ", ["U", "P", "D", "B"]):
+                case "U":
+                    new_username = self.__get_default_input("Enter new username: ")
+                    self._application.change_username(new_username)
+                case "P":
+                    new_password = self.__get_default_input("Enter new password: ")
+                    new_password2 = self.__get_default_input("Enter new password again: ")
+                    if new_password == new_password2:
+                        self._application.change_password(new_password)
+                    else:
+                        input("Passwords entered don't match")
+                case "D":
+                    if self.__get_input("Are you sure you want to delete your account? (Y/N): ", ["Y", "N"]) == "Y":
+                        self._application.delete_account()
+                case "B":
+                    pass
+        except DBError as err:
+            input(err)
+        return
 
     def __open_or_create_new_game(self):
         if os.listdir("games"): # if there are games stored to play

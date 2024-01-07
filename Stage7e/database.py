@@ -33,8 +33,8 @@ def __setup():
         print("DB Setup")
         __update_db("""CREATE TABLE Accounts(
                     username VARCHAR(100) PRIMARY KEY,
-                    singleplayer_rating INTEGER,
-                    singleplayer_title VARCHAR(20),
+                    rating INTEGER,
+                    title VARCHAR(20),
                     password VARCHAR(200),
                     current_appearance_preset_number INTEGER,
                     milestone_4x4 INTEGER,
@@ -182,26 +182,29 @@ def add_game(username, stats):
     print(f"Game stats successfully saved to {username}")
 
 def change_username(orig_username, new_username):
-    __setup()
-    __update_db(f"""UPDATE Accounts SET username='{new_username}' WHERE username='{orig_username}';""")
-    __update_db(f"""UPDATE Games SET username='{new_username}' WHERE username='{orig_username}';""")
-    print(f"Username {orig_username} changed to {new_username}")
+    try:
+        __setup()
+        __update_db(f"""UPDATE Accounts SET username='{new_username}' WHERE username='{orig_username}';""")
+        __update_db(f"""UPDATE Games SET username='{new_username}' WHERE username='{orig_username}';""")
+        print(f"Username {orig_username} changed to {new_username}")
+    except sqlite3.IntegrityError:
+        raise DBError("Username already taken")
 
 def change_password(username, new_password):
     __setup()
     __update_db(f"""UPDATE Accounts SET password='{encrypt_password(new_password)}' WHERE username='{username}';""")
     print(f"Password updated for username {username}")
 
-def singleplayer_rating(username):
-    return __fetch_data(f"""SELECT singleplayer_rating FROM Accounts WHERE username='{username}';""")
+def rating(username):
+    return __fetch_data(f"""SELECT rating FROM Accounts WHERE username='{username}';""")
 
-def singleplayer_title(username):
-    return __fetch_data(f"""SELECT singleplayer_title FROM Accounts WHERE username='{username}';""")
+def title(username):
+    return __fetch_data(f"""SELECT title FROM Accounts WHERE username='{username}';""")
 
-def update_singleplayer_rating_and_title(username, rating, title):
+def update_rating_and_title(username, rating, title):
     __setup()
-    __update_db(f"""UPDATE Accounts SET singleplayer_rating={rating} WHERE username='{username}';""")
-    __update_db(f"""UPDATE Accounts SET singleplayer_title='{title}' WHERE username='{username}';""")
+    __update_db(f"""UPDATE Accounts SET rating={rating} WHERE username='{username}';""")
+    __update_db(f"""UPDATE Accounts SET title='{title}' WHERE username='{username}';""")
     print(f"Rating and title updated for {username}")
 
 def get_games_of(username):
@@ -267,26 +270,22 @@ def set_bonus_hints(username, num_hints):
 
 def all_account_rating_data():
     __setup()
-    return __fetch_data("""SELECT username, singleplayer_rating, singleplayer_title FROM Accounts""")
+    return __fetch_data("""SELECT username, rating, title FROM Accounts""")
 
 def leaderboard_best_time_data(mode, board_size, difficulty):
-    return __fetch_data(f"""SELECT Accounts.username, Accounts.singleplayer_rating, Accounts.singleplayer_title, 
+    return __fetch_data(f"""SELECT Accounts.username, Accounts.rating, Accounts.title, 
                         (SELECT MIN(Games.time_to_complete) FROM Games WHERE mode='{mode}' AND board_size={board_size}
                        AND difficulty='{difficulty}' AND completed='True' AND hardcore='True' AND Games.username=Accounts.username) 
                        FROM Accounts WHERE EXISTS (SELECT Games.time_to_complete FROM Games WHERE mode='{mode}' AND difficulty='{difficulty}'
                        AND completed='True' AND hardcore='True' AND Games.username=Accounts.username);""")
 
 def leaderboard_milestone_data(board_size):
-    return __fetch_data(f"""SELECT username, singleplayer_rating, singleplayer_title, milestone_{board_size} FROM Accounts;""")
+    return __fetch_data(f"""SELECT username, rating, title, milestone_{board_size} FROM Accounts;""")
 
 if __name__ in "__main__":
     __setup()
     print(__fetch_data("""SELECT * FROM Accounts"""))
-    # print(__fetch_data("""SELECT * FROM Games"""))
-    # print(__fetch_data("SELECT * FROM AppearancePresets"))
-    # print(get_all_presets("admin"))
-    # print(appearance_config_at("admin"))
-    # print(get_preset("admin", 1))
+    print(__fetch_data(f"""SELECT username FROM Accounts"""))
     print(leaderboard_best_time_data("Normal", 4, "Easy"))
 
 ##C5B4E3

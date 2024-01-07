@@ -85,7 +85,7 @@ class Game: # Game class
     def save_game(self, account): # Save game to file method
 
         # Create file name based on local time if board is not loaded from a file
-        file_name = f"singleplayer_{datetime.now().strftime('%d-%m-%y_%H-%M-%S')}.json" if self.__file is None else self.__file
+        file_name = f"sudoku_{datetime.now().strftime('%d-%m-%y_%H-%M-%S')}.json" if self.__file is None else self.__file
 
         with open(dir := f"{Application.DEFAULT_DIRECTORY}/{account}/{file_name}", "w") as f: # Open json file
             f.write(json.dumps({"creation date": self.__creation_date, "creation time": self.__creation_time, 

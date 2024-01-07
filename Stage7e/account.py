@@ -75,8 +75,8 @@ class Account: # Account Class
 
     def __init__(self, username=None, app_config=AppearanceConfiguration(None)):
         self.__username = username
-        self.__singleplayer_rating = None
-        self.__singleplayer_title = None
+        self.__rating = None
+        self.__title = None
         self.__app_config = app_config
     
     '''Getters'''
@@ -86,12 +86,12 @@ class Account: # Account Class
         return self.__username
     
     @property
-    def singleplayer_rating(self):
-        return self.__singleplayer_rating
+    def rating(self):
+        return self.__rating
     
     @property
-    def singleplayer_title(self):
-        return self.__singleplayer_title
+    def title(self):
+        return self.__title
     
     @property
     def app_config(self):
@@ -105,15 +105,15 @@ class Account: # Account Class
     
     def update_singleplayer_rating(self):
         if self.__username is None:
-            self.__singleplayer_rating = None
+            self.__rating = None
         else:
-            self.__singleplayer_rating = database.singleplayer_rating(self.__username)[0][0]
+            self.__rating = database.rating(self.__username)[0][0]
     
     def update_singleplayer_title(self):
         if self.__username is None:
-            self.__singleplayer_title = None
+            self.__title = None
         else:
-            self.__singleplayer_title = database.singleplayer_title(self.__username)[0][0]
+            self.__title = database.title(self.__username)[0][0]
     
     def set_account(self, account):
         self.__username = account

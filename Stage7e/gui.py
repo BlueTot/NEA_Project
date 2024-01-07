@@ -24,7 +24,8 @@ from pyqt_widgets import * # Import all customisable widget classes
   
 class HomeScreen(Screen):
 
-    play_singleplayer_signal = pyqtSignal()
+    create_new_game_signal = pyqtSignal()
+    open_existing_game_signal = pyqtSignal()
     create_new_account_signal = pyqtSignal()
     sign_in_singal = pyqtSignal()
     sign_out_signal = pyqtSignal()
@@ -43,11 +44,11 @@ class HomeScreen(Screen):
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.__title.setStyleSheet("background: transparent;")
 
-        self.__play_singleplayer_button = Button(self, "PLAY SINGLEPLAYER", 300, 250, 400, 50, self._application.account.app_config.regular_font, 25, self.__play_singleplayer)
-        self.__play_singleplayer_button.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
+        self.__create_new_game_button = Button(self, "CREATE NEW GAME", 300, 250, 400, 50, self._application.account.app_config.regular_font, 25, self.__create_new_game)
+        self.__create_new_game_button.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
 
-        self.__play_multiplayer_button = Button(self, "PLAY MULTIPLAYER", 300, 320, 400, 50, self._application.account.app_config.regular_font, 25, None)
-        self.__play_multiplayer_button.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
+        self.__open_existing_game_button = Button(self, "OPEN EXISTING GAME", 300, 320, 400, 50, self._application.account.app_config.regular_font, 25, self.__open_existing_game)
+        self.__open_existing_game_button.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
 
         self.__leaderboard_button = Button(self, "LEADERBOARD", 300, 390, 400, 50, self._application.account.app_config.regular_font, 25, self.__leaderboard_screen)
         self.__leaderboard_button.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
@@ -65,13 +66,22 @@ class HomeScreen(Screen):
         self.__toolbar.addWidget(MenuButton(self, QIcon("resources/stats.svg"), size, QFont(font_family, font_size), [("Show Stats", self.__view_stats), ("Game Milestones", self.__game_milestones)]))
         self.__toolbar.addAction(Action(self, QIcon("resources/help.svg"), "Help", self.__help_screen, False))
 
-        self.__account_label = Label(self, "Not Signed In" if not self._application.signed_in else f"Signed in as {self._application.account.username} ({self._application.account.singleplayer_title} | {self._application.account.singleplayer_rating})", 
+        self.__account_label = Label(self, "Not Signed In" if not self._application.signed_in else f"Signed in as {self._application.account.username} ({self._application.account.title} | {self._application.account.rating})", 
                                      0, 0, 400, 50, self._application.account.app_config.regular_font, 15)
 
-        self._widgets += [self.__title, self.__play_singleplayer_button, self.__play_multiplayer_button, self.__leaderboard_button, self.__toolbar, self.__account_label]
+        self._widgets += [self.__title, self.__create_new_game_button, self.__open_existing_game_button, self.__leaderboard_button, self.__toolbar, self.__account_label]
 
-    def __play_singleplayer(self):
-        self.play_singleplayer_signal.emit()
+    def __create_new_game(self):
+        self.create_new_game_signal.emit()
+    
+    def __open_existing_game(self):
+        if self._application.signed_in:
+            if self._application.get_game_files():
+                self.open_existing_game_signal.emit()
+            else:
+                self.statusBar().showMessage("*There are no saved games at this moment, please create a new game")
+        else:
+                self.statusBar().showMessage("*Please sign in to an account to open saved games")
     
     def __create_new_account(self):
         self.create_new_account_signal.emit()
@@ -114,82 +124,6 @@ class HomeScreen(Screen):
 
     def __quit_game(self):
         exit()
-
-class OpenOrCreateNewGameScreen(Screen):
-
-    return_to_home_screen_signal = pyqtSignal()
-    create_new_game_signal = pyqtSignal()
-    open_game_signal = pyqtSignal()
-
-    def __init__(self, application, max_size):
-
-        super().__init__(application, max_size)
-
-        self.__open_game_button = Button(self, "OPEN EXISTING GAME", 70, 80, 400, 400, self._application.account.app_config.regular_font, 25, self.__open_game)
-        self.__open_game_button.setStyleSheet(f"background: {self._application.account.app_config.colour4}; border: 5px solid black;")
-        self.__create_new_game_button = Button(self, "CREATE NEW GAME", 530, 80, 400, 400, self._application.account.app_config.regular_font, 25, self.__create_new_game)
-        self.__create_new_game_button.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 5px solid black;")
-
-        self.__back_button = BackButton(self, self.__return_to_home_screen)
-
-        self._widgets += [self.__open_game_button, self.__create_new_game_button, self.__back_button]
-    
-    def __open_game(self):
-        if self._application.signed_in:
-            if os.listdir("games"):
-                self.open_game_signal.emit()
-            else:
-                self.statusBar().showMessage("*There are no saved games at this moment, please create a new game")
-        else:
-                self.statusBar().showMessage("*Please sign in to an account to open saved games")
-
-    def __create_new_game(self):
-        self.create_new_game_signal.emit()
-
-    def __return_to_home_screen(self):
-        self.return_to_home_screen_signal.emit()
-
-class OpenGameScreen(Screen):
-
-    return_to_home_screen_signal = pyqtSignal()
-    play_game_signal = pyqtSignal(str)
-
-    def __init__(self, application, max_size):
-
-        super().__init__(application, max_size)
-
-        self.__title = Label(self, "OPEN EXISTING GAME", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, self._application.account.app_config.regular_font, 20, self.__play_game)
-        self.__play.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
-        self.__back = BackButton(self, self.__return_to_home_screen)
-
-        self.__choose_game = Label(self, "CHOOSE A GAME: ", 50, 150, 300, 100, self._application.account.app_config.regular_font, 20)
-        self.__choose_game_menu = ComboBox(self, 50, 230, 400, 50,self._application.account.app_config.regular_font, 15, self._application.get_game_files())
-        self.__choose_game_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
-        self.__choose_game_menu.activated.connect(self.__show_game_info)
-
-        self.__game_info = TextEdit(self, 50, 300, 400, 235, self._application.account.app_config.colour2,  2, self._application.account.app_config.regular_font, 18)
-
-        self._widgets += [self.__title, self.__play, self.__back, self.__choose_game, self.__choose_game_menu, self.__game_info]
-    
-    def __show_game_info(self):
-        if file := self.__choose_game_menu.currentText():
-            stats = Game.get_stats_from(self._application.account.username, file)
-            labels = ["Creation Date", "Creation Time", "Mode", "Difficulty", "Board Size"]
-            self.__game_info.setText("\n".join([f"{label}: {stats[label.lower()]}" for label in labels]))
-        else:
-            self.__game_info.setText("")
-            
-    def __return_to_home_screen(self):
-        self.return_to_home_screen_signal.emit()
-    
-    def __play_game(self):
-        if file := self.__choose_game_menu.currentText():
-            self.play_game_signal.emit(file)
-        else:
-            self.statusBar().showMessage("*To continue, please select a game file to play")
 
 class ConfigGameScreen(Screen):
 
@@ -241,6 +175,48 @@ class ConfigGameScreen(Screen):
 
     def __return_to_home_screen(self):
         self.return_to_home_screen_signal.emit()
+
+class OpenGameScreen(Screen):
+
+    return_to_home_screen_signal = pyqtSignal()
+    play_game_signal = pyqtSignal(str)
+
+    def __init__(self, application, max_size):
+
+        super().__init__(application, max_size)
+
+        self.__title = Label(self, "OPEN EXISTING GAME", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
+        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, self._application.account.app_config.regular_font, 20, self.__play_game)
+        self.__play.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
+        self.__back = BackButton(self, self.__return_to_home_screen)
+
+        self.__choose_game = Label(self, "CHOOSE A GAME: ", 50, 150, 300, 100, self._application.account.app_config.regular_font, 20)
+        self.__choose_game_menu = ComboBox(self, 50, 230, 400, 50,self._application.account.app_config.regular_font, 15, self._application.get_game_files())
+        self.__choose_game_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
+        self.__choose_game_menu.activated.connect(self.__show_game_info)
+
+        self.__game_info = TextEdit(self, 50, 300, 400, 235, self._application.account.app_config.colour2,  2, self._application.account.app_config.regular_font, 18)
+
+        self._widgets += [self.__title, self.__play, self.__back, self.__choose_game, self.__choose_game_menu, self.__game_info]
+    
+    def __show_game_info(self):
+        if file := self.__choose_game_menu.currentText():
+            stats = Game.get_stats_from(self._application.account.username, file)
+            labels = ["Creation Date", "Creation Time", "Mode", "Difficulty", "Board Size"]
+            self.__game_info.setText("\n".join([f"{label}: {stats[label.lower()]}" for label in labels]))
+        else:
+            self.__game_info.setText("")
+            
+    def __return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+    
+    def __play_game(self):
+        if file := self.__choose_game_menu.currentText():
+            self.play_game_signal.emit(file)
+        else:
+            self.statusBar().showMessage("*To continue, please select a game file to play")
 
 class GameScreen(Screen):
 
@@ -413,7 +389,7 @@ class GameScreen(Screen):
             self.__timer_event.stop()
         if self._application.signed_in and self.__game.timed:
             self.save_stats_signal.emit(self.__game.get_stats(win))
-            self.update_rating_signal.emit(rating_change := self.__game.rating_change(self._application.account.singleplayer_rating, win))
+            self.update_rating_signal.emit(rating_change := self.__game.rating_change(self._application.account.rating, win))
             self.update_milestone_signal.emit([self.__game.mode, self.__game.board_size, self.__game.difficulty, win])
 
         bg = Rect(self, 0, 0, 1000, 560, self._application.account.app_config.colour2_translucent, 0)
@@ -446,7 +422,7 @@ class GameScreen(Screen):
                 rating_label_top.setStyleSheet("background: transparent;")
                 rating_label_top.show()
 
-                rating = Label(self, rating_str := str(self._application.account.singleplayer_rating), 0, 310, 1000, 100, self._application.account.app_config.regular_font, 60)
+                rating = Label(self, rating_str := str(self._application.account.rating), 0, 310, 1000, 100, self._application.account.app_config.regular_font, 60)
                 rating.setAlignment(Qt.AlignmentFlag.AlignHCenter)
                 rating.setStyleSheet("background: transparent;")
                 rating.show()
@@ -647,7 +623,12 @@ class SignInScreen(Screen):
     
     def __sign_in(self):
         if self.__username.text() and self.__password.text():
-            self.sign_in_signal.emit([self.__username.text(), self.__password.text()])
+            try:
+                self._application.sign_in([self.__username.text(), self.__password.text()])
+                self.__return_to_home_screen()
+            except DBError as err:
+                print(err)
+                self.show_error(err)
         else:
             self.statusBar().showMessage("One or more input boxes are still empty")
 
@@ -905,8 +886,8 @@ class ViewStatsScreen(Screen):
 
         stats_txt = "\n".join([
         "OVERALL STATS: \n",
-        f"Rating: {self._application.account.singleplayer_rating}",                         
-        f"Title: {self._application.account.singleplayer_title}\n",
+        f"Rating: {self._application.account.rating}",                         
+        f"Title: {self._application.account.title}\n",
         f"Total Games Played: {total_games}",
         f"Completed Games: {completed_games}",
         f"% Complete: {f'{round(completed_games/total_games*100)}%' if total_games != 0 else 'N/A'}\n",
@@ -1157,19 +1138,20 @@ class GUI(UI): # Graphical User Interface (GUI) class
         QFontDatabase.addApplicationFont("resources/Metropolis-Regular.otf")
 
         self.__screens = {} # Placeholder screens dictionary to make it easier to load and render screens
-        self.__screen_partials = {"home": self.__home_screen, "open or create new game": self.__open_or_create_new_game_screen,
-                           "config game": self.__config_game_screen, "open game": self.__open_game_screen,
-                           "game": self.__game_screen, "create new account": self.__create_new_account_screen, 
-                           "sign in": self.__sign_in_screen, "manage account": self.__manage_account_screen, 
-                           "view stats": self.__view_stats_screen, "game milestones": self.__game_milestones_screen,
-                           "view gui presets": self.__view_gui_presets_screen,
-                           "edit gui preset": self.__edit_gui_preset_screen, "help": self.__help_screen,
-                           "leaderboard": self.__leaderboard_screen} # Dictionary of screen partials used to initialise each screen
+        self.__screen_partials = {"home": self.__home_screen,
+                                  "config game": self.__config_game_screen, "open game": self.__open_game_screen,
+                                  "game": self.__game_screen, "create new account": self.__create_new_account_screen, 
+                                  "sign in": self.__sign_in_screen, "manage account": self.__manage_account_screen, 
+                                  "view stats": self.__view_stats_screen, "game milestones": self.__game_milestones_screen,
+                                  "view gui presets": self.__view_gui_presets_screen,
+                                  "edit gui preset": self.__edit_gui_preset_screen, "help": self.__help_screen,
+                                  "leaderboard": self.__leaderboard_screen} # Dictionary of screen partials used to initialise each screen
         self.__show_screen("home", self.__screen_partials["home"]) # Show the home screen
     
     def __home_screen(self): # Initialise home screen
         home_screen = HomeScreen(self._application, self.__max_size)
-        home_screen.play_singleplayer_signal.connect(partial(self.__show_screen, "open or create new game", self.__open_or_create_new_game_screen))
+        home_screen.create_new_game_signal.connect(partial(self.__show_screen, "config game", self.__config_game_screen))
+        home_screen.open_existing_game_signal.connect(partial(self.__show_screen, "open game", self.__open_game_screen))
         home_screen.create_new_account_signal.connect(partial(self.__show_screen, "create new account", self.__create_new_account_screen))
         home_screen.sign_in_singal.connect(partial(self.__show_screen, "sign in", self.__sign_in_screen))
         home_screen.sign_out_signal.connect(self.__sign_out)
@@ -1181,12 +1163,12 @@ class GUI(UI): # Graphical User Interface (GUI) class
         home_screen.leaderboard_signal.connect(partial(self.__show_screen, "leaderboard", self.__leaderboard_screen))
         return home_screen
     
-    def __open_or_create_new_game_screen(self): # Initialise open or create new game screen
-        open_or_create_new_game_screen = OpenOrCreateNewGameScreen(self._application, self.__max_size)
-        open_or_create_new_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        open_or_create_new_game_screen.open_game_signal.connect(partial(self.__show_screen, "open game", self.__open_game_screen))
-        open_or_create_new_game_screen.create_new_game_signal.connect(partial(self.__show_screen, "config game", self.__config_game_screen))  
-        return open_or_create_new_game_screen
+    # def __open_or_create_new_game_screen(self): # Initialise open or create new game screen
+    #     open_or_create_new_game_screen = OpenOrCreateNewGameScreen(self._application, self.__max_size)
+    #     open_or_create_new_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
+    #     open_or_create_new_game_screen.open_game_signal.connect(partial(self.__show_screen, "open game", self.__open_game_screen))
+    #     open_or_create_new_game_screen.create_new_game_signal.connect(partial(self.__show_screen, "config game", self.__config_game_screen))  
+    #     return open_or_create_new_game_screen
     
     def __open_game_screen(self): # Initialise open game screen
         open_game_screen = OpenGameScreen(self._application, self.__max_size)
@@ -1204,7 +1186,7 @@ class GUI(UI): # Graphical User Interface (GUI) class
         game_screen = GameScreen(self._application, self.__max_size)
         game_screen.return_to_home_screen_signal.connect(self.__quit_game)
         game_screen.save_stats_signal.connect(self._application.save_game_stats)
-        game_screen.update_rating_signal.connect(self._application.update_singleplayer_rating)
+        game_screen.update_rating_signal.connect(self._application.update_rating)
         game_screen.update_milestone_signal.connect(self._application.update_milestone)
         return game_screen
 
@@ -1326,7 +1308,8 @@ class GUI(UI): # Graphical User Interface (GUI) class
             self._application.sign_in(options)
             self.__pop_screen()
         except DBError as err:
-            self.__screens["sign in"].show_error(err)
+            raise err
+            #self.__screens["sign in"].show_error(err)
 
     def __sign_out(self): # Method to sign out
         self._application.sign_out()

@@ -1,6 +1,6 @@
 import os
 from account import *
-from rating_calc import title
+from rating_calc import get_title
 from database import *
 
 class Application:
@@ -76,13 +76,13 @@ class Application:
         os.rmdir(os.path.join(self.DEFAULT_DIRECTORY, f"{self.__account.username}"))
         self.__account.set_account(None)
     
-    def update_singleplayer_rating(self, rating_change): # Method to update singleplayer rating (after each game)
-        new_rating = self.__account.singleplayer_rating + rating_change
+    def update_rating(self, rating_change): # Method to update singleplayer rating (after each game)
+        new_rating = self.__account.rating + rating_change
         if new_rating >= 0:
-            new_title = title(new_rating)
-            database.update_singleplayer_rating_and_title(self.__account.username, new_rating, new_title)
-            self.__account.update_singleplayer_rating()
-            self.__account.update_singleplayer_title()
+            new_title = get_title(new_rating)
+            database.update_rating_and_title(self.__account.username, new_rating, new_title)
+            self.__account.update_rating()
+            self.__account.update_title()
     
     def __curr_milestone_rank(self, milestone): # Method to get current milestone rank (1 to 7) of any milestone collection
         for rank, comps in reversed(GameMilestones.MILESTONES.items()):

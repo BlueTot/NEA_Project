@@ -23,7 +23,7 @@ def average_time_to_complete(mode, board_size, difficulty):
         b *= 1.5
     return round(a*exp(b*DIFFICULTY_NUMS[difficulty]))
 
-def title(rating):
+def get_title(rating):
     if rating >= 2000:
         return "Master"
     elif rating >= 1600:
