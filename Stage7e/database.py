@@ -185,6 +185,7 @@ def change_username(orig_username, new_username):
     try:
         __setup()
         __update_db(f"""UPDATE Accounts SET username='{new_username}' WHERE username='{orig_username}';""")
+        __update_db(f"""UPDATE AppearancePresets SET username='{new_username}' WHERE username='{orig_username}';""")
         __update_db(f"""UPDATE Games SET username='{new_username}' WHERE username='{orig_username}';""")
         print(f"Username {orig_username} changed to {new_username}")
     except sqlite3.IntegrityError:
@@ -287,5 +288,7 @@ if __name__ in "__main__":
     print(__fetch_data("""SELECT * FROM Accounts"""))
     print(__fetch_data(f"""SELECT username FROM Accounts"""))
     print(leaderboard_best_time_data("Normal", 4, "Easy"))
+    print(__fetch_data("""SELECT * FROM AppearancePresets"""))
+    print(appearance_config_at("bluetot"))
 
 ##C5B4E3

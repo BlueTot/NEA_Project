@@ -554,7 +554,6 @@ class GameScreen(Screen):
 class CreateNewAccountScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
-    create_account_signal = pyqtSignal(list)
     
     def __init__(self, application, max_size):
 
@@ -586,7 +585,11 @@ class CreateNewAccountScreen(Screen):
     def __create_account(self):
         if self.__username.text() and self.__password.text() and self.__password2.text():
             if self.__password.text() == self.__password2.text():
-                self.create_account_signal.emit([self.__username.text(), self.__password.text()])
+                try:
+                    self._application.create_account([self.__username.text(), self.__password.text()])
+                    self.__return_to_home_screen()
+                except DBError as err:
+                    self.show_error(err)
             else:
                 self.statusBar().showMessage("Passwords inputted are not the same")
         else:
@@ -595,7 +598,6 @@ class CreateNewAccountScreen(Screen):
 class SignInScreen(Screen):
 
     return_to_home_screen_signal = pyqtSignal()
-    sign_in_signal = pyqtSignal(list)
     
     def __init__(self, application, max_size):
 
@@ -627,7 +629,6 @@ class SignInScreen(Screen):
                 self._application.sign_in([self.__username.text(), self.__password.text()])
                 self.__return_to_home_screen()
             except DBError as err:
-                print(err)
                 self.show_error(err)
         else:
             self.statusBar().showMessage("One or more input boxes are still empty")
@@ -1163,13 +1164,6 @@ class GUI(UI): # Graphical User Interface (GUI) class
         home_screen.leaderboard_signal.connect(partial(self.__show_screen, "leaderboard", self.__leaderboard_screen))
         return home_screen
     
-    # def __open_or_create_new_game_screen(self): # Initialise open or create new game screen
-    #     open_or_create_new_game_screen = OpenOrCreateNewGameScreen(self._application, self.__max_size)
-    #     open_or_create_new_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-    #     open_or_create_new_game_screen.open_game_signal.connect(partial(self.__show_screen, "open game", self.__open_game_screen))
-    #     open_or_create_new_game_screen.create_new_game_signal.connect(partial(self.__show_screen, "config game", self.__config_game_screen))  
-    #     return open_or_create_new_game_screen
-    
     def __open_game_screen(self): # Initialise open game screen
         open_game_screen = OpenGameScreen(self._application, self.__max_size)
         open_game_screen.return_to_home_screen_signal.connect(self.__pop_screen)
@@ -1193,13 +1187,11 @@ class GUI(UI): # Graphical User Interface (GUI) class
     def __create_new_account_screen(self): # Initialise create new account screen
         create_new_account_screen = CreateNewAccountScreen(self._application, self.__max_size)
         create_new_account_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        create_new_account_screen.create_account_signal.connect(self.__create_new_account)
         return create_new_account_screen
 
     def __sign_in_screen(self): # Initialise sign in screen
         sign_in_screen = SignInScreen(self._application, self.__max_size)
         sign_in_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        sign_in_screen.sign_in_signal.connect(self.__sign_in)
         return sign_in_screen
 
     def __manage_account_screen(self): # Initialise manage account screen
@@ -1295,21 +1287,6 @@ class GUI(UI): # Graphical User Interface (GUI) class
         for _ in range(3):
             self._pop_ui_from_stack()
         self.__show_screen(self._get_curr_ui(), self.__screen_partials[self._get_curr_ui()])
-    
-    def __create_new_account(self, options):
-        try:
-            self._application.create_account(options)
-            self.__pop_screen()
-        except DBError as err:
-            self.__screens["create new account"].show_error(err)
-
-    def __sign_in(self, options):
-        try:
-            self._application.sign_in(options)
-            self.__pop_screen()
-        except DBError as err:
-            raise err
-            #self.__screens["sign in"].show_error(err)
 
     def __sign_out(self): # Method to sign out
         self._application.sign_out()

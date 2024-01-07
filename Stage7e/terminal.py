@@ -46,11 +46,11 @@ class Terminal(UI):
     def __play_home_screen(self):
         if not self._application.signed_in: # Not signed in
             print("\nNOT SIGNED IN\n")
-            main_menu_choice = self.__get_input("Press (S) to play singleplayer, (C) to create a new account, (I) to sign in, (Q) to quit: ", ["S", "C", "I", "Q"])
+            main_menu_choice = self.__get_input("Press (P) to play sudoku, (C) to create a new account, (I) to sign in, (Q) to quit: ", ["P", "C", "I", "Q"])
         else:
             print(f"\nSIGNED IN AS {self._application.account.username}\n")
-            main_menu_choice = self.__get_input("Press (S) to play singleplayer, (C) to create a new account, (M) to manage account, (O) to sign out, (Q) to quit: ", ["S", "C", "M", "O", "Q"])
-        if main_menu_choice == "S":
+            main_menu_choice = self.__get_input("Press (P) to play sudoku, (C) to create a new account, (M) to manage account, (O) to sign out, (Q) to quit: ", ["P", "C", "M", "O", "Q"])
+        if main_menu_choice == "P":
             self._push_ui_to_stack("open or create new game")
         elif main_menu_choice == "C":
             self._push_ui_to_stack("create new account")
@@ -71,23 +71,22 @@ class Terminal(UI):
             password2 = self.__get_default_input("Enter password again: ")
             if password == password2:
                 self._application.create_account([username, password])
-                return
-            input("Passwords entered don't match")
+            else:
+                input("Passwords entered don't match")
         except DBError as err:
             input(err)
         self._pop_ui_from_stack()
         return
     
     def __sign_in(self):
-        while True:
-            try:
-                username = self.__get_default_input("Enter username: ")
-                password = self.__get_default_input("Enter password: ")
-                self._application.sign_in([username, password])
-                self._pop_ui_from_stack()
-                return
-            except DBError as err:
-                input(err)
+        try:
+            username = self.__get_default_input("Enter username: ")
+            password = self.__get_default_input("Enter password: ")
+            self._application.sign_in([username, password])
+        except DBError as err:
+            input(err)
+        self._pop_ui_from_stack()
+        return
     
     def __manage_account(self):
         try:
@@ -109,6 +108,7 @@ class Terminal(UI):
                     pass
         except DBError as err:
             input(err)
+        self._pop_ui_from_stack()
         return
 
     def __open_or_create_new_game(self):
