@@ -2,7 +2,7 @@ from ui import UI # Import UI for the version number
 
 '''PyQt GUI Imports'''
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QAction, QIcon
 from PyQt6.QtWidgets import QMainWindow, QLabel, QPushButton, QToolBar, QMenu, QComboBox, QProgressBar, QWidget, QTextEdit, QLineEdit, QTableWidget, QAbstractScrollArea, QTableWidgetItem, QAbstractItemView, QHeaderView
 
@@ -361,7 +361,10 @@ class TableWidget(QTableWidget): # Table widget, used to display rankings in lea
             self.verticalHeader().setStyleSheet(ss)
 
 class Screen(QMainWindow): # Screen widget, all GUI screens inherit from Screen
-    def __init__(self, application, max_size : QSize):
+
+    return_to_home_screen_signal = pyqtSignal() 
+
+    def __init__(self, application, max_size : QSize, title_name, create_button):
         super().__init__() # Inheritance
         self._widgets = [] # Initialise list of widgets to maximise / minimise
         self._application = application # Set application : Application
@@ -372,7 +375,18 @@ class Screen(QMainWindow): # Screen widget, all GUI screens inherit from Screen
         self.statusBar().setFont(QFont(self._application.account.app_config.regular_font, 14)) # Set font of status bar (to show errors)
         self.statusBar().setStyleSheet("color : red;") # Set colour of status bar (to show errors)
         self._resize_factor = self._max_size.width() / self.minimumSize().width() # Calculate resize factor for maximising
+        if title_name is not None:
+            self._title = Label(self, title_name, 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
+            self._title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            self._widgets.append(self._title)
+        if create_button:
+            self._back = BackButton(self, self._return_to_home_screen)
+            self._widgets.append(self._back)
     
+    # Method to return back to home screen
+    def _return_to_home_screen(self):
+        self.return_to_home_screen_signal.emit()
+
     # Override screen resize event (triggered on clicking maximise / minimise button)
     def resizeEvent(self, event):
         factor = event.size().width() / self.minimumSize().width() # Calculate factor

@@ -48,9 +48,9 @@ class Application: # Application class, used to manage accounts and all account-
     
     def get_preset(self, preset_num):
         try:
-            return database.get_preset(self._account.username, preset_num)
+            return database.get_preset(self.__account.username, preset_num)
         except IndexError:
-            return database.get_preset(self._account.username, 1)
+            return database.get_preset(self.__account.username, 1)
     
     def use_gui_preset(self, preset_num): # Method to use certain appearance preset (from view gui preset screen)
         database.set_current_appearance_preset(self.__account.username, preset_num)

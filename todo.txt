@@ -1,9 +1,5 @@
-Stage 7a
-
-- Add account feature to terminal
-- Add create account, sign in and sign out features to terminal
-- Enable saving of games to terminal
-
-Stage 7b
-
-- Add classic multiplayer to terminal (two players on separate boards, competing to finish the game quicker)
+- Make title and back button part of Screen inheritance
+- Fix manage account screen checking for correct password details when both new username and password are entered
+- Improve readability of config game menu
+- Add recommended rating data to config game menu
+- Add button to play same gamemode again (repeat)

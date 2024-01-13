@@ -39,10 +39,10 @@ class HomeScreen(Screen):
 
     def __init__(self, application, max_size): # Constructor
 
-        super().__init__(application, max_size) # Inheritance
+        super().__init__(application=application, max_size=max_size, title_name=None, create_button=False) # Inheritance
 
         # Title
-        self.__title = Label(self, "S U D O K U", 0, 75, 1000, 100, self._application.account.app_config.title_font, 70)
+        self.__title = Label(self, "S U D O K U", 0, 75, 1000, 125, self._application.account.app_config.title_font, 70)
         self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.__title.setStyleSheet("background: transparent;")
 
@@ -142,18 +142,11 @@ class ConfigGameScreen(Screen): # Create new game screen
 
     def __init__(self, application, max_size): # Constructor
 
-        super().__init__(application, max_size) # Inheritance
-
-        # Title
-        self.__title = Label(self, "CREATE NEW GAME", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        super().__init__(application=application, max_size=max_size, title_name="CREATE NEW GAME", create_button=True) # Inheritance
 
         # Play button
         self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, self._application.account.app_config.regular_font, 20, self.__play_game)
         self.__play.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
-
-        # Back button
-        self.__back = BackButton(self, self.__return_to_home_screen)
 
         # Create labels for board settings
         for idx, label in enumerate(("MODE: ", "DIFFICULTY: ", "TIMED: ", "BOARD_SIZE: ", "HARDCORE: ")):
@@ -173,7 +166,7 @@ class ConfigGameScreen(Screen): # Create new game screen
         self.__hardcore_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
 
         # Add to widgets (for maximising)
-        self._widgets += [self.__title, self.__play, self.__back, self.__mode_menu, self.__difficulty_menu, 
+        self._widgets += [self.__play, self.__mode_menu, self.__difficulty_menu, 
                           self.__timed_menu, self.__board_size_menu, self.__hardcore_menu]
 
     def __play_game(self): # Play game
@@ -190,29 +183,18 @@ class ConfigGameScreen(Screen): # Create new game screen
         else:
             self.statusBar().showMessage("*To continue, please fill all boxes")
 
-    def __return_to_home_screen(self): # Return to home screen
-        self.return_to_home_screen_signal.emit()
-
 class OpenGameScreen(Screen): # Open game screen
 
     # Create pyqt signals
-    return_to_home_screen_signal = pyqtSignal() # Return to home screen
     play_game_signal = pyqtSignal(str) # Play game
 
     def __init__(self, application, max_size): # Constructor
 
-        super().__init__(application, max_size) # Inheritance
-
-        # Title
-        self.__title = Label(self, "OPEN EXISTING GAME", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        super().__init__(application=application, max_size=max_size, title_name="OPEN EXISTING GAME", create_button=True) # Inheritance
 
         # Play button
         self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, self._application.account.app_config.regular_font, 20, self.__play_game)
         self.__play.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
-
-        # Back button
-        self.__back = BackButton(self, self.__return_to_home_screen)
 
         # Choose game label
         self.__choose_game = Label(self, "CHOOSE A GAME: ", 50, 150, 300, 100, self._application.account.app_config.regular_font, 20)
@@ -235,9 +217,6 @@ class OpenGameScreen(Screen): # Open game screen
             self.__game_info.setText("\n".join([f"{label}: {stats[label.lower()]}" for label in labels])) # Render label-stat pairs in TextEdit
         else:
             self.__game_info.setText("") # Remove all existing text
-            
-    def __return_to_home_screen(self): # Return to home screen
-        self.return_to_home_screen_signal.emit()
     
     def __play_game(self): # Play game
         if file := self.__choose_game_menu.currentText(): # Check if user chose a file to open
@@ -248,7 +227,6 @@ class OpenGameScreen(Screen): # Open game screen
 class GameScreen(Screen): # Main game screen
 
     # Create pyqt signals to connect to GUI
-    return_to_home_screen_signal = pyqtSignal() # Return to home screen
     save_stats_signal = pyqtSignal(list) # Save stats
     update_rating_signal = pyqtSignal(int) # Update rating
     update_milestone_signal = pyqtSignal(list) # Update milestone
@@ -261,7 +239,7 @@ class GameScreen(Screen): # Main game screen
 
     def __init__(self, application, max_size, game : Game): # Constructor
         
-        super().__init__(application, max_size) # Inheritance
+        super().__init__(application=application, max_size=max_size, title_name=None, create_button=True) # Inheritance
 
         self.__selected_square = (None, None) # Current selected square (nothing selected initally)
         self.__notes_mode = False # User not in notes mode initially
@@ -276,9 +254,6 @@ class GameScreen(Screen): # Main game screen
         self.__progress = ProgressBar(self, 610, 110, 330, 20)
         self.__progress.setValue(int(self.__game.percent_complete()))
         self.__progress.setStyleSheet("QProgressBar::chunk{background-color: " + self._application.account.app_config.colour2 + ";}")
-
-        # Back button
-        self.__back = BackButton(self, self.__return_to_home_screen)
 
         # Info label to show game settings
         self.__info_label = Label(self, "", 595, 15, 310, 90, self._application.account.app_config.regular_font, 12)
@@ -337,7 +312,7 @@ class GameScreen(Screen): # Main game screen
 
 
         # add to widgets (for maximising)
-        self._widgets += [self.__timer, self.__back, self.__info_label, self.__info_button, self.__undo_button, 
+        self._widgets += [self.__timer, self.__info_label, self.__info_button, self.__undo_button, 
                           self.__auto_note_button, self.__hint_button, self.__num_auto_notes_label, self.__num_hints_label, self.__notes_button, 
                           self.__resign_button, self.__progress, self.__paused_label, self.__board_cover]
         
@@ -610,25 +585,16 @@ class GameScreen(Screen): # Main game screen
         self.__game.inc_time_elapsed() # Increment time elapsed variable
         self.__timer.setText(str(self.__game.time_elapsed)) # Update label
 
-    def __return_to_home_screen(self): # Method to return back to home screen
+    def _return_to_home_screen(self): # Method to return back to home screen (Overriding existing return to home screen method)
         if self.__running and self._application.signed_in: # game quit from the "back" button
             self.__game.save_game(self._application.account.username) # Save the game to folder
-        self.return_to_home_screen_signal.emit() # Return to home screen
+        super()._return_to_home_screen() # Return to home screen
 
 class CreateNewAccountScreen(Screen): # Create new account screen class
-
-    return_to_home_screen_signal = pyqtSignal() # Pyqt signal to return back to home screen
     
     def __init__(self, application, max_size): # Constructor
 
-        super().__init__(application, max_size) # Inheritance
-
-        # Create title
-        self.__title = Label(self, "CREATE NEW ACCOUNT", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        # Create back button
-        self.__back = BackButton(self, self.__return_to_home_screen)
+        super().__init__(application=application, max_size=max_size, title_name="CREATE NEW ACCOUNT", create_button=True) # Inheritance
 
         # Create username label and input box
         self.__username = LineEdit(self, 400, 200, 500, 50, self._application.account.app_config.regular_font, 15, "Type here: ", False)
@@ -647,18 +613,15 @@ class CreateNewAccountScreen(Screen): # Create new account screen class
         self.__create.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
 
         # Add to widgets
-        self._widgets += [self.__title, self.__back, self.__username, self.__username_label, self.__password, 
+        self._widgets += [self.__username, self.__username_label, self.__password, 
                           self.__password_label, self.__password2, self.__password_label2, self.__create]
-
-    def __return_to_home_screen(self): # Return to home screen
-        self.return_to_home_screen_signal.emit()
     
     def __create_account(self): # Create account method
         if self.__username.text() and self.__password.text() and self.__password2.text(): # If user typed something in every box
             if self.__password.text() == self.__password2.text(): # If passwords match
                 try:
                     self._application.create_account([self.__username.text(), self.__password.text()]) # Create account
-                    self.__return_to_home_screen() # Return to home screen
+                    self._return_to_home_screen() # Return to home screen
                 except DBError as err: # Catch database error
                     self.show_error(err) # Show error on statusbar
             else:
@@ -667,19 +630,10 @@ class CreateNewAccountScreen(Screen): # Create new account screen class
             self.statusBar().showMessage("One or more input boxes are still empty")
 
 class SignInScreen(Screen): # Sign In Screen class
-
-    return_to_home_screen_signal = pyqtSignal() # Pyqt signal to return to home screen
     
     def __init__(self, application, max_size): # Constructor
 
-        super().__init__(application, max_size) # Inheritqance
-
-        # Create title
-        self.__title = Label(self, "SIGN IN", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        # Create back button
-        self.__back = BackButton(self, self.__return_to_home_screen)
+        super().__init__(application=application, max_size=max_size, title_name="SIGN IN", create_button=True) # Inheritance
 
         # Create username label and input box
         self.__username = LineEdit(self, 400, 200, 500, 50, self._application.account.app_config.regular_font, 15, "Type here: ", False)
@@ -694,17 +648,14 @@ class SignInScreen(Screen): # Sign In Screen class
         self.__sign_in.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
 
         # Add to widgets
-        self._widgets += [self.__title, self.__back, self.__username, self.__username_label, self.__password, 
+        self._widgets += [self.__username, self.__username_label, self.__password, 
                           self.__password_label, self.__sign_in]
-    
-    def __return_to_home_screen(self): # Return to home screen
-        self.return_to_home_screen_signal.emit()
     
     def __sign_in(self): # Sign in method
         if self.__username.text() and self.__password.text(): # If user typed something in both boxes
             try:
                 self._application.sign_in([self.__username.text(), self.__password.text()]) # Sign in
-                self.__return_to_home_screen() # Return to home screen
+                self._return_to_home_screen() # Return to home screen
             except DBError as err: # Catch database error
                 self.show_error(err) # Show error on statusbar
         else:
@@ -713,20 +664,12 @@ class SignInScreen(Screen): # Sign In Screen class
 class ViewGUIPresetsScreen(Screen): # View GUI Presets Screen class
 
     # Create pyqt signals
-    return_to_home_screen_signal = pyqtSignal() # Return to home screen
     update_preset_signal = pyqtSignal(list) # Update preset
     use_preset_signal = pyqtSignal(int) # Use preset
 
     def __init__(self, application, max_size): # Constructor
 
-        super().__init__(application, max_size) # Inheritance
-
-        # Create title
-        self.__title = Label(self, "VIEW PRESETS", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        # Create back button
-        self.__back = BackButton(self, self.__return_to_home_screen)
+        super().__init__(application=application, max_size=max_size, title_name="VIEW PRESETS", create_button=True) # Inheritance
 
         # Create create preset button
         self.__create_preset = Button(self, "CREATE PRESET", 600, 180, 300, 100, self._application.account.app_config.regular_font, 22, self.__create_preset)
@@ -757,7 +700,7 @@ class ViewGUIPresetsScreen(Screen): # View GUI Presets Screen class
         self.__preset_preview = TextEdit(self, 50, 325, 400, 235, self._application.account.app_config.colour2, 2, self._application.account.app_config.regular_font, 14)
 
         # Add widgets
-        self._widgets += [self.__title, self.__back, self.__choose_preset, self.__choose_preset_menu, 
+        self._widgets += [self.__choose_preset, self.__choose_preset_menu, 
                           self.__create_preset, self.__edit_preset, self.__use_preset, self.__preset_preview,
                           self.__current_preset]
     
@@ -796,31 +739,20 @@ class ViewGUIPresetsScreen(Screen): # View GUI Presets Screen class
             self.__use_preset.setStyleSheet(f"background: {self._application.account.app_config.colour3}; border: 2px solid black;") # change button colour to grey
             self.__preset_preview.setText("") # reset info box contents
 
-    def __return_to_home_screen(self): # method to return back to home screen
-        self.return_to_home_screen_signal.emit()
-
 class EditGUIPresetScreen(Screen): # Edit GUI Preset Screen Class
     
     # Pyqt signals
-    return_to_home_screen_signal = pyqtSignal() # return to home screen
     save_signal = pyqtSignal(list) # save preset
     delete_signal = pyqtSignal(int) # delete preset
 
     def __init__(self, application, max_size, mode, preset_num): # Constructor
 
-        super().__init__(application, max_size) # Inheritance
+        super().__init__(application=application, max_size=max_size, title_name=f"{'EDIT' if mode == 'edit' else 'CREATE'} PRESET {preset_num}", create_button=True) # Inheritance
 
         self.__mode = mode # Set mode (create or edit)
         self.__preset_num = preset_num # Set preset number of preset that is being created or edited
 
-        self._curr_preset = self._application.get_preset(preset_num) # Get current preset being edited
-        
-        # Create title
-        self.__title = Label(self, f"{'EDIT' if mode == 'edit' else 'CREATE'} PRESET {preset_num}", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        # Create back button
-        self.__back = BackButton(self, self.__return_to_home_screen)
+        self.__curr_preset = self._application.get_preset(preset_num) # Get current preset being edited
 
         # Create labels on the left
         for idx, label in enumerate(("Background Colour", "Colour 1", "Colour 2", "Colour 3", "Colour 4", "Title Font")):
@@ -869,7 +801,7 @@ class EditGUIPresetScreen(Screen): # Edit GUI Preset Screen Class
         self.__delete.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
 
         # Add to widgets
-        self._widgets += [self.__title, self.__back, self.__bg_colour, self.__colour1, self.__colour2, self.__colour3, self.__colour4, self.__title_font, 
+        self._widgets += [self.__bg_colour, self.__colour1, self.__colour2, self.__colour3, self.__colour4, self.__title_font, 
                           self.__regular_font, self.__killer_colour1, self.__killer_colour2, self.__killer_colour3, self.__killer_colour4, self.__killer_colour5,
                           self.__save, self.__delete]
     
@@ -886,7 +818,7 @@ class EditGUIPresetScreen(Screen): # Edit GUI Preset Screen Class
         options = self.__get_options() # get contents of input boxes
         if any([textbox.text() for textbox in self.__options]) or self.__font_options_changed(): # check if at least one option is changed
             self.save_signal.emit([self.__mode, self.__preset_num] + options) # save preset
-            self.__return_to_home_screen() # return to home screen
+            self._return_to_home_screen() # return to home screen
         else:
             self.statusBar().showMessage("Please fill in at least one box to save")
     
@@ -895,29 +827,18 @@ class EditGUIPresetScreen(Screen): # Edit GUI Preset Screen Class
             self.statusBar().showMessage("*Preset is currently in use and cannot be deleted.") # display error message
         else: # otherwise
             self.delete_signal.emit(self.__preset_num) # delete preset
-            self.__return_to_home_screen() # return to home screen
-
-    def __return_to_home_screen(self): # return to home screen
-        self.return_to_home_screen_signal.emit()
+            self._return_to_home_screen() # return to home screen
 
 class ManageAccountScreen(Screen): # Manage account screen class
     
     # pyqt signals
-    return_to_home_screen_signal = pyqtSignal() # return to home screen
     change_username_signal = pyqtSignal(str) # change username
     change_password_signal = pyqtSignal(str) # change password
     delete_account_signal = pyqtSignal() # delete account
     
     def __init__(self, application, max_size): # Constructor
 
-        super().__init__(application, max_size) # Inheritance
-
-        # Create title
-        self.__title = Label(self, "MANAGE ACCOUNT", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        # Create back button
-        self.__back = BackButton(self, self.__return_to_home_screen)
+        super().__init__(application=application, max_size=max_size, title_name="MANAGE ACCOUNT", create_button=True) # Inheritance
 
         # Create labels
         for idx, label in enumerate(("Change Username", "Old Password", "New Password", "New Password Again")):
@@ -939,20 +860,20 @@ class ManageAccountScreen(Screen): # Manage account screen class
         self.__delete = Button(self, "Delete Account", 525, 500, 200, 50, self._application.account.app_config.regular_font, 18, self.__delete)
         self.__delete.setStyleSheet(f"background: {self._application.account.app_config.colour4}; border: 2px solid black;")
 
-        self._widgets += [self.__back, self.__title, self.__username, self.__old_password, self.__new_password, 
+        self._widgets += [self.__username, self.__old_password, self.__new_password, 
                           self.__new_password2, self.__save, self.__delete]
     
     def __save(self): # Save account changes method
         if any([textbox.text() for textbox in self.__textboxes]): # Check if user typed something in a box
             if (username := self.__username.text()): # If user typed their username
                 self.change_username_signal.emit(username) # Change username
-                self.__return_to_home_screen() # Return to home screen
+                self._return_to_home_screen() # Return to home screen
             if all([textbox.text() for textbox in self.__textboxes[1:]]): # If user wishes to change their password
                 if self._application.check_password_match(self.__old_password.text()): # check if passwords match
                     if self.__new_password.text() == self.__new_password2.text(): # check if new passwords match
                         if self.__new_password.text() != self.__old_password.text(): # check if new password is different to old password
                             self.change_password_signal.emit(self.__new_password.text()) # change password
-                            self.__return_to_home_screen() # return to home screen
+                            self._return_to_home_screen() # return to home screen
                         else:
                             self.statusBar().showMessage("Please choose a different password to your current one")
                     else:
@@ -975,22 +896,13 @@ class ManageAccountScreen(Screen): # Manage account screen class
     def __delete_menu_button(self, button): # method to delete account when user confirms
         if button.text()[1:] == "Yes": # check if user pressed yes
             self.delete_account_signal.emit() # delete account
-            self.__return_to_home_screen() # return to home screen
-    
-    def __return_to_home_screen(self): # return to home screen
-        self.return_to_home_screen_signal.emit()
+            self._return_to_home_screen() # return to home screen
 
 class ViewStatsScreen(Screen): # View stats screen class
-
-    return_to_home_screen_signal = pyqtSignal() # pyqt signal to return to home screen
     
     def __init__(self, application, max_size): # Constructor
 
-        super().__init__(application, max_size) # Inheritance
-
-        # Create title
-        self.__title = Label(self, "PLAYER STATS", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        super().__init__(application=application, max_size=max_size, title_name="PLAYER STATS", create_button=True) # Inheritance
         
         # Create stats text edit widget
         self.__stats = TextEdit(self, 50, 150, 400, 450, self._application.account.app_config.colour2_translucent, 4, self._application.account.app_config.regular_font, 18)
@@ -1031,11 +943,8 @@ class ViewStatsScreen(Screen): # View stats screen class
         # create stats text edit widget
         self.__gamemode_stats = TextEdit(self, 525, 350, 400, 250, self._application.account.app_config.colour2_translucent, 4, self._application.account.app_config.regular_font, 18)
 
-        # Create back button
-        self.__back = BackButton(self, self.__return_to_home_screen)
-
         # Add to widgets
-        self._widgets += [self.__back, self.__title, self.__stats, self.__mode_menu, self.__board_size_menu, 
+        self._widgets += [self.__stats, self.__mode_menu, self.__board_size_menu, 
                           self.__difficulty_menu, self.__gamemode_stats]
     
     def update_gamemode_stats(self): # Method to update gamemode stats
@@ -1048,26 +957,15 @@ class ViewStatsScreen(Screen): # View stats screen class
                 f"Best Time: {database.best_time(self._application.account.username, mode, board_size, difficulty)}",
                 f"Best Hardcore Time: {database.best_hardcore_time(self._application.account.username, mode, board_size, difficulty)}"
             ])) # Set text in gamemode stats text edit
-    
-    def __return_to_home_screen(self): # Method to return back to home screen
-        self.return_to_home_screen_signal.emit()
 
 class GameMilestonesScreen(Screen): # Game Milestones Screen class
 
     # pyqt signals
-    return_to_home_screen_signal = pyqtSignal() # return to home screen
     claim_reward_signal = pyqtSignal(list) # claim reward
     
     def __init__(self, application, max_size): # Constructor
 
-        super().__init__(application, max_size) # Inheritance
-
-        # Create title
-        self.__title = Label(self, "GAME MILESTONES", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        # Create back button
-        self.__back = BackButton(self, self.__return_to_home_screen)
+        super().__init__(application=application, max_size=max_size, title_name="GAME MILESTONES", create_button=True) # Inheritance
         
         # Create currently selected milestone
         self.__selected_milestone = None
@@ -1096,7 +994,7 @@ class GameMilestonesScreen(Screen): # Game Milestones Screen class
         self.__claim_reward = Button(self, "Claim Reward", 725, 515, 250, 40, self._application.account.app_config.regular_font, 18, self.__claim_reward) # Create claim reward button
         self.__claim_reward.setStyleSheet("background: rgb(175, 175, 175); border: 2px solid black;") # Set background colour
             
-        self._widgets += [self.__back, self.__title, self.__milestone_data_box, self.__claim_reward] # Add to widgets
+        self._widgets += [self.__milestone_data_box, self.__claim_reward] # Add to widgets
     
     def __update_milestone_grid(self): # Method to update milestone grid
         milestone_claimed = database.milestone_claimed(self._application.account.username) # Get milestone claimed string
@@ -1148,19 +1046,13 @@ class GameMilestonesScreen(Screen): # Game Milestones Screen class
                 self.statusBar().showMessage("You haven't unlocked this reward yet!")
         else:
             self.statusBar().showMessage("Please select a milestone to claim")
-        
-    def __return_to_home_screen(self): # Method to return back to home screen
-        self.return_to_home_screen_signal.emit()
 
 class HelpScreen(Screen): # Help Screen class
 
-    return_to_home_screen_signal = pyqtSignal() # Return to home screen signal
-
     def __init__(self, application, max_size): # Constructor
 
-        super().__init__(application, max_size) # Inheritance
+        super().__init__(application=application, max_size=max_size, title_name=None, create_button=True) # Inheritance
 
-        self.__back = BackButton(self, self.__return_to_home_screen) # Create back button
         self.setStyleSheet(f"background: {self._application.account.app_config.colour3};") # Set background colour of screen
         
         # Create help instructions text window
@@ -1168,25 +1060,13 @@ class HelpScreen(Screen): # Help Screen class
         with open("resources/help.txt", "r") as f: # Open help.txt file and insert the text read in
             self.__txt_window.insertPlainText(f.read())
 
-        self._widgets += [self.__back, self.__txt_window] # Add to widgets
-        
-    def __return_to_home_screen(self): # Method to return back to home screen
-        self.return_to_home_screen_signal.emit()
+        self._widgets += [self.__txt_window] # Add to widgets
 
 class LeaderboardScreen(Screen): # Leaderboard Screen Class
 
-    return_to_home_screen_signal = pyqtSignal() # Return back to home screen pyqt signal
-
     def __init__(self, application, max_size): # Constructor
 
-        super().__init__(application, max_size) # Inheritance
-
-        # Create title
-        self.__title = Label(self, "LEADERBOARD", 0, 25, 1000, 100, self._application.account.app_config.title_font, 50)
-        self.__title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        # Create back button
-        self.__back = BackButton(self, self.__return_to_home_screen)
+        super().__init__(application=application, max_size=max_size, title_name="LEADERBOARD", create_button=True) # Inheritance
 
         # Create leaderboard table
         self.__table = TableWidget(self, 50, 125, 600, 450, self._application.account.app_config.regular_font, 18, self._application.account.app_config.colour2_translucent, 25, 3)
@@ -1223,7 +1103,7 @@ class LeaderboardScreen(Screen): # Leaderboard Screen Class
         self.__milestone.hide() # Hide for now
 
         # Add to widgets
-        self._widgets += [self.__back, self.__title, self.__table, self.__type, self.__gamemode, 
+        self._widgets += [self.__table, self.__type, self.__gamemode, 
                           self.__milestone, self.__type_label, self.__next_label]  
     
     def __show_options(self): # Method to show current options for best time or milestone
@@ -1259,9 +1139,6 @@ class LeaderboardScreen(Screen): # Leaderboard Screen Class
         else: # Otherwise
             self.__show_default_leaderboard() # Show the default leaderboard
             self.statusBar().showMessage("Please select an option to continue") # Show error message
-        
-    def __return_to_home_screen(self): # Method to return to home screen
-        self.return_to_home_screen_signal.emit()
 
 class GUI(UI): # Graphical User Interface (GUI) class
 

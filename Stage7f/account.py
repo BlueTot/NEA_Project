@@ -99,6 +99,7 @@ class Account: # Account Class
     def app_config(self): # Get appearance configuration
         return self.__app_config
     
+    @property
     def app_preset_num(self):
         return database.get_current_appearance_preset_num(self.__username)
     
