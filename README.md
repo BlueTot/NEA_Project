@@ -25,4 +25,5 @@ Milestones:
 - Stage 7c Commence: January 3rd 2024
 - Stage 7d Commence: January 3rd 2024
 - Stage 7e Commence: January 4th 2024
+- Stage 7f Commence: January 13th 2024
 - COMPLETION: January 15th 2024
