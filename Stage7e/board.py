@@ -1,5 +1,5 @@
 from ast import literal_eval # importing function to convert string into list/tuple objects
-from group_colouring import group_colours
+from group_colouring import group_colours # Import group colouring algorithm for killer sudoku
 
 def to_letter(num): # convert letter to number (A = 10 ...)
     return str(num) if 0 <= num <= 9 else chr(num-10+65)
@@ -14,10 +14,10 @@ def to_matrix_size(board_size): # get matrix size from board size
 
 class Square: # Square class
     def __init__(self, board_size, matrix_size): # constructor (takes board size : int,  matrix size : tuple)
-        self.__BOARD_SIZE = board_size
-        self.__MATRIX_SIZE = matrix_size
-        self.__num = 0
-        self.__note = [False for _ in range(self.__BOARD_SIZE)]
+        self.__BOARD_SIZE = board_size # Board size to know how long the note array should be
+        self.__MATRIX_SIZE = matrix_size # Matrix size for note rendering calculations
+        self.__num = 0 # Number at square initially set to 0
+        self.__note = [False for _ in range(self.__BOARD_SIZE)] # Note array
     
     '''Getters'''
 
@@ -64,12 +64,12 @@ class Square: # Square class
 class Board: # Board Base Class
 
     def __init__(self, board_size): # Constructor (takes board size : int)
-        self._board_size = board_size
-        self._matrix_size = to_matrix_size(board_size)
-        self._board = [[Square(self._board_size, self._matrix_size) for _ in range(self._board_size)] for _ in range(self._board_size)]
-        self._row_digits = [0 for _ in range(self._board_size)]
-        self._col_digits = [0 for _ in range(self._board_size)]
-        self._matrix_digits = [0 for _ in range(self._board_size)]
+        self._board_size = board_size # Board size
+        self._matrix_size = to_matrix_size(board_size) # Matrix size
+        self._board = [[Square(self._board_size, self._matrix_size) for _ in range(self._board_size)] for _ in range(self._board_size)] # 2D array for board
+        self._row_digits = [0 for _ in range(self._board_size)] # Row digits 1D array of integers to quickly determine legal moves
+        self._col_digits = [0 for _ in range(self._board_size)] # Col digits 1D array
+        self._matrix_digits = [0 for _ in range(self._board_size)] # Matrix digits 1D array
     
     @staticmethod
     def _bin(num): # convert index of number in binary number to decimal
@@ -114,15 +114,15 @@ class Board: # Board Base Class
     '''Setters'''
     
     def set_num_at(self, row, col, num): # sets num at (row, col)
-        if num > 0:
+        if num > 0: # Set number at square : add to 1D arrays (replacing an existing number with a non-zero number is not a legal move)
             self._row_digits[row] += (bin := self._bin(num)) # add binary number to row
             self._col_digits[col] += bin
             self._matrix_digits[self.matrix_num(row, col)] += bin
-        elif (orig_num := self.get_num_at(row, col)) != 0:
+        elif (orig_num := self.get_num_at(row, col)) != 0: # Delete number at square : subtract from 1D arrays
             self._row_digits[row] -= (bin := self._bin(orig_num))
             self._col_digits[col] -= bin
             self._matrix_digits[self.matrix_num(row, col)] -= bin
-        self._board[row][col].set_num(num)
+        self._board[row][col].set_num(num) # Set the number
     
     def set_note_at(self, row, col, note): # sets note at (row, col)
         self._board[row][col].set_note(note)
@@ -137,15 +137,6 @@ class Board: # Board Base Class
     
     def pieced_note_str(self, row, col, piece): # String representation of note (for rendering in terminal)
         return self._board[row][col].pieced_note_str(piece)
-    
-    @property
-    def board_as_2darr(self):
-        return [[sq.num for sq in row] for row in self._board]
-    
-    def load_from_2darr(self, arr):
-        for row in range(len(arr)):
-            for col in range(len(arr[0])):
-                self.set_num_at(row, col, arr[row][col])
 
 class NormalModeBoard(Board): # Normal Mode Board Class
 
@@ -153,7 +144,7 @@ class NormalModeBoard(Board): # Normal Mode Board Class
         super().__init__(board_size)
     
     @property
-    def mode(self):
+    def mode(self): # Get Mode
         return "Normal"
 
     def is_safe(self, row, col, num): # Is safe method to check if a number can be placed in a certain square
@@ -174,7 +165,7 @@ class KillerModeBoard(Board): # Killer Mode Board Class
         self._groups = {} # Create groups attribute (dictionary)
     
     @property
-    def mode(self):
+    def mode(self): # Get Mode
         return "Killer"
     
     @property
@@ -196,11 +187,11 @@ class KillerModeBoard(Board): # Killer Mode Board Class
     
     def adjacent_cells(self, row, col): # gets adjacent cells of a square (returns list)
         cells = []
-        for dr, dc in ((-1, 0), (1, 0), (0, 1), (0, -1)):
-            nr, nc = row + dr, col + dc
-            if 0 <= nr < self._board_size and 0 <= nc < self._board_size:
-                cells.append((nr, nc))
-        return cells
+        for dr, dc in ((-1, 0), (1, 0), (0, 1), (0, -1)): # Loop through all changes in row and col
+            nr, nc = row + dr, col + dc # Calculate new row and new col
+            if 0 <= nr < self._board_size and 0 <= nc < self._board_size: # Check if new rol and new col are in range
+                cells.append((nr, nc)) # Append to list of cells
+        return cells # Return cells
     
     def adjacent_non_grouped_cells(self, row, col): # gets adjacent cells of a square that aren't grouped (returns list)
         return [cell for cell in self.adjacent_cells(row, col) if not self.is_grouped(cell[0], cell[1])]
@@ -223,7 +214,7 @@ class KillerModeBoard(Board): # Killer Mode Board Class
         # Is safe only if not in row, col and matrix, and group is also valid
         return self._not_in_row(row, num) and self._not_in_col(col, num) and self._not_in_3x3_matrix(row, col, num) and self.is_group_valid(row, col, num)
     
-    def group_colours(self):
+    def group_colours(self): # Get group colours, calls group colouring algorithm
         return group_colours(self._groups)
 
     def load(self, hash): # Load board from hash (unique to KillerModeBoard)

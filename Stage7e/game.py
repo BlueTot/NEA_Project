@@ -1,7 +1,7 @@
 from board import * # Import everything from board
 from board_actions import * # Import everything from board_actions
-from generator import BoardGenerator
-from solver import BoardSolver
+from generator import BoardGenerator # Import board generator class
+from solver import BoardSolver # Import board solver class
 from data_structures import Stack # Import stack class
 from datetime import datetime, timedelta # Import datetime and timedelta functions from datetime
 import json # Import json module
@@ -103,7 +103,7 @@ class Game: # Game class
             if os.path.exists(path := f"{Application.DEFAULT_DIRECTORY}/{account}/{self.__file}"):
                 os.remove(path) # Remove file if the file exists
 
-    def get_stats(self, completed):
+    def get_stats(self, completed): # Method to get game stats when user completes or resigns the game
         return [self.__mode, self.__difficulty, self.__board_size, self.__orig_num_of_auto_notes, self.__num_of_auto_notes, 
                 self.__orig_num_of_hints, self.__num_of_hints, self.__timed, completed, self.__hardcore, 
                 0 if self.__time_elapsed is None else self.__time_elapsed, self.__creation_date, self.__creation_time]
@@ -211,44 +211,44 @@ class Game: # Game class
     
     '''UI Specific Methods to interact with the game/board (with validation)'''
 
-    def get_num_at(self, row, col):
+    def get_num_at(self, row, col): # Method to get number at certain square
         row, col = self.__validate(row) - 1, self.__validate(col) - 1 # '-1' is used to convert 1-based system to a 0-based system
         return self.__board.get_num_at(row, col)
 
     def put_down_number(self, row, col, num): # Put down number method (takes row, col, num where row, col are in a 1-based system)
         row, col, num = self.__validate(row) - 1, self.__validate(col) - 1, self.__validate(to_num(num))
-        if (orig_num := self.__board.get_num_at(row, col)) == 0:
-            if self.__board.is_safe(row, col, num):
-                self.__board.set_num_at(row, col, num)
+        if (orig_num := self.__board.get_num_at(row, col)) == 0: # Check if square is empty
+            if self.__board.is_safe(row, col, num): # Check if number is safe to be placed
+                self.__board.set_num_at(row, col, num) # Place the number
             else:
                 raise GameError(f"Please enter a number that doesn't exist in the row / column / box you specified")
         else:
             raise GameError(f"A number already exists at this square")
-        self.push_action(SetNumAction(row, col, orig_num, num))
+        self.push_action(SetNumAction(row, col, orig_num, num)) # Push set num action to stack (for undo button)
     
     def remove_number(self, row, col): # Remove number method (takes row, col, both are in a 1-based system)
         row, col = self.__validate(row) - 1, self.__validate(col) - 1 # '-1' is used to convert 1-based system to a 0-based system
-        if (orig_num := self.__board.get_num_at(row, col)) == 0:
+        if (orig_num := self.__board.get_num_at(row, col)) == 0: #Check if square is already empty
             raise GameError(f"There is no number at this square that you can delete")
         else:
-            if self.__orig_board.get_num_at(row, col) != 0:
+            if self.__orig_board.get_num_at(row, col) != 0: # Check if square is part of original board
                 raise GameError(f"This square is part of the original board and cannot be deleted")
             else:
                 self.__board.set_num_at(row, col, 0)
-        self.push_action(SetNumAction(row, col, orig_num, 0))
+        self.push_action(SetNumAction(row, col, orig_num, 0)) # Push set num action to stack (for undo button)
     
     def edit_note(self, row, col, num): # Edit (toggle) note method (takes row, col, num, where row, col are in a 1-based system)
         row, col, num = self.__validate(row)-1, self.__validate(col)-1, self.__validate(to_num(num)) # '-1' is used to convert 1-based system to a 0-based system
-        self.__board.toggle_num_at_note(row, col, num)
-        self.push_action(EditNoteAction(row, col, num))
+        self.__board.toggle_num_at_note(row, col, num) # Toggle number at note (on -> off, off -> on)
+        self.push_action(EditNoteAction(row, col, num)) # Push edit note action to stack (for undo button)
     
     def __get_auto_note_at(self, row, col): # INTERNAL PRIVATE Get auto note at square method (takes row, col where both are in a 0-based system)
-        if self.__board.get_num_at(row, col) != 0:
+        if self.__board.get_num_at(row, col) != 0: # Check if square is already filled
             raise GameError(f"ERROR: Auto-Note is unavailable for this square as it is not empty")
-        if self.__num_of_auto_notes == 0:
+        if self.__num_of_auto_notes == 0: # Check if still have auto notes to use
             raise GameError(f"Not enough auto-notes")
-        self.__num_of_auto_notes -= 1
-        return [self.__board.is_safe(row, col, num) for num in self.__VALID_NUMS]
+        self.__num_of_auto_notes -= 1 # Decrement auto note counter
+        return [self.__board.is_safe(row, col, num) for num in self.__VALID_NUMS] # Return valid note array
     
     def use_auto_note(self, row, col): # EXTERNAL Use auto note method (takes row, col where both are in a 1-based system)
         row, col = self.__validate(row)-1, self.__validate(col)-1 # '-1' is used to convert 1-based system to a 0-based system
@@ -258,13 +258,13 @@ class Game: # Game class
     
     def use_hint(self, row, col): # EXTERNAL Use hint method (takes row, col where both are in a 1-based system)
         row, col = self.__validate(row)-1, self.__validate(col)-1 # '-1' is used to convert 1-based system to a 0-based system
-        if (orig_num := self.__board.get_num_at(row, col)) != 0:
+        if (orig_num := self.__board.get_num_at(row, col)) != 0: # Check if square is already filled
             raise GameError(f"ERROR: Hint is unavailable for this square as it is not empty")
-        if self.__num_of_hints == 0:
+        if self.__num_of_hints == 0: # Check if still have hints to use
             raise GameError(f"Not enough hints")
-        self.__board.set_num_at(row, col, new_num := self.__solved_board.get_num_at(row, col))
-        self.push_action(SetNumAction(row, col, orig_num, new_num))
-        self.__num_of_hints -= 1
+        self.__board.set_num_at(row, col, new_num := self.__solved_board.get_num_at(row, col)) # Fill in the correct number
+        self.push_action(SetNumAction(row, col, orig_num, new_num)) # Push set num action to stack (for undo button)
+        self.__num_of_hints -= 1 # Decrement hint counter
     
     def undo_last_move(self): # Undo method, uses BoardActions imported from board_actions.py
         if (action := self.pop_action()) != -1: # Check if action stack isn't empty
@@ -276,10 +276,10 @@ class Game: # Game class
             elif isinstance(reverse_action, SetNoteAction): # (for SetNoteAction)
                 self.__board.set_note_at(reverse_action.row, reverse_action.col, reverse_action.new_note)
     
-    def rating_change(self, rating, won):
+    def rating_change(self, rating, won): # Method to return change in rating after game is completed or resigned, takes current rating (int) and whether the game was completed or not (bool)
         if won:
             return rating_gain(self.__mode, self.__board_size, self.__difficulty, rating, self.__time_elapsed, 
                                self.__orig_num_of_auto_notes - self.__num_of_auto_notes, self.__orig_num_of_auto_notes, 
-                               self.__orig_num_of_hints - self.__num_of_hints, self.__orig_num_of_hints)
+                               self.__orig_num_of_hints - self.__num_of_hints, self.__orig_num_of_hints) # Return rating gain if won
         else:
-            return -rating_loss(self.__mode, self.__board_size, self.__difficulty, rating)
+            return -rating_loss(self.__mode, self.__board_size, self.__difficulty, rating) # Return rating loss, loss signified by the minus sign

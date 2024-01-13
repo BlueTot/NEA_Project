@@ -2,7 +2,7 @@ from data_structures import Stack # Import stack object from stack.py
 from abc import ABC, abstractmethod # Import abstract base class and abstract method
 from application import Application # Import game application
 
-class UI(ABC):
+class UI(ABC): # User Interface class, inherits from abstract base class (must be inherited to use it)
 
     VERSION = "v0.7.4" # Set version
 

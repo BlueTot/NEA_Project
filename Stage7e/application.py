@@ -1,24 +1,24 @@
-import os
-from account import *
-from rating_calc import get_title
-from database import *
+import os # Import os library
+from account import * # Import everything from account.py file
+from rating_calc import get_title # import get_title function
+from database import * # Import all database functions
 
-class Application:
+class Application: # Application class, used to manage accounts and all account-related features
 
-    DEFAULT_DIRECTORY = "games"
+    DEFAULT_DIRECTORY = "games" # Default directory to store game files
 
-    def __init__(self):
-        self.__account = Account()
+    def __init__(self): # Constructor
+        self.__account = Account() # Create account
     
     @property
-    def account(self):
+    def account(self): # Get account
         return self.__account
     
     @property
-    def signed_in(self):
+    def signed_in(self): # Get signed in or not
         return self.__account.username is not None
     
-    def get_game_files(self):
+    def get_game_files(self): # Get list of game file names
         if self.signed_in:
             return os.listdir(os.path.join(self.DEFAULT_DIRECTORY, self.__account.username)) 
         return []
@@ -29,12 +29,15 @@ class Application:
         os.mkdir(os.path.join(self.DEFAULT_DIRECTORY, f"{username}")) # Create new directory for stored games
         self.__account.set_account(username) # Set the account in the GUI
     
+    def check_password_match(self, password):
+        return database.encrypt_password(password) == database.password_at(self.__account.username)[0][0]
+    
     def sign_in(self, options): # Method to sign in
         username, password = options
-        if not database.password_at(username):
+        if not database.password_at(username): # Username does not exist
             raise DBError("Username doesn't exist")
-        if database.password_at(username)[0][0] == database.encrypt_password(password):
-            self.__account.set_account(username)
+        if database.password_at(username)[0][0] == database.encrypt_password(password): # Check if password entered is correct
+            self.__account.set_account(username) # Set account
             print(f"Signed In as {username}")
         else:
             raise DBError("Incorrect Password")
@@ -43,15 +46,21 @@ class Application:
         self.__account.set_account(None)
         print("Signed Out")
     
+    def get_preset(self, preset_num):
+        try:
+            return database.get_preset(self._account.username, preset_num)
+        except IndexError:
+            return database.get_preset(self._account.username, 1)
+    
     def use_gui_preset(self, preset_num): # Method to use certain appearance preset (from view gui preset screen)
         database.set_current_appearance_preset(self.__account.username, preset_num)
         self.__account.update_app_config()
     
     def update_appearance_preset(self, options): # Method to update appearance preset (from edit gui preset screen)
         mode, preset_num, data = options[0], options[1], options[2:]
-        if mode == "edit":
+        if mode == "edit": # Edit existing preset
             database.update_appearance_preset(self.__account.username, preset_num, data)
-        else:
+        else: # Create new preset
             database.create_new_appearance_preset(self.__account.username, data)
         self.__account.update_app_config()
 
@@ -95,32 +104,32 @@ class Application:
 
         mode, board_size, difficulty, won = data
 
-        if won:
+        if won: # Check if user has won the game
 
-            milestone = database.milestone(self.__account.username, bs := f"milestone_{board_size}x{board_size}")
-            new_milestone = milestone + GameMilestones.MILESTONE_GAIN[difficulty] * (2 if mode == "Killer" else 1)
-            database.set_milestone(self.__account.username, bs, new_milestone)
+            milestone = database.milestone(self.__account.username, bs := f"milestone_{board_size}x{board_size}") # get current milestone
+            new_milestone = milestone + GameMilestones.MILESTONE_GAIN[difficulty] * (2 if mode == "Killer" else 1) # Calculate new milestone
+            database.set_milestone(self.__account.username, bs, new_milestone) # Update to database
 
-            old_rank = self.__curr_milestone_rank(milestone)
-            new_rank = self.__curr_milestone_rank(new_milestone)
+            old_rank = self.__curr_milestone_rank(milestone) # Calculate old milestone rank
+            new_rank = self.__curr_milestone_rank(new_milestone) # Calculate new milestone rank
 
-            if new_rank != old_rank:
-                claimed = database.milestone_claimed(self.__account.username)
-                idx = GameMilestones.BOARD_SIZE_IDXS[board_size] * 7 + new_rank - 1
-                database.set_milestone_claimed(self.__account.username, claimed[:idx] + "1" + claimed[idx+1:])
+            if new_rank != old_rank: # Check if milestone rank changed
+                claimed = database.milestone_claimed(self.__account.username) # Get claimed string
+                idx = GameMilestones.BOARD_SIZE_IDXS[board_size] * 7 + new_rank - 1 # Get index to update
+                database.set_milestone_claimed(self.__account.username, claimed[:idx] + "1" + claimed[idx+1:]) # Update the index to signify that a milestone reward needs to be claimed
 
             print(f"Milestone successfully updated for {self.__account.username}")
     
     def claim_reward(self, data): # Method to claim reward for a milestone (from game milestone screen)
         
         board_size, milestone_num = data
-        claimed = database.milestone_claimed(self.__account.username)
-        idx = GameMilestones.BOARD_SIZE_IDXS[board_size] * 7 + milestone_num - 1
-        database.set_milestone_claimed(self.__account.username, claimed[:idx] + "0" + claimed[idx+1:])
-        reward = GameMilestones.REWARDS[f"{board_size}x{board_size}"][milestone_num]
+        claimed = database.milestone_claimed(self.__account.username) # Get claimed string
+        idx = GameMilestones.BOARD_SIZE_IDXS[board_size] * 7 + milestone_num - 1 # Get index to update
+        database.set_milestone_claimed(self.__account.username, claimed[:idx] + "0" + claimed[idx+1:]) # Update the index to claim reward
+        reward = GameMilestones.REWARDS[f"{board_size}x{board_size}"][milestone_num] # Get the reward
         if reward is not None and reward[0] == "H":
             bonus_hints = database.bonus_hints(self.__account.username)
-            database.set_bonus_hints(self.__account.username, bonus_hints + reward[1])
+            database.set_bonus_hints(self.__account.username, bonus_hints + reward[1]) # Add the bonus hints earned from the reward
         
         print(f"Milestone reward claimed")
         

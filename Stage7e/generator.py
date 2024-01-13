@@ -1,15 +1,15 @@
-from board import NormalModeBoard, KillerModeBoard
-from solver import BoardSolver
-from random import randint, choice, shuffle
-from itertools import product
-from copy import deepcopy
-from solver import BoardUnsolvableError
-from difficulty_settings import get_num_givens
-from math import sqrt, ceil
+from board import NormalModeBoard, KillerModeBoard # Import NormalModeBoard and KillerModeBoard classes
+from solver import BoardSolver # Import BoardSolver class
+from random import randint, choice, shuffle # Import random functions for generating random board
+from itertools import product # Import cartesian product function
+from copy import deepcopy # Import deepcopy function
+from solver import BoardUnsolvableError # Import BoardUnsolvableError for error-catching purposes
+from difficulty_settings import get_num_givens # Import function to get number of given numbers for a given gamemode
+from math import sqrt, ceil # Import math functions
 
 class BoardGenerator: # Board Generator Class
 
-    NUM_GIVENS = get_num_givens()
+    NUM_GIVENS = get_num_givens() # Get the number of givens allowed
 
     @staticmethod
     def __get_random_filled_board(board_size): # generate a randomly filled valid board
@@ -66,23 +66,23 @@ class BoardGenerator: # Board Generator Class
             for c, cell in enumerate(board_row):
                 if cell.num != 0:
                     filled_cells.append((r, c))
-        shuffle(filled_cells)
+        shuffle(filled_cells) # Shuffle using random.shuffle
 
         # while there are still numbers to remove to reach the given difficulty
         while num_remaining > BoardGenerator.NUM_GIVENS[mode][board_size][difficulty]:
 
-            for row, col in filled_cells:
+            for row, col in filled_cells: # Iterate through all filled cells to remove
 
-                orig_num = board.get_num_at(row, col)
-                board.set_num_at(row, col, 0)
+                orig_num = board.get_num_at(row, col) # Store original number to restore later
+                board.set_num_at(row, col, 0) # Delete number at square
 
-                if BoardSolver.is_unique(deepcopy(board)):
-                    num_remaining -= 1
-                    filled_cells.remove((row, col))
+                if BoardSolver.is_unique(deepcopy(board)): # Check if board still has one solution
+                    num_remaining -= 1 # Decerement number of remaining numbers
+                    filled_cells.remove((row, col)) # Remove from filled cells as the cell is now empty
                     break
 
-                board.set_num_at(row, col, orig_num)
-                filled_cells.remove((row, col))
+                board.set_num_at(row, col, orig_num) # Otherwise restore the number at that square
+                filled_cells.remove((row, col)) # Remove from filled cells as cells that cannot be removed now are most likely not able to be removed in the future (as number of clues decreases)
             
             else:
                 return board # exit as board cannot be reduced further (minimal board reached)

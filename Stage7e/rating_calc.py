@@ -16,14 +16,14 @@ RECOMMENDED_RATINGS = {("Normal", 4, "Easy"): 0, ("Normal", 4, "Medium"): 40, ("
                        ("Killer", 16, "Easy"): 1500, ("Killer", 16, "Medium"): 1700, ("Killer", 16, "Hard"): 1950, ("Killer", 16, "Expert"): None
 }
 
-def average_time_to_complete(mode, board_size, difficulty):
+def average_time_to_complete(mode, board_size, difficulty): # Function to get average time to complete a gamemode
     a = {4 : 25, 6: 45, 9: 240, 12: 450, 16: 770}[board_size]
     b = 0.775 + 0.30*{4: -2.5, 6: -1.5, 9: 0, 12: 0.05, 16: 0.1}[board_size]
     if mode == "Killer":
         b *= 1.5
     return round(a*exp(b*DIFFICULTY_NUMS[difficulty]))
 
-def get_title(rating):
+def get_title(rating): # Functin to get user's title depending on rating
     if rating >= 2000:
         return "Master"
     elif rating >= 1600:
@@ -42,7 +42,7 @@ ACTIVE_RANGE = 100 # b
 XP_PER_RUN = 15 # k
 
 '''RATING FORMULA: y = {a<x<a+b : k, x>a : round(ke^{-1/(10eb)*(x-a-b)^2),x<a:round(2k-ke^{-1/(10eb)*(x-a)^2)}'''
-def __rating_gain(mode, board_size, difficulty, rating):
+def __rating_gain(mode, board_size, difficulty, rating): # Function to get rating gain (returns int)
     recommended_rating = RECOMMENDED_RATINGS[(mode, board_size, difficulty)] # a
    
     if recommended_rating <= rating <= recommended_rating + ACTIVE_RANGE: # if a < x < a + b
@@ -68,61 +68,19 @@ def rating_gain(mode, board_size, difficulty, rating, time, num_auto_notes_used,
     return round(base_rating * factor)
 
 '''RATING FORMULA: y = 2k - rating_gain(...)'''
-def rating_loss(mode, board_size, difficulty, rating):
+def rating_loss(mode, board_size, difficulty, rating): # Function to get rating loss (returns int)
     return 2*XP_PER_RUN - __rating_gain(mode, board_size, difficulty, rating) # 2k - rating_gain(...)
 
-if __name__ in "__main__":
-    for mode in ("Normal", "Killer"):
-        for board_size in (4, 6, 9, 12, 16):
-            for difficulty in ("Easy", "Medium", "Hard", "Expert"):
-                t = average_time_to_complete(mode, board_size, difficulty)
-                print(f"{mode} {board_size} {difficulty} : {t // 60}m {t % 60}s")
+# if __name__ in "__main__":
+#     for mode in ("Normal", "Killer"):
+#         for board_size in (4, 6, 9, 12, 16):
+#             for difficulty in ("Easy", "Medium", "Hard", "Expert"):
+#                 t = average_time_to_complete(mode, board_size, difficulty)
+#                 print(f"{mode} {board_size} {difficulty} : {t // 60}m {t % 60}s")
 
 
 '''
-v1
-Normal 4 Easy : 0m 47s
-Normal 4 Medium : 1m 59s
-Normal 4 Hard : 3m 57s
-Normal 4 Expert : 7m 54s
-Normal 6 Easy : 1m 47s
-Normal 6 Medium : 4m 27s
-Normal 6 Hard : 8m 53s
-Normal 6 Expert : 17m 47s
-Normal 9 Easy : 4m 0s
-Normal 9 Medium : 10m 0s
-Normal 9 Hard : 20m 0s
-Normal 9 Expert : 40m 0s
-Normal 12 Easy : 7m 7s
-Normal 12 Medium : 17m 47s
-Normal 12 Hard : 35m 33s
-Normal 12 Expert : 71m 7s
-Normal 16 Easy : 12m 39s
-Normal 16 Medium : 31m 36s
-Normal 16 Hard : 63m 13s
-Normal 16 Expert : 126m 25s
-Killer 4 Easy : 0m 47s
-Killer 4 Medium : 2m 22s
-Killer 4 Hard : 4m 56s
-Killer 4 Expert : 9m 53s
-Killer 6 Easy : 1m 47s
-Killer 6 Medium : 5m 20s
-Killer 6 Hard : 11m 7s
-Killer 6 Expert : 22m 13s
-Killer 9 Easy : 4m 0s
-Killer 9 Medium : 12m 0s
-Killer 9 Hard : 25m 0s
-Killer 9 Expert : 50m 0s
-Killer 12 Easy : 7m 7s
-Killer 12 Medium : 21m 20s
-Killer 12 Hard : 44m 27s
-Killer 12 Expert : 88m 53s
-Killer 16 Easy : 12m 39s
-Killer 16 Medium : 37m 56s
-Killer 16 Hard : 79m 1s
-Killer 16 Expert : 158m 1s
-
-v5
+current:
 Normal 4 Easy : 0m 25s
 Normal 4 Medium : 0m 26s
 Normal 4 Hard : 0m 26s

@@ -15,11 +15,11 @@ def __are_adjacent(group1, group2): # Function to check if two groups are adjace
                 queue.append((nr, nc)) # Push back onto queue
     return len(coords) == len(visited) # Check if number of visited squares is the same as the number of squares in both groups
 
-def group_colours(groups):
+def group_colours(groups): # Group colouring function, takes a dictionary and returns a dictionary
 
     graph = {head : [] for head in groups.keys()} # Initialise adjacency list to represent the graph
 
-    seen_conns = set()
+    seen_conns = set() # Initialise set of seen edges so edge is only visited once
 
     # Iterate through all combinations of pairs of groups
     for item1, item2 in combinations(tuple(groups.values()), 2):
@@ -32,26 +32,26 @@ def group_colours(groups):
                 seen_conns.add(tuple(sorted((h1, h2))))
     
     # Breadth first search with priority queue
-    colours = {}
-    visited = set()
-    queue = PriorityQueue((0, list(graph.keys())[0]))
+    colours = {} # Initialise colours dictionary
+    visited = set() # Setup set of visited nodes
+    queue = PriorityQueue((0, list(graph.keys())[0])) # Initialise the priority queue
 
-    while not queue.is_empty():
-        _, v = queue.dequeue()
-        visited.add(v)
-        available_colours = [0, 1, 2, 3, 4]
-        for w in graph[v]:
-            if w in colours and colours[w] in available_colours:
-                available_colours.remove(colours[w])
-            if w not in visited:
-                queue.enqueue((-sum([1 if u in colours else 0 for u in graph[w]]), w))
-        colours[v] = available_colours[0]
+    while not queue.is_empty(): # Loop while the queue is not empty
+        _, v = queue.dequeue() # Dequeue the node with the lowest priority
+        visited.add(v) # Add to set of visited nodes
+        available_colours = [0, 1, 2, 3, 4] # Initialise list of available colours
+        for w in graph[v]: # Iterate through neighbours of v
+            if w in colours and colours[w] in available_colours: # Check if neighbour has been assigned a colour
+                available_colours.remove(colours[w]) # Remove the colour from the list of available colours for v
+            if w not in visited: # Check if neighbour has not been visited yet
+                queue.enqueue((-sum([1 if u in colours else 0 for u in graph[w]]), w)) # Enqueue  neighbour w with priority = -1 * number of coloured neighbours (-1 is to pull out the node with the most coloured neighbours from the priority queue)
+        colours[v] = available_colours[0] # Get the first colour in the list of available colours that hasn't been used yet
     
     # Assign each square in each group their colour
     output = {}
-    for head, colour in colours.items():
-        squares = groups[head][0]
-        for sq in squares:
-            output[sq] = colour
+    for head, colour in colours.items(): # Loop through all groups with a colour
+        squares = groups[head][0] # Get list of squares
+        for sq in squares: # Loop through list of squares in the group
+            output[sq] = colour # Assign the colour of the head square
 
     return output # return the output dictionary

@@ -1,8 +1,8 @@
-from sys import argv
-from terminal import Terminal
-from gui import GUI
+from sys import argv # Import object to get list of arguments entered in the terminal
+from terminal import Terminal # Import Terminal class
+from gui import GUI # Import GUI class
 
-def print_usage(): # print how to run the game
+def print_usage(): # Print how to run the game in terminal
     print("""Welcome to Sudoku
           
     To start the program in terminal: 
@@ -12,19 +12,19 @@ def print_usage(): # print how to run the game
 
 def main():
 
-    if len(argv) != 2:
+    if len(argv) != 2: # If number of arguments is not 2
         print_usage()
         return
 
-    if argv[1] == "t": # terminal
+    if argv[1] == "t": # Run terminal if 't' option used
         game = Terminal()
-    elif argv[1] == "g": # gui
+    elif argv[1] == "g": # Run GUI if 'g' optin used
         game = GUI()
-    else:
+    else: # Otherwise print program usage
         print_usage()
         return
     
-    game.run() # start game
+    game.run() # Start the game
 
-if __name__ in "__main__": # driver code
+if __name__ in "__main__": # Driver code
     main()

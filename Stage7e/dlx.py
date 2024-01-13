@@ -1,18 +1,18 @@
 from itertools import product # import product function
 
-class DLXSolver:
+class DLXSolver: # Dancing Links X Solver class
 
     @staticmethod
     def solve_sudoku(board): # Main solver function (takes NormalModeBoard object)
 
-        N = board.board_size
+        N = board.board_size # Board size constant
 
         cols = ([("row col", row_col) for row_col in product(range(N), range(N))] + # Constraint 1: each cell must have a number in it
                 [("row num", row_num) for row_num in product(range(N), range(1, N + 1))] + # Constraint 2: each different number must appear in every row
                 [("col num", col_num) for col_num in product(range(N), range(1, N + 1))] + # Contraint 3: each different number must appear in every column
                 [("matrix num", matrix_num) for matrix_num in product(range(N), range(1, N + 1))]) # Constraint 4: each different number must appear in every matrix/box
         
-        rows = {}
+        rows = {} # Initialise rows dictionary
         for row, col, num in product(range(N), range(N), range(1, N + 1)):
             # Populate rows dictionary with the columns that they match
             matrix_num = board.matrix_num(row, col)
@@ -40,7 +40,7 @@ class DLXSolver:
         for solution_set in DLXSolver.__solve(cols, rows): # Iterate through all solutions of the board using DLX Solver
             for (row, col, num) in solution_set: # Iterate through all squares
                 board.set_num_at(row, col, num)
-            yield board # Return a copy of the board
+            yield board # Return a copy of the board and continue looping thorugh all solutions
 
     @staticmethod
     def __convert_to_sets(cols, rows): # Function to convert set to dictionary of sets for fast access
@@ -52,8 +52,8 @@ class DLXSolver:
 
     @staticmethod
     def __solve(cols, rows, solution_set=[]): # Dancing Links X main solver algorithm
-        if not cols: # Return solution set when no columns left (base case)
-            return [list(solution_set)]
+        if not cols: # Check if no more columns left in the matrix (base case)
+            return [list(solution_set)] # Return the solution set
         else:
             min_col = min(cols, key= lambda col : len(cols[col])) # Get column with least number of intersecting rows (S-heuristic)
             sols = [] # Initialise list of solution sets

@@ -3,8 +3,8 @@ from abc import ABC # importing abstract base class
 class BoardAction(ABC): # Base BoardAction class
 
     def __init__(self, row, col): # Constructor (takes row, col : ints)
-        self._row = row
-        self._col = col
+        self._row = row # Set row
+        self._col = col # Set col
     
     '''Getters'''
     
@@ -25,8 +25,8 @@ class SetNumAction(BoardAction): # Set Num Action class, inherits from BoardActi
 
     def __init__(self, row, col, orig_num, new_num): # Constructor (takes row, col, orig_num, new_num : ints)
         super().__init__(row, col)
-        self._orig_num = orig_num
-        self._new_num = new_num
+        self._orig_num = orig_num # Set original number
+        self._new_num = new_num # Set new number
     
     '''Getters'''
 
@@ -47,7 +47,7 @@ class EditNoteAction(BoardAction): # Edit Note Action (inherits from BoardAction
 
     def __init__(self, row, col, num): # Constructor (takes row, col, num : ints)
         super().__init__(row, col)
-        self._num = num
+        self._num = num # Set number to add/remove
     
     '''Getters'''
 
@@ -64,8 +64,8 @@ class SetNoteAction(BoardAction): # Set Note Action (inherits from BoardAction c
 
     def __init__(self, row, col, orig_note, new_note): # Constructor (takes row, col, orig note, new note : int)
         super().__init__(row, col)
-        self._orig_note = orig_note
-        self._new_note = new_note
+        self._orig_note = orig_note # Original note (list)
+        self._new_note = new_note # New note (list)
     
     '''Getters'''
     
@@ -81,3 +81,4 @@ class SetNoteAction(BoardAction): # Set Note Action (inherits from BoardAction c
     
     def reverse(self): # Reverse method so action can be applied in reverse (undo)
         return SetNoteAction(self._row, self._col, self._new_note, self._orig_note)
+    

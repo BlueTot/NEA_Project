@@ -1,25 +1,27 @@
 # Summary
 
-Date : 2023-11-11 14:49:17
+Date : 2024-01-13 18:38:41
 
-Directory c:\\Users\\nhlo\\Documents\\GitHub\\NEA_Project\\Stage6c
+Directory c:\\Users\\nhlo\\Documents\\GitHub\\NEA_Project\\Stage7e
 
-Total : 33 files,  3576 codes, 79 comments, 669 blanks, all 4324 lines
+Total : 36 files,  4111 codes, 206 comments, 777 blanks, all 5094 lines
 
 Summary / [Details](details.md) / [Diff Summary](diff.md) / [Diff Details](diff-details.md)
 
 ## Languages
 | language | files | code | comment | blank | total |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| Python | 18 | 2,447 | 79 | 655 | 3,181 |
+| Python | 19 | 2,948 | 206 | 763 | 3,917 |
 | XML | 14 | 1,126 | 0 | 14 | 1,140 |
-| JSON | 1 | 3 | 0 | 0 | 3 |
+| JSON | 3 | 37 | 0 | 0 | 37 |
 
 ## Directories
 | path | files | code | comment | blank | total |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| . | 33 | 3,576 | 79 | 669 | 4,324 |
-| . (Files) | 19 | 2,450 | 79 | 655 | 3,184 |
+| . | 36 | 4,111 | 206 | 777 | 5,094 |
+| . (Files) | 20 | 2,951 | 206 | 763 | 3,920 |
+| games | 2 | 34 | 0 | 0 | 34 |
+| games\\beta | 2 | 34 | 0 | 0 | 34 |
 | resources | 14 | 1,126 | 0 | 14 | 1,140 |
 
 Summary / [Details](details.md) / [Diff Summary](diff.md) / [Diff Details](diff-details.md)

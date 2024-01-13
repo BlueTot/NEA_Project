@@ -1,0 +1,66 @@
+Date : 2024-01-13 18:38:41
+Directory : c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e
+Total : 36 files,  4111 codes, 206 comments, 777 blanks, all 5094 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Python   |         19 |      2,948 |        206 |        763 |      3,917 |
+| XML      |         14 |      1,126 |          0 |         14 |      1,140 |
+| JSON     |          3 |         37 |          0 |          0 |         37 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++---------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                        | files      | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                           |         36 |      4,111 |        206 |        777 |      5,094 |
+| . (Files)                                                                                   |         20 |      2,951 |        206 |        763 |      3,920 |
+| games                                                                                       |          2 |         34 |          0 |          0 |         34 |
+| games\beta                                                                                  |          2 |         34 |          0 |          0 |         34 |
+| resources                                                                                   |         14 |      1,126 |          0 |         14 |      1,140 |
++---------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++---------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                    | language | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\account.py                               | Python   |        101 |          2 |         29 |        132 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\application.py                           | Python   |        104 |          0 |         31 |        135 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\board.py                                 | Python   |        172 |          2 |         60 |        234 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\board_actions.py                         | Python   |         56 |          0 |         28 |         84 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\data_structures.py                       | Python   |         30 |          0 |         10 |         40 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\database.py                              | Python   |        240 |          8 |         46 |        294 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\difficulty_settings.py                   | Python   |         37 |          6 |         14 |         57 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\dlx.py                                   | Python   |         77 |          1 |         13 |         91 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\game.py                                  | Python   |        231 |          2 |         53 |        286 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\games\beta\sudoku_12-01-24_11-10-13.json | JSON     |         17 |          0 |          0 |         17 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\games\beta\sudoku_12-01-24_11-22-18.json | JSON     |         17 |          0 |          0 |         17 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\generator.py                             | Python   |         67 |          3 |         21 |         91 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\group_colouring.py                       | Python   |         45 |          3 |          9 |         57 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\gui.py                                   | Python   |      1,011 |        124 |        302 |      1,437 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\hex_to_dec.py                            | Python   |          8 |          0 |          2 |         10 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\options.json                             | JSON     |          3 |          0 |          0 |          3 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\pyqt_widgets.py                          | Python   |        291 |         38 |         71 |        400 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\rating_calc.py                           | Python   |        100 |         10 |         14 |        124 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\account.svg                    | XML      |          8 |          0 |          1 |          9 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\auto_note.svg                  | XML      |        130 |          0 |          1 |        131 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\back.svg                       | XML      |        128 |          0 |          1 |        129 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\delete.svg                     | XML      |        180 |          0 |          1 |        181 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\exit.svg                       | XML      |         13 |          0 |          1 |         14 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\help.svg                       | XML      |        145 |          0 |          1 |        146 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\hint.svg                       | XML      |         90 |          0 |          1 |         91 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\info.svg                       | XML      |         72 |          0 |          1 |         73 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\notes_off.svg                  | XML      |         91 |          0 |          1 |         92 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\notes_on.svg                   | XML      |         63 |          0 |          1 |         64 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\resign.svg                     | XML      |         65 |          0 |          1 |         66 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\settings.svg                   | XML      |         11 |          0 |          1 |         12 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\stats.svg                      | XML      |         20 |          0 |          1 |         21 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\resources\undo.svg                       | XML      |        110 |          0 |          1 |        111 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\solver.py                                | Python   |         57 |          0 |         18 |         75 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\sudoku.py                                | Python   |         23 |          0 |          8 |         31 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\terminal.py                              | Python   |        280 |          7 |         27 |        314 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\ui.py                                    | Python   |         18 |          0 |          7 |         25 |
+| Total                                                                                       |          |      4,111 |        206 |        777 |      5,094 |
++---------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+

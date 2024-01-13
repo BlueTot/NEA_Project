@@ -1,4 +1,4 @@
-from heapq import heappop, heappush
+from heapq import heappop, heappush # Import priority queue operations
 
 class Stack: # Stack data structure
     def __init__(self): # constructor

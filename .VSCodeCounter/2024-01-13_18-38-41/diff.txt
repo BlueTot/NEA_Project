@@ -1,0 +1,46 @@
+Date : 2024-01-13 18:38:41
+Directory : c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e
+Total : 17 files,  -80 codes, 175 comments, 0 blanks, all 95 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| JSON     |          6 |        -34 |          0 |          0 |        -34 |
+| Python   |         11 |        -46 |        175 |          0 |        129 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                               | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                  |         17 |        -80 |        175 |          0 |         95 |
+| . (Files)                                                                                          |         11 |        -46 |        175 |          0 |        129 |
+| games                                                                                              |          6 |        -34 |          0 |          0 |        -34 |
+| games\admin                                                                                        |          4 |        -68 |          0 |          0 |        -68 |
+| games\beta                                                                                         |          2 |         34 |          0 |          0 |         34 |
++----------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                           | language | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\account.py                                      | Python   |          5 |          2 |          3 |         10 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\application.py                                  | Python   |         11 |          0 |          3 |         14 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\board.py                                        | Python   |         -7 |          0 |         -2 |         -9 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\board_actions.py                                | Python   |          0 |          0 |          1 |          1 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\database.py                                     | Python   |          0 |          2 |          0 |          2 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\difficulty_settings.py                          | Python   |         -2 |          2 |          0 |          0 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\game_generator.py                               | Python   |        -27 |          0 |         -9 |        -36 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\games\admin\singleplayer_03-01-24_09-24-02.json | JSON     |        -17 |          0 |          0 |        -17 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\games\admin\singleplayer_04-01-24_08-32-49.json | JSON     |        -17 |          0 |          0 |        -17 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\games\admin\singleplayer_04-01-24_08-33-54.json | JSON     |        -17 |          0 |          0 |        -17 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\games\admin\singleplayer_04-01-24_08-34-24.json | JSON     |        -17 |          0 |          0 |        -17 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\games\beta\sudoku_12-01-24_11-10-13.json        | JSON     |         17 |          0 |          0 |         17 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\games\beta\sudoku_12-01-24_11-22-18.json        | JSON     |         17 |          0 |          0 |         17 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\gui.py                                          | Python   |        -28 |        123 |          3 |         98 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\pyqt_widgets.py                                 | Python   |         -1 |         33 |          0 |         32 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\rating_calc.py                                  | Python   |        -47 |          6 |         -1 |        -42 |
+| c:\Users\nhlo\Documents\GitHub\NEA_Project\Stage7e\terminal.py                                     | Python   |         50 |          7 |          2 |         59 |
+| Total                                                                                              |          |        -80 |        175 |          0 |         95 |
++----------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
