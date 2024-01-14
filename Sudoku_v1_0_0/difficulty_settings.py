@@ -31,26 +31,3 @@ def get_num_givens(): # Get num givens for normal and killer modes
     NUM_GIVENS["Killer"] = KILLER_NUM_GIVENS
 
     return NUM_GIVENS
-
-# if __name__ in "__main__":
-#     print(get_num_givens())
-    # for d in get_num_givens():
-    #     for k, v in d.items():
-    #         print(k, v)
-    #     print()
-
-'''OUTPUT OF FUNCTION SHOULD GIVE:
-
-9 {'Easy': 43, 'Medium': 35, 'Hard': 29, 'Expert': 25}
-4 {'Easy': 8, 'Medium': 5, 'Hard': 4, 'Expert': 3}
-6 {'Easy': 19, 'Medium': 13, 'Hard': 10, 'Expert': 8}
-12 {'Easy': 76, 'Medium': 61, 'Hard': 49, 'Expert': 42}
-16 {'Easy': 135, 'Medium': 110, 'Hard': 90, 'Expert': 78}
-
-9 {'Easy': 32, 'Medium': 22, 'Hard': 14, 'Expert': 8}
-4 {'Easy': 6, 'Medium': 3, 'Hard': 1, 'Expert': 0}
-6 {'Easy': 14, 'Medium': 7, 'Hard': 3, 'Expert': 1}
-12 {'Easy': 56, 'Medium': 37, 'Hard': 22, 'Expert': 12}
-16 {'Easy': 101, 'Medium': 68, 'Hard': 43, 'Expert': 24}
-
-'''

@@ -282,13 +282,3 @@ def leaderboard_best_time_data(mode, board_size, difficulty): # Query to get the
 
 def leaderboard_milestone_data(board_size): # Query to get the username, rating, title and milestone number of all registered accounts (used in leaderboard)
     return __fetch_data(f"""SELECT username, rating, title, milestone_{board_size} FROM Accounts;""")
-
-# if __name__ in "__main__":
-#     __setup()
-#     print(__fetch_data("""SELECT * FROM Accounts"""))
-#     print(__fetch_data(f"""SELECT username FROM Accounts"""))
-#     print(leaderboard_best_time_data("Normal", 4, "Easy"))
-#     print(__fetch_data("""SELECT * FROM AppearancePresets"""))
-#     print(appearance_config_at("bluetot"))
-
-##C5B4E3
