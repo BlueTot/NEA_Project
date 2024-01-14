@@ -1110,11 +1110,13 @@ class LeaderboardScreen(Screen): # Leaderboard Screen Class
             self.__gamemode.show() # Show gamemode combobox
             self.__milestone.hide() # Hide milestone combobox
             self.__next_label.setText("Choose Gamemode") # Set label text
+            self.__show_default_leaderboard()
         elif self.__type.currentText() == "Milestone": # If user chose to see milestone details
             self.__gamemode.hide() # Hide gamemode combobox
             self.__milestone.setCurrentText("") # Reset milestone combobox contents
             self.__milestone.show() # Show milestone combobox
             self.__next_label.setText("Choose Milestone") # Set label text
+            self.__show_default_leaderboard()
         else:
             self.__gamemode.hide() # Hide gamemode combobox
             self.__milestone.hide() # Hide milestone combobox

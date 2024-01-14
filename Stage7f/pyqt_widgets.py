@@ -320,6 +320,7 @@ class TableWidget(QTableWidget): # Table widget, used to display rankings in lea
         self._orig_height = height
         self._font_family = font_family
         self._orig_font_size = font_size
+        self._num_rows = num_rows
 
         self.setGeometry(x, y, width, height) # Set position and dimensions
         self.setStyleSheet(f"background: {background_colour};") # Set background colour
@@ -334,15 +335,17 @@ class TableWidget(QTableWidget): # Table widget, used to display rankings in lea
     def load_data(self, headings, data): # Method to load table with data when given headings (list) and data (list[tuple])
         self.setSortingEnabled(False) # Disable sorting when loading data
         self.setColumnCount(len(headings)) # Set number of columns
+        self.setRowCount(len(data)) # Set row count to number of rows in data given
         for row in range(self.rowCount()): # Loop through rows
             for col in range(self.columnCount()): # Loop through cols
                 item = QTableWidgetItem() # Create table widget item
-                value = data[row][col] if 0 <= row < len(data) and 0 <= col < len(data[0]) else "" # Get value if (row, col) in range
+                value = data[row][col] if 0 <= row < len(data) and 0 <= col < len(data[0]) else None # Get value if (row, col) in range
                 item.setData(Qt.ItemDataRole.EditRole, value) # Assign value to item
                 self.setItem(row, col, item) # Assign item to table
         self.setHorizontalHeaderLabels(headings) # Set horizontal column headers
         self.setSortingEnabled(True) # Enable sorting so user can click column headers to sort in ascending / descending order
         self.sortByColumn(1, Qt.SortOrder.DescendingOrder) # Sort ratings column (column 1) in descending order by default
+        self.setRowCount(self._num_rows) # Set row count to original (25) so the sorting can work properly     
     
     # Scale up object when screen is maximised
     def maximise(self, factor):
