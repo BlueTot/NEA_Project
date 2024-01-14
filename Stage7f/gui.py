@@ -148,7 +148,7 @@ class ConfigGameScreen(Screen): # Create new game screen
         for idx, label in enumerate(("MODE: ", "DIFFICULTY: ", "TIMED: ", "BOARD_SIZE: ", "HARDCORE: ")):
             label_obj = Label(self, label, 50, 150+75*idx, 300, 100, self._application.account.app_config.regular_font, 24)
             self._widgets.append(label_obj)
-        self.__hardcore_label = Label(self, "(Hardcore enabled = No auto notes or hints allowed\n *Required to be on the leaderboard)", 50, 150+75*4+60, 500, 100, self._application.account.app_config.regular_font, 14)
+        self.__hardcore_label = Label(self, "(Hardcore enabled = No auto notes or hints allowed\n *Required to be on the leaderboard)", 50, 150+75*4+60, 500, 75, self._application.account.app_config.regular_font, 14)
 
         # Create menu for mode
         self.__mode_menu = ComboBox(self, 330, 175, 200, 50, self._application.account.app_config.regular_font, 20, ["Normal", "Killer"])
@@ -503,7 +503,7 @@ class GameScreen(Screen): # Main game screen
             self._widgets += [time, time_label_top] # Add to widgets
 
         # Create button to return back to home screen
-        home_screen_button = Button(self, "RETURN TO HOME", 350, 450, 300, 50, self._application.account.app_config.regular_font, 20, self.__return_to_home_screen)
+        home_screen_button = Button(self, "RETURN TO HOME", 350, 450, 300, 50, self._application.account.app_config.regular_font, 20, self._return_to_home_screen)
         home_screen_button.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
         home_screen_button.show()
 
@@ -1004,7 +1004,7 @@ class GameMilestonesScreen(Screen): # Game Milestones Screen class
             label = Label(self, label, 50, 175+80*idx, 100, 50, self._application.account.app_config.regular_font, 30)
             self._widgets.append(label)
 
-        milestone_claimed = database.milestone_claimed(self._application.account.username) # Get milestone claimed string
+        milestone_claimed = self._application.account.milestone_claimed # Get milestone claimed string
         self.__milestone_buttons = {} # Setup dictionary of milestone buttons
         for vidx, board_size in enumerate(milestone_types): # Loop through milestone types
             for hidx, milestone_num in enumerate(range(1, 8)): # Loop through 7 reward tiers
@@ -1026,7 +1026,7 @@ class GameMilestonesScreen(Screen): # Game Milestones Screen class
         self._widgets += [self.__milestone_data_box, self.__claim_reward] # Add to widgets
     
     def __update_milestone_grid(self): # Method to update milestone grid
-        milestone_claimed = database.milestone_claimed(self._application.account.username) # Get milestone claimed string
+        milestone_claimed = self._application.account.milestone_claimed # Get milestone claimed string
         for k, v in self.__milestone_buttons.items(): # Loop through all milestone buttons
             vidx, hidx = k # Get vertical box number and horizontal box number
             board_size, milestone_num, box, unclaimed_label = v # Get board size, milestone number, box and unclaimed label (!)
@@ -1046,7 +1046,7 @@ class GameMilestonesScreen(Screen): # Game Milestones Screen class
     
     def __selected_milestone_not_claimed(self): # Method to check if the currently selected milestone reward hasn't been claimed
         board_size, milestone_num = self.__selected_milestone # get board size and milestone number
-        claimed = database.milestone_claimed(self._application.account.username) # get claimed string
+        claimed = self._application.account.milestone_claimed # get claimed string
         idx = GameMilestones.BOARD_SIZE_IDXS[int(board_size.split("x")[0])] * 7 + int(milestone_num) - 1 # get index of reward
         return int(claimed[idx]) # get bit at index in string
     
@@ -1061,7 +1061,7 @@ class GameMilestonesScreen(Screen): # Game Milestones Screen class
             f"Progress: {milestone}/{target} ({round(milestone/target*100)}%)\n",
             f"Reward: {self.__parse_reward(GameMilestones.REWARDS[board_size][int(milestone_num)])}"
         ])) # Set text in milestone data box
-        self.__claim_reward.setStyleSheet(f"background: {self._application.account.app_config.killer_colours[3] if self.__complete(board_size, milestone_num) else 'rgb(175, 175, 175)'}; border: 3px solid black;") # Set style sheet
+        self.__claim_reward.setStyleSheet(f"background: {self._application.account.app_config.killer_colours[3] if self.__complete(board_size, milestone_num) and self.__selected_milestone_not_claimed() else 'rgb(175, 175, 175)'}; border: 3px solid black;") # Set style sheet
     
     def __claim_reward(self): # Method to claim reward
         if self.__selected_milestone is not None: # Check if user selected a milestone

@@ -372,10 +372,11 @@ class Screen(QMainWindow): # Screen widget, all GUI screens inherit from Screen
         self._widgets = [] # Initialise list of widgets to maximise / minimise
         self._application = application # Set application : Application
         self._max_size = max_size # Set max_size : QSize
+        self._status_bar_orig_font_size = 14
         self.setWindowTitle(f"Sudoku {UI.VERSION}") # Set window title with version of game
         self.setMinimumSize(QSize(1000, 560)) # Set size of minimised window
         self.setStyleSheet(f"background: {self._application.account.app_config.background_colour};") # set background colour
-        self.statusBar().setFont(QFont(self._application.account.app_config.regular_font, 14)) # Set font of status bar (to show errors)
+        self.statusBar().setFont(QFont(self._application.account.app_config.regular_font, self._status_bar_orig_font_size)) # Set font of status bar (to show errors)
         self.statusBar().setStyleSheet("color : red;") # Set colour of status bar (to show errors)
         self._resize_factor = self._max_size.width() / self.minimumSize().width() # Calculate resize factor for maximising
         if title_name is not None:
@@ -394,20 +395,24 @@ class Screen(QMainWindow): # Screen widget, all GUI screens inherit from Screen
     def resizeEvent(self, event):
         factor = event.size().width() / self.minimumSize().width() # Calculate factor
         if not self.isMaximized(): # If screen is not maximised
+            self.statusBar().setFont(QFont(self._application.account.app_config.regular_font, int(self._status_bar_orig_font_size*self._resize_factor)))
             for widget in self._widgets: # Loop through all widgets
                 widget.maximise(factor) # Maximise the widget
         elif factor == 1: # If screen needs to be minimised
+            self.statusBar().setFont(QFont(self._application.account.app_config.regular_font, self._status_bar_orig_font_size))
             for widget in self._widgets: # Loop through all widgets
                 widget.minimise() # Minimise the widget
     
     # Show screen in maximised mode initally
     def initShowMaximised(self):
         self.showMaximized() # Maximise
+        self.statusBar().setFont(QFont(self._application.account.app_config.regular_font, int(self._status_bar_orig_font_size*self._resize_factor)))
         for widget in self._widgets: # Loop through all widgets
             widget.maximise(self._resize_factor) # Maximise the widget
     
     # Manually maximise widgets when widgets on screen are changed (e.g. in game end screen where user can see the solution)
     def manualMaximise(self):
+        self.statusBar().setFont(QFont(self._application.account.app_config.regular_font, int(self._status_bar_orig_font_size*self._resize_factor)))
         if self.isMaximized(): # Check if screen is already maximised
             for widget in self._widgets: # Loop through all widgets
                 widget.maximise(self._resize_factor) # Maximise the widget

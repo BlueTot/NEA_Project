@@ -107,6 +107,10 @@ class Account: # Account Class
     def bonus_hints(self):
         return database.bonus_hints(self.__username)
     
+    @property
+    def milestone_claimed(self):
+        return database.milestone_claimed(self.__username)
+    
     def update_app_config(self): # Update app config after preset changed
         if self.__username is None:
             self.__app_config = AppearanceConfiguration(None)
