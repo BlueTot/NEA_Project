@@ -3,6 +3,9 @@ from account import * # Import everything from account.py file
 from rating_calc import get_title # import get_title function
 from database import * # Import all database functions
 
+class ApplicationError(Exception):
+    pass
+
 class Application: # Application class, used to manage accounts and all account-related features
 
     DEFAULT_DIRECTORY = "games" # Default directory to store game files

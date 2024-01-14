@@ -1,7 +1,6 @@
 '''Library Imports'''
 
 from sys import argv, exit # Import argv and edit from sys
-import os # Import os module
 from functools import partial # Import partial from functools module
 import json # Import json module
 from roman import toRoman # Import roman numerals module
@@ -14,6 +13,7 @@ from board import to_letter # Import to_letter function
 import database # Import database
 from database import DBError # Import Database Error
 from account import * # Import account, appearance config and gme milestone classes
+from application import ApplicationError
 
 '''PyQt6 GUI Imports'''
 
@@ -831,11 +831,6 @@ class EditGUIPresetScreen(Screen): # Edit GUI Preset Screen Class
 
 class ManageAccountScreen(Screen): # Manage account screen class
     
-    # pyqt signals
-    change_username_signal = pyqtSignal(str) # change username
-    change_password_signal = pyqtSignal(str) # change password
-    delete_account_signal = pyqtSignal() # delete account
-    
     def __init__(self, application, max_size): # Constructor
 
         super().__init__(application=application, max_size=max_size, title_name="MANAGE ACCOUNT", create_button=True) # Inheritance
@@ -864,26 +859,29 @@ class ManageAccountScreen(Screen): # Manage account screen class
                           self.__new_password2, self.__save, self.__delete]
     
     def __save(self): # Save account changes method
-        if any([textbox.text() for textbox in self.__textboxes]): # Check if user typed something in a box
+        try:
+            change_username, change_password = False, False
+            if not any([textbox.text() for textbox in self.__textboxes]): # Check if user did not type anything
+                raise ApplicationError("Please either change your username or password to save")
             if (username := self.__username.text()): # If user typed their username
-                self.change_username_signal.emit(username) # Change username
-                self._return_to_home_screen() # Return to home screen
+                change_username = True        
             if all([textbox.text() for textbox in self.__textboxes[1:]]): # If user wishes to change their password
-                if self._application.check_password_match(self.__old_password.text()): # check if passwords match
-                    if self.__new_password.text() == self.__new_password2.text(): # check if new passwords match
-                        if self.__new_password.text() != self.__old_password.text(): # check if new password is different to old password
-                            self.change_password_signal.emit(self.__new_password.text()) # change password
-                            self._return_to_home_screen() # return to home screen
-                        else:
-                            self.statusBar().showMessage("Please choose a different password to your current one")
-                    else:
-                        self.statusBar().showMessage("New passwords inputted are not the same")
-                else:
-                    self.statusBar().showMessage("Incorrect original password")
-            else:
-                self.statusBar().showMessage("To change your password, please fill in the last 3 blanks")    
-        else:
-            self.statusBar().showMessage("Please either change your username or password to save")
+                if not self._application.check_password_match(self.__old_password.text()): # check if old passwords don't match
+                    raise ApplicationError("Incorrect original password")
+                if self.__new_password.text() != self.__new_password2.text(): # check if new don't passwords match
+                    raise ApplicationError("New passwords inputted are not the same")
+                if self.__new_password.text() == self.__old_password.text(): # check if new password is different to old password
+                    raise ApplicationError("Please choose a different password to your current one")
+                change_password = True
+            if change_username:
+                self._application.change_username(username)
+            if change_password:
+                self._application.change_password(self.__new_password.text())
+            self._return_to_home_screen() # return to home screen
+        except DBError as err: # Catch database errors
+            self.show_error(err)
+        except ApplicationError as err: # Catch application errors
+            self.show_error(err) # Show error
 
     def __delete(self): # delete account method
         self.__message_box = QMessageBox(self) # create message box to ask user if they really want to delete their account
@@ -895,7 +893,7 @@ class ManageAccountScreen(Screen): # Manage account screen class
     
     def __delete_menu_button(self, button): # method to delete account when user confirms
         if button.text()[1:] == "Yes": # check if user pressed yes
-            self.delete_account_signal.emit() # delete account
+            self._application.delete_account()
             self._return_to_home_screen() # return to home screen
 
 class ViewStatsScreen(Screen): # View stats screen class
@@ -1215,9 +1213,6 @@ class GUI(UI): # Graphical User Interface (GUI) class
     def __manage_account_screen(self): # Initialise manage account screen
         manage_account_screen = ManageAccountScreen(self._application, self.__max_size)
         manage_account_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        manage_account_screen.change_username_signal.connect(self._application.change_username)
-        manage_account_screen.change_password_signal.connect(self._application.change_password)
-        manage_account_screen.delete_account_signal.connect(self._application.delete_account)
         return manage_account_screen
 
     def __view_gui_presets_screen(self): # Initialise view gui presets screen
