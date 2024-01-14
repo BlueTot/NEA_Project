@@ -1,6 +1,6 @@
 import os # Import os library
 from account import * # Import everything from account.py file
-from rating_calc import get_title # import get_title function
+from rating_calc import get_title, RECOMMENDED_RATINGS, average_time_to_complete # import functions from rating calculation file
 from database import * # Import all database functions
 
 class ApplicationError(Exception):
@@ -135,4 +135,12 @@ class Application: # Application class, used to manage accounts and all account-
             database.set_bonus_hints(self.__account.username, bonus_hints + reward[1]) # Add the bonus hints earned from the reward
         
         print(f"Milestone reward claimed")
+    
+    @staticmethod
+    def get_recommended_rating(mode, board_size, difficulty):
+        return RECOMMENDED_RATINGS[(mode, int(board_size.split("x")[0]), difficulty)]
+    
+    @staticmethod
+    def get_average_time_to_complete(mode, board_size, difficulty):
+        return average_time_to_complete(mode, int(board_size.split("x")[0]), difficulty)
         

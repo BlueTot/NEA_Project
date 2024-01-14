@@ -1,3 +1,3 @@
-- Improve readability of config game menu
-- Add recommended rating data to config game menu
 - Add button to play same gamemode again (repeat)
+- Make claim game milestone button grey out when appropriate
+- Make error bar bigger at the bottom of the screen

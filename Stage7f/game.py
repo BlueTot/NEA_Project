@@ -16,6 +16,9 @@ class GameError(Exception): # GameError exception class
 
 class Game: # Game class
 
+    DISABLED_GAMEMODES = {("Normal", "16x16", "Expert"), ("Killer", "16x16", "Expert"),
+                          ("Normal", "16x16", "Hard"), ("Killer", "16x16", "Hard"),
+                          ("Killer", "12x12", "Expert")}
     DIFFICULTY_NUMS = {1: "Easy", 2: "Medium", 3: "Hard", 4:"Expert"} # Difficulty-number pair for TERMINAL only
     NUM_AUTO_NOTES = {"Easy": 80, "Medium": 65, "Hard": 50, "Expert": 35} # Number of auto notes for each difficulty
     NUM_HINTS = {"Easy": 5, "Medium": 6, "Hard": 8, "Expert": 11} # Number of hints for each difficulty

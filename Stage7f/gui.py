@@ -144,44 +144,75 @@ class ConfigGameScreen(Screen): # Create new game screen
 
         super().__init__(application=application, max_size=max_size, title_name="CREATE NEW GAME", create_button=True) # Inheritance
 
-        # Play button
-        self.__play = Button(self, "PLAY GAME", 675, 290, 200, 50, self._application.account.app_config.regular_font, 20, self.__play_game)
-        self.__play.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
-
         # Create labels for board settings
         for idx, label in enumerate(("MODE: ", "DIFFICULTY: ", "TIMED: ", "BOARD_SIZE: ", "HARDCORE: ")):
             label_obj = Label(self, label, 50, 150+75*idx, 300, 100, self._application.account.app_config.regular_font, 24)
             self._widgets.append(label_obj)
+        self.__hardcore_label = Label(self, "(Hardcore enabled = No auto notes or hints allowed\n *Required to be on the leaderboard)", 50, 150+75*4+60, 500, 100, self._application.account.app_config.regular_font, 14)
 
-        # Create menus for mode, difficulty, timed, board size and hardcore
+        # Create menu for mode
         self.__mode_menu = ComboBox(self, 330, 175, 200, 50, self._application.account.app_config.regular_font, 20, ["Normal", "Killer"])
         self.__mode_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
-        self.__difficulty_menu = ComboBox(self, 330, 250, 200, 50, self._application.account.app_config.regular_font, 20, ["Easy", "Medium", "Hard", "Expert"])
-        self.__difficulty_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
-        self.__timed_menu = ComboBox(self, 330, 325, 200, 50, self._application.account.app_config.regular_font, 20, ["Yes", "No"])
-        self.__timed_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
-        self.__board_size_menu = ComboBox(self, 330, 400, 200, 50, self._application.account.app_config.regular_font, 20, ["4x4", "6x6", "9x9", "12x12", "16x16"])
+        self.__mode_menu.activated.connect(self.__update_gamemode_infobox)
+
+        # Create menu for board size
+        self.__board_size_menu = ComboBox(self, 330, 250, 200, 50, self._application.account.app_config.regular_font, 20, ["4x4", "6x6", "9x9", "12x12", "16x16"])
         self.__board_size_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
+        self.__board_size_menu.activated.connect(self.__update_gamemode_infobox)
+
+        # Create menu for difficulty
+        self.__difficulty_menu = ComboBox(self, 330, 325, 200, 50, self._application.account.app_config.regular_font, 20, ["Easy", "Medium", "Hard", "Expert"])
+        self.__difficulty_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
+        self.__difficulty_menu.activated.connect(self.__update_gamemode_infobox)
+
+        # Create menu for timed
+        self.__timed_menu = ComboBox(self, 330, 400, 200, 50, self._application.account.app_config.regular_font, 20, ["Yes", "No"])
+        self.__timed_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
+        
+        # Create menu for hardcore
         self.__hardcore_menu = ComboBox(self, 330, 475, 200, 50, self._application.account.app_config.regular_font, 20, ["Yes", "No"])
         self.__hardcore_menu.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
+        
+        # Create text box to show info about the gamemode that the user is selecting
+        self.__gamemode_info = TextEdit(self, 650, 175, 300, 275, self._application.account.app_config.colour2, 3, self._application.account.app_config.regular_font, 18)
+
+        # Play button
+        self.__play = Button(self, "PLAY GAME", 650, 475, 300, 50, self._application.account.app_config.regular_font, 20, self.__play_game)
+        self.__play.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
 
         # Add to widgets (for maximising)
         self._widgets += [self.__play, self.__mode_menu, self.__difficulty_menu, 
-                          self.__timed_menu, self.__board_size_menu, self.__hardcore_menu]
+                          self.__timed_menu, self.__board_size_menu, self.__hardcore_menu, self.__hardcore_label, self.__gamemode_info]
 
     def __play_game(self): # Play game
-        if (difficulty := self.__difficulty_menu.currentText()) and (timed := self.__timed_menu.currentText()) and \
-            (board_size := self.__board_size_menu.currentText()) and (mode := self.__mode_menu.currentText()) and \
-                (hardcore := self.__hardcore_menu.currentText()): # If all boxes have been filled
-            if board_size == "16x16" and difficulty == "Expert": # Do not allow user to play 16x16 Expert as it is too slow to generate
-                self.statusBar().showMessage("*16x16 Expert is not available")
-            elif board_size == "16x16" and difficulty == "Hard": # Do not allow user to play 16x16 Hard as it is too slow to generate
-                self.statusBar().showMessage("*16x16 Hard is not available")
+        try:
+            if (difficulty := self.__difficulty_menu.currentText()) and (timed := self.__timed_menu.currentText()) and \
+                (board_size := self.__board_size_menu.currentText()) and (mode := self.__mode_menu.currentText()) and \
+                    (hardcore := self.__hardcore_menu.currentText()): # If all boxes have been filled
+                if (mode, board_size, difficulty) in Game.DISABLED_GAMEMODES: # Check if gamemode is disabled
+                    raise ApplicationError(f"*{mode} {board_size} {difficulty} is disabled due to generation issues") # Raise error
+                else:
+                    self.setWindowTitle("Board Generation in Progress") # Tell user that the board is currently being generated
+                    self.play_game_signal.emit([mode, difficulty, int(board_size.split("x")[0]), True if timed == "Yes" else False, True if hardcore == "Yes" else False])
             else:
-                self.setWindowTitle("Board Generation in Progress") # Tell user that the board is currently being generated
-                self.play_game_signal.emit([mode, difficulty, int(board_size.split("x")[0]), True if timed == "Yes" else False, True if hardcore == "Yes" else False])
+                raise ApplicationError("*To continue, please fill all boxes") # Raise error
+        except ApplicationError as err: # Catch errors
+            self.show_error(err) # Show the error
+    
+    def __update_gamemode_infobox(self): # Method to update gamemode info box every time user clicks the first three comboboxes
+        if (difficulty := self.__difficulty_menu.currentText()) and (board_size := self.__board_size_menu.currentText()) and \
+            (mode := self.__mode_menu.currentText()): # If all boxes have been filled
+            if (mode, board_size, difficulty) in Game.DISABLED_GAMEMODES: # Check if gamemode has been disabled
+                self.__gamemode_info.setText("This gamemode is not available") # Show text
+            else:
+                time_taken = self._application.get_average_time_to_complete(mode, board_size, difficulty) # Get average time to complete
+                m, s = divmod(time_taken, 60) # Floor divide and mod by 60
+                self.__gamemode_info.setText("".join([
+                    f"Recommended Rating: {self._application.get_recommended_rating(mode, board_size, difficulty)}\n" if self._application.signed_in else "",
+                    f"Average Time to Complete: {m}m {s}s"
+                ])) # Set text
         else:
-            self.statusBar().showMessage("*To continue, please fill all boxes")
+            self.__gamemode_info.setText("")
 
 class OpenGameScreen(Screen): # Open game screen
 
@@ -1148,9 +1179,8 @@ class GUI(UI): # Graphical User Interface (GUI) class
 
         self.__pyqt_app = QApplication(argv) # Create PyQt GUI Application
         self.__max_size = self.__pyqt_app.primaryScreen().size() # Create maximum size (for maximising the window)
-
-        with open("options.json") as f: # Load in options file
-            self.__options = json.load(f)
+        
+        self.__options = {"full screen": True} # Default options dictionary
 
         # Initialise fonts used in GUI
         QFontDatabase.addApplicationFont("resources/library-3-am.3amsoft.otf")
