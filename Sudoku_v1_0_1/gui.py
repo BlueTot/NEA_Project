@@ -144,7 +144,7 @@ class ConfigGameScreen(Screen): # Create new game screen
         super().__init__(application=application, max_size=max_size, title_name="CREATE NEW GAME", create_button=True) # Inheritance
 
         # Create labels for board settings
-        for idx, label in enumerate(("MODE: ", "DIFFICULTY: ", "TIMED: ", "BOARD_SIZE: ", "HARDCORE: ")):
+        for idx, label in enumerate(("MODE: ", "DIFFICULTY: ", "TIMED: ", "BOARD SIZE: ", "HARDCORE: ")):
             label_obj = Label(self, label, 50, 150+75*idx, 300, 100, self._application.account.app_config.regular_font, 24)
             self._widgets.append(label_obj)
         self.__hardcore_label = Label(self, "(Hardcore enabled = No auto notes or hints allowed\n *Required to be on the leaderboard)", 50, 150+75*4+60, 500, 75, self._application.account.app_config.regular_font, 14)
@@ -255,11 +255,6 @@ class OpenGameScreen(Screen): # Open game screen
             self.statusBar().showMessage("*To continue, please select a game file to play")
 
 class GameScreen(Screen): # Main game screen
-
-    # Create pyqt signals to connect to GUI
-    save_stats_signal = pyqtSignal(list) # Save stats
-    update_rating_signal = pyqtSignal(int) # Update rating
-    update_milestone_signal = pyqtSignal(list) # Update milestone
 
     # Constants for rendering board
     PADDING, STARTX = 25, 10 # Padding and starting x coordinate
@@ -445,9 +440,9 @@ class GameScreen(Screen): # Main game screen
         if self.__game.timed: # If game is timed, stop the timer
             self.__timer_event.stop()
         if self._application.signed_in and self.__game.timed: # If signed in to an account and the game is timed
-            self.save_stats_signal.emit(self.__game.get_stats(win)) # Save the game
-            self.update_rating_signal.emit(rating_change := self.__game.rating_change(self._application.account.rating, win)) # Update rating
-            self.update_milestone_signal.emit([self.__game.mode, self.__game.board_size, self.__game.difficulty, win]) # Update milestone
+            self._application.save_game_stats(self.__game.get_stats(win))
+            self._application.update_rating(rating_change := self.__game.rating_change(self._application.account.rating, win))
+            self._application.update_milestone([self.__game.mode, self.__game.board_size, self.__game.difficulty, win])
 
         # Create translucent background rect
         bg = Rect(self, 0, 0, 1000, 560, self._application.account.app_config.colour2_translucent, 0)
@@ -696,7 +691,6 @@ class ViewGUIPresetsScreen(Screen): # View GUI Presets Screen class
 
     # Create pyqt signals
     update_preset_signal = pyqtSignal(list) # Update preset
-    use_preset_signal = pyqtSignal(int) # Use preset
 
     def __init__(self, application, max_size): # Constructor
 
@@ -750,7 +744,7 @@ class ViewGUIPresetsScreen(Screen): # View GUI Presets Screen class
     def __use_preset(self): # Use preset method
         if (text := self.__choose_preset_menu.currentText()): # If user chose an option in the combobox
             if self._application.account.app_preset_num != (num := int(text.split(" ")[1])): # If preset is not currently being used already
-                self.use_preset_signal.emit(num) # Use the preset
+                self._application.use_gui_preset(num) # Use the preset
                 self.__current_preset.setText(f"CURRENT PRESET: Preset {self._application.account.app_preset_num}") # Update label
             else:
                 self.statusBar().showMessage(f"*Preset {num} is currently being used.") 
@@ -771,10 +765,6 @@ class ViewGUIPresetsScreen(Screen): # View GUI Presets Screen class
             self.__preset_preview.setText("") # reset info box contents
 
 class EditGUIPresetScreen(Screen): # Edit GUI Preset Screen Class
-    
-    # Pyqt signals
-    save_signal = pyqtSignal(list) # save preset
-    delete_signal = pyqtSignal(int) # delete preset
 
     def __init__(self, application, max_size, mode, preset_num): # Constructor
 
@@ -848,7 +838,7 @@ class EditGUIPresetScreen(Screen): # Edit GUI Preset Screen Class
     def __save(self): # save preset method
         options = self.__get_options() # get contents of input boxes
         if any([textbox.text() for textbox in self.__options]) or self.__font_options_changed(): # check if at least one option is changed
-            self.save_signal.emit([self.__mode, self.__preset_num] + options) # save preset
+            self._application.update_appearance_preset([self.__mode, self.__preset_num] + options) # save preset
             self._return_to_home_screen() # return to home screen
         else:
             self.statusBar().showMessage("Please fill in at least one box to save")
@@ -857,7 +847,7 @@ class EditGUIPresetScreen(Screen): # Edit GUI Preset Screen Class
         if self._application.account.app_preset_num == self.__preset_num: # check if preset is currently being used
             self.statusBar().showMessage("*Preset is currently in use and cannot be deleted.") # display error message
         else: # otherwise
-            self.delete_signal.emit(self.__preset_num) # delete preset
+            self._application.delete_appearance_preset(self.__preset_num) # delete preset
             self._return_to_home_screen() # return to home screen
 
 class ManageAccountScreen(Screen): # Manage account screen class
@@ -988,9 +978,6 @@ class ViewStatsScreen(Screen): # View stats screen class
             ])) # Set text in gamemode stats text edit
 
 class GameMilestonesScreen(Screen): # Game Milestones Screen class
-
-    # pyqt signals
-    claim_reward_signal = pyqtSignal(list) # claim reward
     
     def __init__(self, application, max_size): # Constructor
 
@@ -1067,7 +1054,7 @@ class GameMilestonesScreen(Screen): # Game Milestones Screen class
         if self.__selected_milestone is not None: # Check if user selected a milestone
             if self.__complete(self.__selected_milestone[0], self.__selected_milestone[1]): # Check if the milestone has been reached
                 if self.__selected_milestone_not_claimed(): # Check if the milestone reward hasn't been claimed yet
-                    self.claim_reward_signal.emit([int(self.__selected_milestone[0].split("x")[0]), int(self.__selected_milestone[1])]) # Claim milestone
+                    self._application.claim_reward([int(self.__selected_milestone[0].split("x")[0]), int(self.__selected_milestone[1])]) # Claim milestone
                     self.__update_milestone_grid() # Update milestone grid
                 else:
                     self.statusBar().showMessage("You already claimed this reward!")
@@ -1227,9 +1214,6 @@ class GUI(UI): # Graphical User Interface (GUI) class
     def __game_screen(self, game): # Initialise game screen
         game_screen = GameScreen(self._application, self.__max_size, game)
         game_screen.return_to_home_screen_signal.connect(self.__quit_game)
-        game_screen.save_stats_signal.connect(self._application.save_game_stats)
-        game_screen.update_rating_signal.connect(self._application.update_rating)
-        game_screen.update_milestone_signal.connect(self._application.update_milestone)
         return game_screen
 
     def __create_new_account_screen(self): # Initialise create new account screen
@@ -1251,14 +1235,11 @@ class GUI(UI): # Graphical User Interface (GUI) class
         view_gui_presets_screen = ViewGUIPresetsScreen(self._application, self.__max_size)
         view_gui_presets_screen.return_to_home_screen_signal.connect(self.__pop_screen)
         view_gui_presets_screen.update_preset_signal.connect(self.__show_edit_gui_preset_screen)
-        view_gui_presets_screen.use_preset_signal.connect(self._application.use_gui_preset)
         return view_gui_presets_screen
     
     def __edit_gui_preset_screen(self, mode, preset_id): # Initialise edit gui preset screen
         edit_gui_preset_screen = EditGUIPresetScreen(self._application, self.__max_size, mode, preset_id)
         edit_gui_preset_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        edit_gui_preset_screen.save_signal.connect(self._application.update_appearance_preset)
-        edit_gui_preset_screen.delete_signal.connect(self._application.delete_appearance_preset)
         return edit_gui_preset_screen
     
     def __view_stats_screen(self): # Initialise view stats screen
@@ -1269,7 +1250,7 @@ class GUI(UI): # Graphical User Interface (GUI) class
     def __game_milestones_screen(self): # Initialise game milestones screen
         game_milestones_screen = GameMilestonesScreen(self._application, self.__max_size)
         game_milestones_screen.return_to_home_screen_signal.connect(self.__pop_screen)
-        game_milestones_screen.claim_reward_signal.connect(self._application.claim_reward)
+        #game_milestones_screen.claim_reward_signal.connect(self._application.claim_reward)
         return game_milestones_screen
 
     def __help_screen(self): # Initialise help screen

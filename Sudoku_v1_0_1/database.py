@@ -3,7 +3,7 @@ import os # Import os library
 import hashlib # Import password hashing library
 import datetime # Import datetime library
 
-class DBError(Exception): #] Database Error
+class DBError(Exception): # Database Error
     pass
 
 def __db_path(): # Function to get path of database file
