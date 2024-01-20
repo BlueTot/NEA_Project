@@ -144,7 +144,7 @@ class ConfigGameScreen(Screen): # Create new game screen
         super().__init__(application=application, max_size=max_size, title_name="CREATE NEW GAME", create_button=True) # Inheritance
 
         # Create labels for board settings
-        for idx, label in enumerate(("MODE: ", "DIFFICULTY: ", "TIMED: ", "BOARD SIZE: ", "HARDCORE: ")):
+        for idx, label in enumerate(("MODE: ", "BOARD SIZE: ", "DIFFICULTY: ", "TIMED: ", "HARDCORE: ")):
             label_obj = Label(self, label, 50, 150+75*idx, 300, 100, self._application.account.app_config.regular_font, 24)
             self._widgets.append(label_obj)
         self.__hardcore_label = Label(self, "(Hardcore enabled = No auto notes or hints allowed\n *Required to be on the leaderboard)", 50, 150+75*4+60, 500, 75, self._application.account.app_config.regular_font, 14)
@@ -522,7 +522,7 @@ class GameScreen(Screen): # Main game screen
         self.__create_solution_grid() # Create solution grid
 
         # Create button to return back to home screen
-        home_screen_button = Button(self, "RETURN TO HOME", 625, 250, 300, 50, self._application.account.app_config.regular_font, 20, self.__return_to_home_screen)
+        home_screen_button = Button(self, "RETURN TO HOME", 625, 250, 300, 50, self._application.account.app_config.regular_font, 20, self._return_to_home_screen)
         home_screen_button.setStyleSheet(f"background: {self._application.account.app_config.colour2}; border: 2px solid black;")
         home_screen_button.show()
         
