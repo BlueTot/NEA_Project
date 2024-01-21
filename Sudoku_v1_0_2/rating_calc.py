@@ -11,7 +11,7 @@ RECOMMENDED_RATINGS = {("Normal", 4, "Easy"): 0, ("Normal", 4, "Medium"): 40, ("
                        ("Normal", 9, "Expert"): 1100,
                        ("Normal", 12, "Easy"): 1000, ("Normal", 12, "Medium"): 1200, ("Normal", 12, "Hard"): 1400,
                        ("Normal", 12, "Expert"): 1600,
-                       ("Normal", 16, "Easy"): 1200, ("Normal", 16, "Medium"): 1500, ("Normal", 16, "Hard"): 1800,
+                       ("Normal", 16, "Easy"): 1300, ("Normal", 16, "Medium"): 1600, ("Normal", 16, "Hard"): None,
                        ("Normal", 16, "Expert"): None,
 
                        ("Killer", 4, "Easy"): 10, ("Killer", 4, "Medium"): 50, ("Killer", 4, "Hard"): 90,
@@ -19,10 +19,10 @@ RECOMMENDED_RATINGS = {("Normal", 4, "Easy"): 0, ("Normal", 4, "Medium"): 40, ("
                        ("Killer", 6, "Easy"): 170, ("Killer", 6, "Medium"): 230, ("Killer", 6, "Hard"): 290,
                        ("Killer", 6, "Expert"): 360,
                        ("Killer", 9, "Easy"): 410, ("Killer", 9, "Medium"): 630, ("Killer", 9, "Hard"): 850,
-                       ("Killer", 9, "Expert"): 1200,
-                       ("Killer", 12, "Easy"): 1050, ("Killer", 12, "Medium"): 1350, ("Killer", 12, "Hard"): 1500,
-                       ("Killer", 12, "Expert"): 1650,
-                       ("Killer", 16, "Easy"): 1500, ("Killer", 16, "Medium"): 1700, ("Killer", 16, "Hard"): 1950,
+                       ("Killer", 9, "Expert"): 1300,
+                       ("Killer", 12, "Easy"): 1250, ("Killer", 12, "Medium"): 1550, ("Killer", 12, "Hard"): None,
+                       ("Killer", 12, "Expert"): None,
+                       ("Killer", 16, "Easy"): 1800, ("Killer", 16, "Medium"): None, ("Killer", 16, "Hard"): None,
                        ("Killer", 16, "Expert"): None
                        }
 

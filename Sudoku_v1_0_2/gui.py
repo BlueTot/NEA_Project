@@ -3,6 +3,7 @@
 from sys import argv, exit  # Import argv and edit from sys
 from functools import partial  # Import partial from functools module
 from roman import toRoman  # Import roman numerals module
+from time import perf_counter
 
 '''File Imports'''
 
@@ -292,7 +293,7 @@ class OpenGameScreen(Screen):  # Open game screen
                                     self._application.account.app_config.regular_font, 18)
 
         # Add to widgets (for maximising)
-        self._widgets += [self.__title, self.__play, self.__back, self.__choose_game, self.__choose_game_menu,
+        self._widgets += [self.__play, self.__choose_game, self.__choose_game_menu,
                           self.__game_info]
 
     def __show_game_info(self):  # Show game info
@@ -321,7 +322,7 @@ class GameScreen(Screen):  # Main game screen
     TOTAL_FONT_SIZES = {4: 10 * 9 // 4, 6: 10 * 9 // 6, 9: 10, 12: 10 * 9 // 12,
                         16: 10 * 9 // 16}  # Font sizes for total
 
-    def __init__(self, application, max_size, game: Game):  # Constructor
+    def __init__(self, application, max_size, game: Game, time_to_generate):  # Constructor
 
         super().__init__(application=application, max_size=max_size, title_name=None, create_button=True)  # Inheritance
 
@@ -329,6 +330,7 @@ class GameScreen(Screen):  # Main game screen
         self.__notes_mode = False  # User not in notes mode initially
         self.__running = True  # Game is currently running
         self.__game = game  # Set game
+        self.__time_to_generate = time_to_generate
 
         # Timer button and label
         self.__timer = Button(self, "", 610, 20, 130, 65, self._application.account.app_config.regular_font, 21,
@@ -342,9 +344,15 @@ class GameScreen(Screen):  # Main game screen
             "QProgressBar::chunk{background-color: " + self._application.account.app_config.colour2 + ";}")
 
         # Info label to show game settings
-        self.__info_label = Label(self, "", 595, 15, 310, 90, self._application.account.app_config.regular_font, 12)
-        self.__info_label.setText(
-            f"Mode: {self.__game.mode} \nDifficulty: {self.__game.difficulty} \nBoard Size: {self.__game.board_size}x{self.__game.board_size} \nTimed: {self.__game.timed} \nHardcore: {self.__game.hardcore}")
+        self.__info_label = Label(self, "", 595, 15, 310, 90, self._application.account.app_config.regular_font, 10)
+        self.__info_label.setText("\n".join([
+            f"Mode: {self.__game.mode}",
+            f"Difficulty: {self.__game.difficulty}",
+            f"Board Size: {self.__game.board_size}x{self.__game.board_size}",
+            f"Timed: {self.__game.timed}",
+            f"Hardcore: {self.__game.hardcore}",
+            f"Time to Generate: {self.__time_to_generate:.4f} s"
+        ]))
         self.__info_label.setStyleSheet(
             f"background: {self._application.account.app_config.colour2}; border: 2px solid black; border-radius: 30px;")
         self.__info_label.hide()
@@ -370,7 +378,7 @@ class GameScreen(Screen):  # Main game screen
         self.__hint_button = CircularButton(self, 744, 470, 58, 58, QIcon("resources/hint.svg"), self.__show_hint)
 
         # Label to show number of hints left
-        self.__num_hints_label = Label(self, "", 748, 535, 58, 58, self._application.account.app_config.regular_font,
+        self.__num_hints_label = Label(self, "", 738, 535, 90, 58, self._application.account.app_config.regular_font,
                                        15)
         self.__num_hints_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         if not self._application.signed_in:
@@ -657,6 +665,8 @@ class GameScreen(Screen):  # Main game screen
     def __place_num(self, num):  # Method to place number / remove number / edit note
         if self.__running:  # Check if game is still running
             try:
+                if self.__selected_square == (None, None):
+                    raise GameError("Please select a square before placing / removing a number")
                 if self.__notes_mode:  # If user is in notes mode
                     self.__game.edit_note(self.__selected_square[0], self.__selected_square[1], num)  # Edit note
                 else:
@@ -678,6 +688,8 @@ class GameScreen(Screen):  # Main game screen
     def __show_auto_note(self):  # Method to use auto note
         if self.__running:  # Check if game is running
             try:
+                if self.__selected_square == (None, None):
+                    raise GameError("Please select a square first")
                 self.__game.use_auto_note(self.__selected_square[0], self.__selected_square[1])  # Use auto note
                 self.__num_auto_notes_label.setText(
                     str(self.__game.num_auto_notes_left))  # Update label showing number of auto notes left on screen
@@ -690,6 +702,8 @@ class GameScreen(Screen):  # Main game screen
     def __show_hint(self):  # Method to use hint
         if self.__running:  # Check if game is running
             try:
+                if self.__selected_square == (None, None):
+                    raise GameError("Please select a square first")
                 self.__game.use_hint(self.__selected_square[0], self.__selected_square[1])  # Use hint
                 if not self._application.signed_in:  # No bonus hints if user is not signed in
                     bonus_hint_str = ""
@@ -723,15 +737,20 @@ class GameScreen(Screen):  # Main game screen
         self.__info_label.setHidden(not self.__info_label.isHidden())  # Toggle between hidden and shown
 
     def __pause_game(self):  # Method to pause game
-        self.__running = not self.__running  # Toggle running variable
-        self.__timer.setStyleSheet(
-            f"background: {'white' if self.__running else self._application.account.app_config.colour2}; border: 2px solid black;")  # Update style sheet
-        self.__board_cover.setHidden(not self.__board_cover.isHidden())  # Toggle board cover between hidden and shown
-        if self.__game.timed:  # Check if game is timed
-            if self.__running:
-                self.__timer_event.start(10)  # Start timer with 10 millisecond (0.01s) interval if game is running
-            else:
-                self.__timer_event.stop()  # Stop the timer if game is not running
+        try:
+            if not self.__game.timed:
+                raise GameError("Game pausing is not available in non-timed games")
+            self.__running = not self.__running  # Toggle running variable
+            self.__timer.setStyleSheet(
+                f"background: {'white' if self.__running else self._application.account.app_config.colour2}; border: 2px solid black;")  # Update style sheet
+            self.__board_cover.setHidden(not self.__board_cover.isHidden())  # Toggle board cover between hidden and shown
+            if self.__game.timed:  # Check if game is timed
+                if self.__running:
+                    self.__timer_event.start(10)  # Start timer with 10 millisecond (0.01s) interval if game is running
+                else:
+                    self.__timer_event.stop()  # Stop the timer if game is not running
+        except GameError as err:
+            self.show_error(err)
 
     def __update_time_elapsed(self):  # Method to update time elapsed variable every 0.01 seconds
         self.__game.inc_time_elapsed()  # Increment time elapsed variable
@@ -1478,8 +1497,8 @@ class GUI(UI):  # Graphical User Interface (GUI) class
         config_game_screen.play_game_signal.connect(self.__show_game_screen)
         return config_game_screen
 
-    def __game_screen(self, game):  # Initialise game screen
-        game_screen = GameScreen(self._application, self.__max_size, game)
+    def __game_screen(self, game, time_to_generate):  # Initialise game screen
+        game_screen = GameScreen(self._application, self.__max_size, game, time_to_generate)
         game_screen.return_to_home_screen_signal.connect(self.__quit_game)
         return game_screen
 
@@ -1556,16 +1575,17 @@ class GUI(UI):  # Graphical User Interface (GUI) class
 
     def __show_game_screen(self, options):  # Show game screen (generate new game)
         mode, difficulty, board_size, timed, hardcore = options
+        start_time = perf_counter()
         self.__game = Game()
         bonus_hints = 0 if not self._application.signed_in else self._application.account.bonus_hints
         self.__game.generate(mode, difficulty, board_size, timed, hardcore, bonus_hints)
-        self.__screens["game"] = self.__game_screen(self.__game)
+        self.__screens["game"] = self.__game_screen(self.__game, perf_counter() - start_time)
         self.__push_screen("game")
 
     def __load_game_screen(self, file):  # Load game screen (load from file)
         self.__game = Game()
         self.__game.load_game(self._application.account.username, file)
-        self.__screens["game"] = self.__game_screen(self.__game)
+        self.__screens["game"] = self.__game_screen(self.__game, 0)
         self.__push_screen("game")
 
     def __show_edit_gui_preset_screen(self, options):
