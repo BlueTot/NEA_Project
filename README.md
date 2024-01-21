@@ -26,4 +26,7 @@ Milestones:
 - Stage 7d Commence: January 3rd 2024
 - Stage 7e Commence: January 4th 2024
 - Stage 7f Commence: January 13th 2024
-- COMPLETION: January 15th 2024
+- Sudoku v1.0.0: January 14th 2024
+- Sudoku v1.0.1: January 15th 2024
+- Sudoku v1.0.2: January 21st 2024
+- COMPLETION: February 12th 2024
