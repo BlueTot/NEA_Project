@@ -9,6 +9,10 @@ class BoardUnsolvableError(Exception):  # Board unsolvable error
 
 class BoardSolver:  # Board Solver Class
 
+
+    '''
+    GROUP A Skill: Recursive Algorithms - Simple backtracking solver to solve Killer Sudoku boards
+    '''
     @staticmethod
     def __solvable(board, row=0,
                    col=0):  # Simple backtracking solver that returns True and solves the board if it is solvable, otherwise it returns False

@@ -1,6 +1,11 @@
 from abc import ABC  # importing abstract base class
 
 
+'''
+Abstract base class used to represent an action/move 
+played by the user, parent class of SetNumAction, 
+EditNoteAction and SetNoteAction.
+'''
 class BoardAction(ABC):  # Base BoardAction class
 
     def __init__(self, row, col):  # Constructor (takes row, col : ints)
@@ -23,6 +28,9 @@ class BoardAction(ABC):  # Base BoardAction class
         raise NotImplementedError
 
 
+'''
+Action for setting a number in a square.
+'''
 class SetNumAction(BoardAction):  # Set Num Action class, inherits from BoardAction class
 
     def __init__(self, row, col, orig_num, new_num):  # Constructor (takes row, col, orig_num, new_num : ints)
@@ -45,7 +53,9 @@ class SetNumAction(BoardAction):  # Set Num Action class, inherits from BoardAct
     def reverse(self):  # Reverse method so action can be applied in reverse (undo)
         return SetNumAction(self._row, self._col, self._new_num, self._orig_num)
 
-
+'''
+Action for toggling a number in the notes of a square.
+'''
 class EditNoteAction(BoardAction):  # Edit Note Action (inherits from BoardAction class)
 
     def __init__(self, row, col, num):  # Constructor (takes row, col, num : ints)
@@ -64,6 +74,10 @@ class EditNoteAction(BoardAction):  # Edit Note Action (inherits from BoardActio
         return EditNoteAction(self._row, self._col, self._num)
 
 
+'''
+Action for setting the note of a particular 
+square to some list, used in the auto-notes function.
+'''
 class SetNoteAction(BoardAction):  # Set Note Action (inherits from BoardAction class)
 
     def __init__(self, row, col, orig_note, new_note):  # Constructor (takes row, col, orig note, new note : int)

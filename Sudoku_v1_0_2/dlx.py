@@ -1,6 +1,9 @@
 from itertools import product  # import product function
 
 
+'''
+GROUP A Skill: Dancing Links X Algorithm used to solve Normal Sudoku boards
+'''
 class DLXSolver:  # Dancing Links X Solver class
 
     @staticmethod
@@ -17,6 +20,11 @@ class DLXSolver:  # Dancing Links X Solver class
                 [("matrix num", matrix_num) for matrix_num in product(range(N), range(1,
                                                                                       N + 1))])  # Constraint 4: each different number must appear in every matrix/box
 
+        
+        '''
+        GROUP A Skill: Dictionaries - used by the DLX algorithm to solve sudoku boards quickly.
+        This is not the only place dictionaries are used, other places like group_colouring.py, ratin_calc.py, difficulty_settings.py etc. also use them.
+        '''
         rows = {}  # Initialise rows dictionary
         for row, col, num in product(range(N), range(N), range(1, N + 1)):
             # Populate rows dictionary with the columns that they match

@@ -3,6 +3,11 @@ from abc import ABC, abstractmethod  # Import abstract base class and abstract m
 from application import Application  # Import game application
 
 
+'''
+User Interface class, parent class of 
+both Terminal and UI, stores the current 
+version of the application.
+'''
 class UI(ABC):  # User Interface class, inherits from abstract base class (must be inherited to use it)
 
     VERSION = "v1.0.2"  # Set version

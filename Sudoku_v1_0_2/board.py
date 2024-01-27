@@ -16,6 +16,10 @@ def to_matrix_size(board_size):  # get matrix size from board size
             return tuple(sorted((factor, board_size // factor)))
 
 
+'''
+Class to represent a square on the sudoku board, 
+which has a number and a note associated with it.
+'''
 class Square:  # Square class
     def __init__(self, board_size, matrix_size):  # constructor (takes board size : int,  matrix size : tuple)
         self.__BOARD_SIZE = board_size  # Board size to know how long the note array should be
@@ -68,12 +72,17 @@ class Square:  # Square class
     def __repr__(self):  # string representation of number (DEBUG)
         return str(self.__num)
 
-
+'''
+Class to represent the sudoku board, parent class of NormalModeBoard and KillerModeBoard.
+'''
 class Board:  # Board Base Class
 
     def __init__(self, board_size):  # Constructor (takes board size : int)
         self._board_size = board_size  # Board size
         self._matrix_size = to_matrix_size(board_size)  # Matrix size
+        '''
+        GROUP B Skill: Multi-dimensional arrays - A 2-dimensional array is used to represent the sudoku board
+        '''
         self._board = [[Square(self._board_size, self._matrix_size) for _ in range(self._board_size)] for _ in
                        range(self._board_size)]  # 2D array for board
         self._row_digits = [0 for _ in
@@ -149,6 +158,10 @@ class Board:  # Board Base Class
         return self._board[row][col].pieced_note_str(piece)
 
 
+'''
+Class to represent a sudoku board in normal 
+mode, is a child class of Board.
+'''
 class NormalModeBoard(Board):  # Normal Mode Board Class
 
     def __init__(self, board_size):  # Constructor (inherits from Board)
@@ -171,6 +184,11 @@ class NormalModeBoard(Board):  # Normal Mode Board Class
         return ";".join([";".join([sq.hash() for sq in row]) for row in self._board])
 
 
+'''
+Class to represent a sudoku board in killer mode, 
+is a child class of Board and includes groups and group 
+colouring features that are not present in the base Board class.
+'''
 class KillerModeBoard(Board):  # Killer Mode Board Class
 
     def __init__(self, board_size):  # Constructor (inherits from Board)

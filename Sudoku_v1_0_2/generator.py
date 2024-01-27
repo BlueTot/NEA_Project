@@ -17,6 +17,9 @@ class BoardGenerator:  # Board Generator Class
         board = NormalModeBoard(board_size)
         return BoardSolver.solver(board, generating_mode=True)
 
+    '''
+    GROUP A Skill: Complex User-Defined Algorithms - Group generator algorithm for Killer Sudoku boards
+    '''
     @staticmethod
     def __set_groups(board):  # set groups for killer sudoku board
 
@@ -49,7 +52,10 @@ class BoardGenerator:  # Board Generator Class
         board = BoardSolver.solver(board)  # randomly fill using solver
         board = BoardGenerator.__set_groups(board)  # set the groups
         return board
-
+    
+    '''
+    GROUP A Skill: Complex User-Defined Algorithm - Board generator algorithm to generate random valid boards with one solution
+    '''
     @staticmethod
     def new_board(mode, difficulty, board_size):  # generate a new board
 

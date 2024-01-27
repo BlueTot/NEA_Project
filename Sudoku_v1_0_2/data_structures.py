@@ -1,6 +1,8 @@
 from heapq import heappop, heappush  # Import priority queue operations
 
-
+'''
+GROUP A Skill: Stacks - user defined stack class
+'''
 class Stack:  # Stack data structure
     def __init__(self):  # constructor
         self.__array = []
@@ -23,7 +25,9 @@ class Stack:  # Stack data structure
     def is_empty(self):  # empty check
         return not self.__array
 
-
+'''
+GROUP A Skill: Queues - user defined priority queue class
+'''
 class PriorityQueue:  # Priority queue data structure
     def __init__(self, initial_item=None):  # Constructor
         if initial_item is not None:

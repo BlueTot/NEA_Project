@@ -2,6 +2,10 @@ from hex_to_dec import to_translucent  # Import convert to translucent function
 import database  # Import database
 
 
+'''
+Class used to store details about game milestones 
+for all users, e.g. rewards for all milestones.
+'''
 class GameMilestones:  # Game Milestones class
 
     MILESTONES = {1: 10, 2: 20, 3: 35, 4: 60, 5: 100, 6: 180,
@@ -16,6 +20,9 @@ class GameMilestones:  # Game Milestones class
                          7: ("H", 30)}}  # Hint rewards for each milestone
 
 
+'''Class used to store the appearance configuration 
+settings of a particular user/account.
+'''
 class AppearanceConfiguration:  # Appearance Configuration class
 
     DEFAULT_SETTINGS = ['#f0f0f0', '#ffffff', '#aee8f5', '#969696', '#ffcccb', 'LIBRARY 3 AM soft',
@@ -79,6 +86,12 @@ class AppearanceConfiguration:  # Appearance Configuration class
         return self.__killer_colours
 
 
+'''
+Class used to store account details, such as username, rating, 
+title and current appearance preset. This class only deals with 
+account-based attributes and methods and nothing related to 
+leaderboards as these features are cross-account features.
+'''
 class Account:  # Account Class
 
     # Constructor, set default username and appearance config upon login

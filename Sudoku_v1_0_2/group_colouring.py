@@ -18,6 +18,9 @@ def __are_adjacent(group1, group2):  # Function to check if two groups are adjac
         visited)  # Check if number of visited squares is the same as the number of squares in both groups
 
 
+'''
+GROUP A Skill: Graph / Tree Traversal - Group colouring algorithm used to colour in groups on the Killer Sudoku board
+'''
 def group_colours(groups):  # Group colouring function, takes a dictionary and returns a dictionary
 
     graph = {head: [] for head in groups.keys()}  # Initialise adjacency list to represent the graph

@@ -9,6 +9,11 @@ class ApplicationError(Exception):
     pass
 
 
+'''
+Class used to represent the application behind the UI that 
+controls all account and database-related actions, such as methods 
+for creating new accounts, saving games and getting data for the leaderboard.
+'''
 class Application:  # Application class, used to manage accounts and all account-related features
 
     DEFAULT_DIRECTORY = "games"  # Default directory to store game files

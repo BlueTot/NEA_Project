@@ -23,6 +23,15 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 from pyqt_widgets import *  # Import all customisable widget classes
 
 
+'''
+GROUP A Skill: Complex user-defined use of object oriented programming (OOP) model - 
+Used to organise parts of the code together, such as individual screens, game, board etc.
+This file is an example of the use of complex OOP, other files also contain OOP such as game.py, board.py etc.
+'''
+
+'''
+Screen that is rendered when the GUI is first launched.
+'''
 class HomeScreen(Screen):
     # Create signals that are used to call methods in the GUI
     create_new_game_signal = pyqtSignal()  # create new game
@@ -152,7 +161,10 @@ class HomeScreen(Screen):
     def __quit_game(self):  # Quit game
         exit()
 
-
+'''
+Screen that is rendered when the user chooses 
+the settings of the new game they want to create.
+'''
 class ConfigGameScreen(Screen):  # Create new game screen
 
     # Create pyqt signals to connect to GUI
@@ -260,7 +272,10 @@ class ConfigGameScreen(Screen):  # Create new game screen
         else:
             self.__gamemode_info.setText("")
 
-
+'''
+Screen that is rendered when the user chooses to open an 
+existing game and allows the user to choose which game to open.
+'''
 class OpenGameScreen(Screen):  # Open game screen
 
     # Create pyqt signals
@@ -311,7 +326,10 @@ class OpenGameScreen(Screen):  # Open game screen
         else:
             self.statusBar().showMessage("*To continue, please select a game file to play")
 
-
+'''
+Class to represent the screen that is rendered when the user plays a sudoku game. 
+The screen contains the board, numpad and accessory buttons like hint and undo.
+'''
 class GameScreen(Screen):  # Main game screen
 
     # Constants for rendering board
@@ -762,7 +780,9 @@ class GameScreen(Screen):  # Main game screen
             self.__game.save_game(self._application.account.username)  # Save the game to folder
         super()._return_to_home_screen()  # Return to home screen
 
-
+'''
+Screen that is rendered when the user creates a new account.
+'''
 class CreateNewAccountScreen(Screen):  # Create new account screen class
 
     def __init__(self, application, max_size):  # Constructor
@@ -811,7 +831,9 @@ class CreateNewAccountScreen(Screen):  # Create new account screen class
         else:
             self.statusBar().showMessage("One or more input boxes are still empty")
 
-
+'''
+Screen that is rendered when the user signs in to an account.
+'''
 class SignInScreen(Screen):  # Sign In Screen class
 
     def __init__(self, application, max_size):  # Constructor
@@ -851,7 +873,10 @@ class SignInScreen(Screen):  # Sign In Screen class
         else:
             self.statusBar().showMessage("One or more input boxes are still empty")
 
-
+'''
+Screen that is rendered when the user views and 
+chooses their current GUI appearance presets.
+'''
 class ViewGUIPresetsScreen(Screen):  # View GUI Presets Screen class
 
     # Create pyqt signals
@@ -951,7 +976,10 @@ class ViewGUIPresetsScreen(Screen):  # View GUI Presets Screen class
                 f"background: {self._application.account.app_config.colour3}; border: 2px solid black;")  # change button colour to grey
             self.__preset_preview.setText("")  # reset info box contents
 
-
+'''
+Screen that is rendered when the chooses to create 
+a new GUI preset or edit an existing GUI preset.
+'''
 class EditGUIPresetScreen(Screen):  # Edit GUI Preset Screen Class
 
     def __init__(self, application, max_size, mode, preset_num):  # Constructor
@@ -1066,6 +1094,10 @@ class EditGUIPresetScreen(Screen):  # Edit GUI Preset Screen Class
             self._return_to_home_screen()  # return to home screen
 
 
+'''
+Screen that is rendered when the user chooses to manage 
+their account (change username, password, delete account etc.)
+'''
 class ManageAccountScreen(Screen):  # Manage account screen class
 
     def __init__(self, application, max_size):  # Constructor
@@ -1147,6 +1179,10 @@ class ManageAccountScreen(Screen):  # Manage account screen class
             self._return_to_home_screen()  # return to home screen
 
 
+'''
+Screen that is rendered when the user 
+chooses to view their current stats.
+'''
 class ViewStatsScreen(Screen):  # View stats screen class
 
     def __init__(self, application, max_size):  # Constructor
@@ -1220,6 +1256,10 @@ class ViewStatsScreen(Screen):  # View stats screen class
             ]))  # Set text in gamemode stats text edit
 
 
+'''
+Screen that is rendered when the user 
+chooses to view their game milestones.
+'''
 class GameMilestonesScreen(Screen):  # Game Milestones Screen class
 
     def __init__(self, application, max_size):  # Constructor
@@ -1327,6 +1367,9 @@ class GameMilestonesScreen(Screen):  # Game Milestones Screen class
             self.statusBar().showMessage("Please select a milestone to claim")
 
 
+'''
+Screen that is rendered when the user clicks the help button.
+'''
 class HelpScreen(Screen):  # Help Screen class
 
     def __init__(self, application, max_size):  # Constructor
@@ -1339,12 +1382,20 @@ class HelpScreen(Screen):  # Help Screen class
         # Create help instructions text window
         self.__txt_window = TextEdit(self, 100, 20, 800, 520, "white", 5,
                                      self._application.account.app_config.regular_font, 16)
+        
+        '''
+        GROUP B Skill: Text files - used to open help instructions from text file to render on screen
+        '''
         with open("resources/help.txt", "r") as f:  # Open help.txt file and insert the text read in
             self.__txt_window.insertPlainText(f.read())
 
         self._widgets += [self.__txt_window]  # Add to widgets
 
 
+'''
+Screen that is rendered when the user 
+chooses to view the leaderboard for all accounts.
+'''
 class LeaderboardScreen(Screen):  # Leaderboard Screen Class
 
     def __init__(self, application, max_size):  # Constructor
@@ -1438,6 +1489,10 @@ class LeaderboardScreen(Screen):  # Leaderboard Screen Class
             self.statusBar().showMessage("Please select an option to continue")  # Show error message
 
 
+'''
+Class to represent GUI object that will be 
+run when the user runs the application in GUI mode.
+'''
 class GUI(UI):  # Graphical User Interface (GUI) class
 
     def __init__(self):  # Constructor

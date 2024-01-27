@@ -34,6 +34,11 @@ def __fetch_data(sql):  # Function to fetch data from given SQL query
     return data
 
 
+'''
+GROUP A Skill: Complex data model in database (e.g. several interlinked tables) - The below function 
+creates a three tables, Accounts, AppearancePresets and Games which are linked to the Accounts table 
+by a many-to-one relationship (one account = many appearance presets and many games)
+'''
 def __setup():  # Setup function to initialise database tables
     if not os.path.exists(__db_path()):  # Check if database file already exists
         print("DB Setup")
@@ -333,6 +338,10 @@ def all_account_rating_data():  # Query to get the username, rating and title of
     return __fetch_data("""SELECT username, rating, title FROM Accounts""")
 
 
+'''
+GROUP A Skill: Cross-table parameterised SQL - Used to fetch best hardcore time for every user 
+where they have completed a game in the given category (for the leaderboard)
+'''
 def leaderboard_best_time_data(mode, board_size,
                                difficulty):  # Query to get the username, rating, title and best time in a certain gamemode of all registered accounts (used in leaderboard)
     return __fetch_data(f"""SELECT Accounts.username, Accounts.rating, Accounts.title, 

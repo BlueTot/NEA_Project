@@ -15,7 +15,11 @@ from application import Application  # Import application class to get default d
 class GameError(Exception):  # GameError exception class
     pass
 
-
+'''
+Class to represent the game that is currently being played, 
+contains the board and processes any in-game operations such as 
+placing and removing numbers from the board with validation.
+'''
 class Game:  # Game class
 
     DISABLED_GAMEMODES = {("Normal", "16x16", "Expert"), ("Killer", "16x16", "Expert"),
@@ -93,7 +97,10 @@ class Game:  # Game class
         self.__timed = data["timed"]  # Set timed
         self.__hardcore = data["hardcore"]  # Set hardcore
         self.__time_elapsed = data["time elapsed"]  # Set time elapsed
-
+    
+    '''
+    GROUP B Skill: Writing and reading from files - used to store game files as .json in directory
+    '''
     def save_game(self, account):  # Save game to file method
 
         # Create file name based on local time if board is not loaded from a file

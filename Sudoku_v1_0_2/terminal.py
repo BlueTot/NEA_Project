@@ -6,6 +6,11 @@ from game import GameError  # Import GameError Exception class (for catching gam
 from database import DBError  # Import DBError Exception class (for catching database errors)
 
 
+'''
+Class to represent terminal UI object that 
+will be run when the user runs the 
+application in terminal mode.
+'''
 class Terminal(UI):  # Terminal class, inherits from UI
 
     def __init__(self):  # Constructor
