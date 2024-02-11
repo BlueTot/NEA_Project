@@ -99,7 +99,15 @@ class Game:  # Game class
         self.__time_elapsed = data["time elapsed"]  # Set time elapsed
     
     '''
-    GROUP B Skill: Writing and reading from files - used to store game files as .json in directory
+    #####################################################################################################
+    # GROUP B Skill: Writing and reading from files - used to store game files as .json in directory    #
+    #                                                                                                   #
+    # The Game class reads and writes JSON files using the json library in python to store information  #
+    # about games that have been paused by the user. Whenever a user pauses a game, the state of the    #
+    # board along with other variables are written to a JSON file in the account’s directory. Whenever  # 
+    # a user browses through their stored games in the OpenGameScreen, the JSON file is read in and the #
+    # settings of the game are displayed on the screen.                                                 #
+    #####################################################################################################
     '''
     def save_game(self, account):  # Save game to file method
 

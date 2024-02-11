@@ -24,9 +24,18 @@ from pyqt_widgets import *  # Import all customisable widget classes
 
 
 '''
-GROUP A Skill: Complex user-defined use of object oriented programming (OOP) model - 
-Used to organise parts of the code together, such as individual screens, game, board etc.
-This file is an example of the use of complex OOP, other files also contain OOP such as game.py, board.py etc.
+##################################################################################################################
+# GROUP A Skill: Complex user-defined use of object oriented programming (OOP) model -                           #
+# Used to organise parts of the code together, such as individual screens, game, board etc.                      #
+# This file is an example of the use of complex OOP, other files also contain OOP such as game.py, board.py etc. #
+#                                                                                                                #
+# Most of the GUI, Board and Game parts of the code all use complex user-defined OOP to organise different       #
+# methods and attributes together to create objects which are related to each other through a UML diagram        #
+# shown above. Composition and inheritance are used frequently throughout the code, for example Board is a       #
+# part of Game and Game is a part of GUI. In the file pyqt_widgets.py, a lot of the frequently used widget       #
+# classes used by the GUI are inherited from the base widget classes provided by the pyqt UI, where appearance   #
+# and styling features are applied and maximising/minimising features are added.                                 #
+##################################################################################################################
 '''
 
 '''
@@ -1384,7 +1393,13 @@ class HelpScreen(Screen):  # Help Screen class
                                      self._application.account.app_config.regular_font, 16)
         
         '''
-        GROUP B Skill: Text files - used to open help instructions from text file to render on screen
+        #################################################################################################
+        # GROUP B Skill: Text files - used to open help instructions from text file to render on screen #
+        #                                                                                               #
+        # The HelpScreen class in gui.py uses a text file called help.txt which stores instructions on  #
+        # how to use the application. The text file is never written and only read in by the HelpScreen #
+        # class and fed to a TextEdit widget which displays the contents of the text file to the user.  #
+        #################################################################################################
         '''
         with open("resources/help.txt", "r") as f:  # Open help.txt file and insert the text read in
             self.__txt_window.insertPlainText(f.read())

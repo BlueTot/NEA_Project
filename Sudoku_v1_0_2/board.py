@@ -81,7 +81,13 @@ class Board:  # Board Base Class
         self._board_size = board_size  # Board size
         self._matrix_size = to_matrix_size(board_size)  # Matrix size
         '''
-        GROUP B Skill: Multi-dimensional arrays - A 2-dimensional array is used to represent the sudoku board
+        #########################################################################################################
+        # GROUP B Skill: Multi-dimensional arrays - A 2-dimensional array is used to represent the sudoku board #
+        #                                                                                                       #
+        # The Board class uses a two-dimensional array to store the numbers on the sudoku board. A double for   #
+        # loop is used to loop through all the squares in the board to render the board on the screen, and      #
+        # numbers are accessed from the two-dimensional array by using the row and column indices.              #
+        #########################################################################################################
         '''
         self._board = [[Square(self._board_size, self._matrix_size) for _ in range(self._board_size)] for _ in
                        range(self._board_size)]  # 2D array for board

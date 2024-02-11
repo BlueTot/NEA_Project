@@ -2,7 +2,13 @@ from itertools import product  # import product function
 
 
 '''
-GROUP A Skill: Dancing Links X Algorithm used to solve Normal Sudoku boards
+###########################################################################################
+# GROUP A Skill: Dancing Links X Algorithm used to solve Normal Sudoku boards             #
+#                                                                                         #
+# The Game and Board classes both use a recursive algorithm called DLX, which is a fast   #
+# recursive depth-first backtracking solver used to solve normal sudoku boards.           #
+# It takes in a NormalModeBoard object and returns a solved version of that board object. #
+###########################################################################################
 '''
 class DLXSolver:  # Dancing Links X Solver class
 
@@ -22,8 +28,16 @@ class DLXSolver:  # Dancing Links X Solver class
 
         
         '''
-        GROUP A Skill: Dictionaries - used by the DLX algorithm to solve sudoku boards quickly.
-        This is not the only place dictionaries are used, other places like group_colouring.py, ratin_calc.py, difficulty_settings.py etc. also use them.
+        #####################################################################################################################################################
+        # GROUP A Skill: Dictionaries - used by the DLX algorithm to solve sudoku boards quickly.                                                           #
+        # This is not the only place dictionaries are used, other places like group_colouring.py, ratin_calc.py, difficulty_settings.py etc. also use them. #
+        #                                                                                                                                                   #
+        # Dictionaries are frequently used in many areas of the code, mainly used by the Dancing Links Solver in dlx.py, and used to store groups in Killer #
+        # Sudoku boards in board.py and used to underpin an adjacency list for graph traversal in the Group Colouring algorithm in group_colouring.py.      #
+        # In other smaller files such as rating_calc.py and difficulty_settings.py, dictionaries are used to store constants that are used by some areas    #
+        # of the program, such as storing the recommended ratings of each difficulty to calculate rating gain/losses for the user, and storing the number   #
+        # of given numbers for each difficulty, used by the board generator algorithm.                                                                      #
+        #####################################################################################################################################################
         '''
         rows = {}  # Initialise rows dictionary
         for row, col, num in product(range(N), range(N), range(1, N + 1)):

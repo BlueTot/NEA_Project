@@ -35,9 +35,15 @@ def __fetch_data(sql):  # Function to fetch data from given SQL query
 
 
 '''
-GROUP A Skill: Complex data model in database (e.g. several interlinked tables) - The below function 
-creates a three tables, Accounts, AppearancePresets and Games which are linked to the Accounts table 
-by a many-to-one relationship (one account = many appearance presets and many games)
+#########################################################################################################
+# GROUP A Skill: Complex data model in database (e.g. several interlinked tables) - The below function  #
+# creates a three tables, Accounts, AppearancePresets and Games which are linked to the Accounts table  #
+# by a many-to-one relationship (one account = many appearance presets and many games)                  #
+#                                                                                                       #
+# The database.py file uses a complex database model with three interlinked tables, Accounts,           #
+# AppearancePresets and Games. Accounts is related to AppearancePresets with a One-to-Many relationship # 
+# and Accounts is related to Games with a One-to-Many relationship as well.                             #
+#########################################################################################################
 '''
 def __setup():  # Setup function to initialise database tables
     if not os.path.exists(__db_path()):  # Check if database file already exists
@@ -339,8 +345,17 @@ def all_account_rating_data():  # Query to get the username, rating and title of
 
 
 '''
-GROUP A Skill: Cross-table parameterised SQL - Used to fetch best hardcore time for every user 
-where they have completed a game in the given category (for the leaderboard)
+##################################################################################################
+# GROUP A Skill: Cross-table parameterised SQL - Used to fetch best hardcore time for every user #
+# where they have completed a game in the given category (for the leaderboard)                   #
+#                                                                                                #
+# The database.py file uses a cross-table parametrised SQL query, which is used to fetch the     #
+# username, rating, title and best hardcore time in a given game-mode. This query is made up     #
+# of the two parts, an outer part which is used to fetch the username, rating and title from     #
+# the Accounts table, and an inner part which fetches the best hardcore time for a given         #
+# difficulty for every username in the Accounts table, where the best hardcore time exists       #
+# in the table in the first place.                                                               #
+##################################################################################################
 '''
 def leaderboard_best_time_data(mode, board_size,
                                difficulty):  # Query to get the username, rating, title and best time in a certain gamemode of all registered accounts (used in leaderboard)

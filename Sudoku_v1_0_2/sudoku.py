@@ -19,7 +19,7 @@ def main():
 
     if argv[1] == "t":  # Run terminal if 't' option used
         game = Terminal()
-    elif argv[1] == "g":  # Run GUI if 'g' optin used
+    elif argv[1] == "g":  # Run GUI if 'g' option used
         game = GUI()
     else:  # Otherwise print program usage
         print_usage()

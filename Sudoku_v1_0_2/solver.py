@@ -11,7 +11,13 @@ class BoardSolver:  # Board Solver Class
 
 
     '''
-    GROUP A Skill: Recursive Algorithms - Simple backtracking solver to solve Killer Sudoku boards
+    ##################################################################################################
+    # GROUP A Skill: Recursive Algorithms - Simple backtracking solver to solve Killer Sudoku boards #
+    #                                                                                                #
+    # The Game and Board classes both use a simple depth-first recursive solver algorithm used to    #
+    # solve killer sudoku boards, which takes in a KillerModeBoard object and returns a solved       #
+    # version of that board object.                                                                  #
+    ##################################################################################################
     '''
     @staticmethod
     def __solvable(board, row=0,

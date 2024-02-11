@@ -18,7 +18,13 @@ class BoardGenerator:  # Board Generator Class
         return BoardSolver.solver(board, generating_mode=True)
 
     '''
-    GROUP A Skill: Complex User-Defined Algorithms - Group generator algorithm for Killer Sudoku boards
+    #######################################################################################################
+    # GROUP A Skill: Complex User-Defined Algorithms - Group generator algorithm for Killer Sudoku boards #
+    #                                                                                                     #
+    # The KillerModeBoard class uses a complex user-defined algorithm called the Group generation         #
+    # algorithm, which takes in a randomly filled valid board object and creates a dictionary             #
+    # called groups that groups squares on the board together with a total.                               #
+    #######################################################################################################
     '''
     @staticmethod
     def __set_groups(board):  # set groups for killer sudoku board
@@ -54,7 +60,13 @@ class BoardGenerator:  # Board Generator Class
         return board
     
     '''
-    GROUP A Skill: Complex User-Defined Algorithm - Board generator algorithm to generate random valid boards with one solution
+    ###############################################################################################################################
+    # GROUP A Skill: Complex User-Defined Algorithm - Board generator algorithm to generate random valid boards with one solution #
+    #                                                                                                                             #
+    # The Game class uses a complex user-defined board generation algorithm that creates a random filled valid board and randomly #
+    # removes numbers from the board that do not cause the board to have two or more solutions. The board generation algorithm    #
+    # uses the DLX solver and the simple backtracking solver to check if a board has multiple solutions.                          #
+    ###############################################################################################################################
     '''
     @staticmethod
     def new_board(mode, difficulty, board_size):  # generate a new board

@@ -1,7 +1,14 @@
 from heapq import heappop, heappush  # Import priority queue operations
 
 '''
-GROUP A Skill: Stacks - user defined stack class
+#######################################################################################
+# GROUP A Skill: Stacks - user defined stack class                                    #                                
+#                                                                                     #
+# The Game and UI classes both use a user defined class                               #
+# called Stack that is an implementation of the stack data structure.                 #
+# The stack is used to store the order that moves are played,                         #
+# so when the undo operation is used, the item at the top of the stack is popped off. #
+#######################################################################################
 '''
 class Stack:  # Stack data structure
     def __init__(self):  # constructor
@@ -26,7 +33,14 @@ class Stack:  # Stack data structure
         return not self.__array
 
 '''
-GROUP A Skill: Queues - user defined priority queue class
+##########################################################################
+# GROUP A Skill: Queues - user defined priority queue class              #
+#                                                                        #
+# The group colouring algorithm uses a normal queue and a priority       #
+# queue to carry out breadth first search to colour in nodes of a graph. #
+# The priority queue is used to ensure that nodes with the               #
+# most coloured neighbours are coloured first.                           #
+##########################################################################
 '''
 class PriorityQueue:  # Priority queue data structure
     def __init__(self, initial_item=None):  # Constructor

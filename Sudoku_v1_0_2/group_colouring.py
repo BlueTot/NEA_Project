@@ -19,7 +19,13 @@ def __are_adjacent(group1, group2):  # Function to check if two groups are adjac
 
 
 '''
-GROUP A Skill: Graph / Tree Traversal - Group colouring algorithm used to colour in groups on the Killer Sudoku board
+#########################################################################################################################
+# GROUP A Skill: Graph / Tree Traversal - Group colouring algorithm used to colour in groups on the Killer Sudoku board #
+#                                                                                                                       #
+# The KillerModeBoard class uses a complex user-defined algorithm called the Group colouring algorithm,                 #
+# which takes in a KillerModeBoard object that has been assigned groups and returns a dictionary called                 #
+# colours that pairs squares on the board with the colour they are supposed to be rendered with on the GUI.             #
+#########################################################################################################################
 '''
 def group_colours(groups):  # Group colouring function, takes a dictionary and returns a dictionary
 
