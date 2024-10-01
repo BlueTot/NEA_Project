@@ -1,5 +1,7 @@
-# NEA_Project
-A Level Computer Science Coursework NEA Project
+# Sudoku - A Level NEA Project
+
+I made a sudoku generator and solver application for my A Level NEA project, which can generate up to 33 different types of boards on the fly, ranging from killer sudoku to 16x16 sudoku. This appliation uses PyQt6 for the graphical user interface, and uses the Dancing Links (DLX) Algorithm to solve the sudoku puzzles during generation.
+
 
 Milestones:
 
